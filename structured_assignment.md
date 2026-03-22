@@ -199,11 +199,14 @@ Weak = Decile 1-3, Mid = 4-7, Strong = 8-10
 ```
 
 #### BrandFit
+Meria, ako dobre daný **obchod** predáva danú **značku** v porovnaní s ostatnými obchodmi predávajúcimi tú istú značku. Nejde o porovnanie značiek medzi sebou (napr. L'Oréal vs Hugo Boss), ale o to, ktoré obchody sú pre konkrétnu značku silné/slabé.
 ```
-BrandRevenue_6M = SUM(Quantity × SalePrice) za 6M filtrované na daný BrandId
+-- Granularita: jeden riadok = (WarehouseId, BrandId)
+BrandRevenue_6M = SUM(Quantity × SalePrice) za 6M, GROUP BY WarehouseId, BrandId
 BrandQuintile = NTILE(5) OVER (PARTITION BY BrandId ORDER BY BrandRevenue_6M)
 BrandWeak = Q1-2, BrandMid = Q3, BrandStrong = Q4-5
 ```
+Príklad: Ak obchod A predáva L'Oréal za 10 000€ (Q5 = BrandStrong) a obchod B za 500€ (Q1 = BrandWeak), redistribúcia L'Oréal produktov do obchodu A má vyššiu šancu na úspech.
 
 **BrandStoreFit je silný prediktor (~12pp dopad na ST).** Efekt je graduovaný:
 - **Na target strane:** Najsilnejší pri nízkom SalesBucket (0-2 sales: delta +10-40pp ST). Pri 6+ sales irelevantný — predaje hovoria samy za seba.
