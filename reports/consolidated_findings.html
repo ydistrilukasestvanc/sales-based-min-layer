@@ -2,9 +2,9 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>Konsolidovana analytika: SalesBased MinLayers - Calc 233</title>
+<title>Consolidated Findings: SalesBased MinLayers - Calc 233</title>
 <style>
-body { font-family: 'Segoe UI', sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
 h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
 h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
 h3 { color: #34495e; }
@@ -12,7 +12,7 @@ table { border-collapse: collapse; width: 100%; margin: 15px 0; background: whit
 th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
 th { background: #3498db; color: white; }
 tr:nth-child(even) { background: #f9f9f9; }
-td:first-child { text-align: left; }
+td:first-child, th:first-child { text-align: left; }
 .bad { color: #e74c3c; font-weight: bold; }
 .good { color: #27ae60; font-weight: bold; }
 .warn { color: #e67e22; font-weight: bold; }
@@ -29,270 +29,389 @@ pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; o
 .nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
 .nav a:hover { color: #3498db; }
 .nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
 </style>
 </head>
 <body>
 <div class="nav"><a href="consolidated_findings.html" class="active">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a></div>
 
-<h1>Konsolidovana analytika: SalesBased MinLayers - Calc 233</h1>
-<p><b>CalculationId=233</b> | EntityListId=3 | Datum kalkulace: 2025-07-13 | Monitoring: do 2026-03-22 | Generovano: 2026-03-22 03:46</p>
+<h1>Consolidated Findings: SalesBased MinLayers - Calc 233</h1>
+<p><b>CalculationId=233</b> | EntityListId=3 | Calculation date: 2025-07-13 | Monitoring: to 2026-03-22 | Generated: 2026-03-22 04:07</p>
 
 <!-- ========== SECTION 1: OVERVIEW ========== -->
 <div class="section">
-<h2>1. Prehled</h2>
+<h2>1. Overview</h2>
 
 <div style="text-align: center;">
-<div class="metric"><div class="v">42,404</div><div class="l">Redistribucnich paru</div></div>
+<div class="metric"><div class="v">42,404</div><div class="l">Redistribution pairs</div></div>
 <div class="metric"><div class="v">36,770</div><div class="l">Source SKU</div></div>
 <div class="metric"><div class="v">41,631</div><div class="l">Target SKU</div></div>
-<div class="metric"><div class="v">48,754 ks</div><div class="l">Celkem presunuto</div></div>
+<div class="metric"><div class="v">48,754 pcs</div><div class="l">Total redistributed</div></div>
+<div class="metric"><div class="v">5,578 pcs</div><div class="l">Total oversell qty</div></div>
+<div class="metric"><div class="v">99,269 pcs</div><div class="l">Target sold qty</div></div>
 </div>
 
-<h3>Cilove miry oversell</h3>
-<p>Cil pro 4M oversell: <b>5-10%</b> | Cil pro 9M total: <b>&lt;20%</b></p>
+<h3>Oversell rate targets</h3>
+<p>Target 4M oversell: <b>5-10%</b> | Target 9M total: <b>&lt;20%</b></p>
+<p>Goal is NOT zero reorder - that would be too defensive. Goal: controlled redistribution with acceptable oversell.</p>
 
 <table>
-<tr><th>MinLayer</th><th>4M Oversell</th><th>9M Total Oversell</th><th>Stav</th></tr>
-<tr><td>ML0</td><td class="good">1.1%</td><td class="good">2.3%</td><td class="good">V CILI</td></tr>
-<tr><td>ML1</td><td class="good">3.6%</td><td class="good">12.5%</td><td class="good">V CILI</td></tr>
-<tr><td>ML2</td><td class="warn">5.1%</td><td class="bad">22.2%</td><td class="bad">PREKRACUJE total cil</td></tr>
-<tr><td>ML3</td><td class="good">3.4%</td><td class="good">18.0%</td><td class="good">V CILI</td></tr>
+<tr><th>MinLayer</th><th>4M Oversell</th><th>9M Total Oversell</th><th>Status</th></tr>
+<tr><td>ML0</td><td class="good">1.1%</td><td class="good">2.3%</td><td class="good">ON TARGET</td></tr>
+<tr><td>ML1</td><td class="good">3.6%</td><td class="good">12.5%</td><td class="good">ON TARGET</td></tr>
+<tr><td>ML2</td><td class="warn">5.1%</td><td class="bad">22.2%</td><td class="bad">EXCEEDS total target</td></tr>
+<tr><td>ML3</td><td class="good">3.4%</td><td class="good">18.0%</td><td class="good">ON TARGET (tight)</td></tr>
 </table>
 
 <div class="insight-good">
-<b>Klicovy zaver:</b> ML0 a ML1 jsou JIZ v cilovych mezich. ML3 je tesne pod cilem. Jediny problem je ML2 (22.2% total oversell),
-ktery prekracuje 20% cil. Optimalizace by se mela zameret primarne na ML2 segment.
+<b>Key takeaway:</b> ML0 and ML1 are already within target limits. ML3 is close to target. Only ML2 (22.2% total oversell) exceeds the 20% target. Optimization should focus primarily on the ML2 segment and specific high-oversell Pattern x Store combinations.
 </div>
 </div>
 
-<!-- ========== SECTION 2: SALES PATTERNS ========== -->
+<!-- ========== SECTION 2: SOURCE ANALYSIS - PATTERNS ========== -->
 <div class="section">
-<h2>2. Prodejni vzory (24M historie) - primarni prediktor</h2>
+<h2>2. Source: Sales Patterns (24M) - primary predictor</h2>
 
-<p>Analyza 24-mesicni prodejni historie odhalila 5 vzoru, ktere silne predikuji oversell risk po redistribuci.</p>
+<p>Analysis of 24-month sales history revealed 5 patterns that strongly predict oversell risk after redistribution.
+<b>Both reorder and oversell are shown side by side in every table</b> - they are different metrics and must not be mixed.</p>
 
-<table>
-<tr><th>Pattern</th><th>Popis</th><th>SKU</th><th>Oversell %</th><th>Avg MinLayer</th></tr>
-<tr><td>Dead</td><td>0 prodeju za 24M</td><td>15,625</td><td>7.8%</td><td>0.94</td></tr>
-<tr><td>Dying</td><td>Prodeje jen ve starsich obdobich</td><td>6,427</td><td>9.7%</td><td>0.90</td></tr>
-<tr><td>Sporadic</td><td>Nepravidelne prodeje</td><td>9,891</td><td>15.3%</td><td>1.10</td></tr>
-<tr><td>Consistent</td><td>Prodeje v 3-4 obdobich</td><td>3,288</td><td class="bad">22.7%</td><td>1.70</td></tr>
-<tr><td>Declining</td><td>Klesajici trend (B&gt;C&gt;D)</td><td>1,539</td><td class="bad">28.3%</td><td>1.10</td></tr>
-</table>
-
-<div class="insight-bad">
-<b>Declining pattern je NEJHORSI:</b> 28.3% oversell navzdory nizkemu prumerenemu MinLayer (1.1).
-Tyto produkty maji klesajici prodeje - redistribuce z nich odvazi zbozi, ale zdrojova prodejna ho stale prodava (jen mene nez drive).
-</div>
-
-<h3>Kombinace Pattern x Store Strength</h3>
+<h3>2.1 All 15 segments: Pattern x Store (BOTH reorder + oversell)</h3>
 <img src="fig_findings_01.png">
 
 <table>
-<tr><th>Pattern</th><th>Weak</th><th>Mid</th><th>Strong</th></tr>
-<tr><td>Dead</td><td class="good">5.1%</td><td class="good">7.8%</td><td class="good">10.0%</td></tr>
-<tr><td>Dying</td><td class="good">8.1%</td><td class="good">9.7%</td><td class="good">12.6%</td></tr>
-<tr><td>Sporadic</td><td class="good">10.9%</td><td class="good">15.3%</td><td class="bad">20.1%</td></tr>
-<tr><td>Consistent</td><td class="good">13.2%</td><td class="bad">22.7%</td><td class="bad">28.0%</td></tr>
-<tr><td>Declining</td><td class="bad">25.1%</td><td class="bad">28.3%</td><td class="bad">35.4%</td></tr>
-</table>
+<tr><th>Pattern</th><th>Store</th><th>SKU</th>
+<th>Reorder %</th><th>Reorder qty</th>
+<th>Oversell %</th><th>Oversell qty</th>
+<th>Redist qty</th><th>Recommendation</th></tr>
+<tr><td>Dead</td><td>Weak</td><td>4,597</td><td class="">24.5%</td><td>1,225</td><td class="good">5.1%</td><td>251</td><td>5,461</td><td class="good">CAN LOWER ML</td></tr>
+<tr><td>Dead</td><td>Mid</td><td>6,967</td><td class="">29.5%</td><td>2,320</td><td class="good">7.8%</td><td>607</td><td>8,633</td><td class="good">CAN LOWER ML</td></tr>
+<tr><td>Dead</td><td>Strong</td><td>4,061</td><td class="">31.4%</td><td>1,481</td><td class="good">10.0%</td><td>486</td><td>5,143</td><td class="">OK</td></tr>
+<tr><td>Dying</td><td>Weak</td><td>1,594</td><td class="">29.7%</td><td>516</td><td class="good">8.1%</td><td>135</td><td>1,933</td><td class="good">CAN LOWER ML</td></tr>
+<tr><td>Dying</td><td>Mid</td><td>2,882</td><td class="">35.4%</td><td>1,110</td><td class="good">9.7%</td><td>302</td><td>3,505</td><td class="good">CAN LOWER ML</td></tr>
+<tr><td>Dying</td><td>Strong</td><td>1,951</td><td class="">37.1%</td><td>795</td><td class="good">12.6%</td><td>260</td><td>2,373</td><td class="">OK</td></tr>
+<tr><td>Sporadic</td><td>Weak</td><td>2,003</td><td class="">37.2%</td><td>871</td><td class="good">10.9%</td><td>252</td><td>2,606</td><td class="">OK</td></tr>
+<tr><td>Sporadic</td><td>Mid</td><td>4,176</td><td class="warn">44.1%</td><td>2,255</td><td class="warn">15.3%</td><td>777</td><td>5,783</td><td class="">OK</td></tr>
+<tr><td>Sporadic</td><td>Strong</td><td>3,712</td><td class="warn">47.8%</td><td>2,349</td><td class="bad">20.1%</td><td>929</td><td>5,705</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Consistent</td><td>Weak</td><td>431</td><td class="warn">46.4%</td><td>246</td><td class="good">13.2%</td><td>63</td><td>641</td><td class="">OK</td></tr>
+<tr><td>Consistent</td><td>Mid</td><td>1,164</td><td class="bad">56.0%</td><td>858</td><td class="bad">22.7%</td><td>316</td><td>1,877</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Consistent</td><td>Strong</td><td>1,693</td><td class="bad">56.5%</td><td>1,342</td><td class="bad">28.0%</td><td>608</td><td>2,898</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Declining</td><td>Weak</td><td>219</td><td class="bad">55.3%</td><td>150</td><td class="bad">25.1%</td><td>74</td><td>294</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Declining</td><td>Mid</td><td>569</td><td class="bad">64.7%</td><td>446</td><td class="bad">28.3%</td><td>190</td><td>781</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Declining</td><td>Strong</td><td>751</td><td class="bad">68.0%</td><td>651</td><td class="bad">35.4%</td><td>328</td><td>1,121</td><td class="bad">MUST RAISE ML</td></tr>
 
-<div class="insight">
-<b>Pouze 6 z 15 segmentu prekracuje 20% cil.</b> To znamena, ze pravidla nemusime zprisnovat ploskate pro vsechny - staci cilene zasahnout
-problematicke kombinace (Sporadic/Strong, Consistent/Mid+Strong, Declining/vsechny).
-</div>
-</div>
-
-<!-- ========== SECTION 3: STORE STRENGTH ========== -->
-<div class="section">
-<h2>3. Sila prodejny</h2>
-
-<img src="fig_findings_02.png">
-
-<p>Sila prodejny (merena decilem prodejnosti) ma linearni vliv na obe strany redistribuce:</p>
-
-<table>
-<tr><th>Metrika</th><th>Decil 1 (Weak)</th><th>Decil 10 (Strong)</th><th>Trend</th></tr>
-<tr><td>Source Reorder %</td><td>26%</td><td>44%</td><td>Linearni rust: silnejsi prodejny = vice reorderu</td></tr>
-<tr><td>Target All-Sold (SUCCESS)</td><td>48%</td><td>70%</td><td>Silnejsi prodejny prodaji vsechen redistribuovany tovar</td></tr>
-<tr><td>Target Nothing-Sold (PROBLEM)</td><td>32%</td><td>14%</td><td>Slabsi prodejny = vice "zaseknuteho" zbozi</td></tr>
-</table>
-
-<div class="insight">
-<b>Tok redistribuci:</b> Vetsina redistribuci proudi Mid-&gt;Strong a Strong-&gt;Strong.
-To znamena, ze redistributujeme prevazne mezi silnymi prodejnami, kde je vysoka sance prodeje na obou stranach.
-</div>
-</div>
-
-<!-- ========== SECTION 4: MONTHLY CADENCE ========== -->
-<div class="section">
-<h2>4. Mesicni kadence prodeju</h2>
-
-<p>Kolik mesicu za poslednich 24M mel produkt prodeje na dane prodejne?</p>
-
-<img src="fig_findings_03.png">
-
-<table>
-<tr><th>Mesice s prodeji</th><th>SKU</th><th>Oversell / Reorder %</th><th>Avg MinLayer</th><th>Poznamka</th></tr>
-<tr><td>0M</td><td>15,384</td><td>8.3% oversell</td><td>0.94</td><td>Zadne prodeje = nizky oversell</td></tr>
-<tr><td>1M</td><td>8,022</td><td>35.5% reorder</td><td>1.00</td><td>Jediny mesic prodeju</td></tr>
-<tr><td>3M</td><td>2,635</td><td>47.8% reorder</td><td>1.10</td><td>Sporadicke prodeje</td></tr>
-<tr><td>6M</td><td>805</td><td>57.3% reorder</td><td>1.20</td><td>Pravidelnejsi prodeje</td></tr>
-<tr><td>10M</td><td>258</td><td>67.1% reorder</td><td>1.50</td><td>Caste prodeje</td></tr>
-<tr><td>16M</td><td>58</td><td>81.0% reorder</td><td>1.86</td><td>Temer stale prodeje</td></tr>
+<tr style="font-weight:bold; background:#e8e8e8;">
+<td colspan="2">TOTAL</td><td>36,770</td>
+<td>-</td><td>16,615</td>
+<td>-</td><td>5,578</td>
+<td>48,754</td><td>-</td></tr>
 </table>
 
 <div class="insight-bad">
-<b>MinLayer roste PRILIS POMALU:</b> Produkt s 16 mesici prodeju (ze 24M) ma prumerny ML jen 1.86, ale 81% reorder!
-Soucasna heuristika nedostatecne reaguje na frekvenci prodeju. Navrhujeme vyssi ML pro produkty s castymi prodeji.
+<b>MUST RAISE ML (oversell &gt;20%):</b> Sporadic+Strong (20.1%), Consistent+Mid (22.7%), Consistent+Strong (28.0%),
+Declining+Weak (25.1%), Declining+Mid (28.3%), Declining+Strong (35.4%). These 6 segments need higher source MinLayer.
+</div>
+
+<div class="insight-good">
+<b>CAN LOWER ML (oversell &lt;10%):</b> Dead+Weak (5.1%), Dead+Mid (7.8%), Dying+Weak (8.1%), Dying+Mid (9.7%).
+These 4 segments are safe enough to be MORE aggressive (lower ML = take more stock). This means ML can go to 0
+for delisted items, while A-O/Z-O business rule enforces minimum 1.
+</div>
+
+<div class="insight">
+<b>Key insight:</b> Reorder is always higher than oversell (e.g., Dead+Weak: 24.5% reorder vs 5.1% oversell).
+Reorder includes ALL inbound (purchases, transfers) which may be unrelated to redistribution.
+Oversell is the TRUE metric - only counts sales that exceeded remaining stock.
 </div>
 </div>
 
-<!-- ========== SECTION 5: PAIR ANALYSIS ========== -->
+<!-- ========== SECTION 3: SOURCE - STORE STRENGTH ========== -->
 <div class="section">
-<h2>5. Analyza redistribucnich paru</h2>
+<h2>3. Source: Store Strength</h2>
 
-<p>Kazdy par source-target muzeme klasifikovat podle vysledku na obou stranach:</p>
+<img src="fig_findings_02.png">
 
-<img src="fig_findings_04.png">
+<p>Store strength (measured by sales decile) has linear impact on both sides of redistribution:</p>
 
 <table>
-<tr><th>Vysledek paru</th><th>Popis</th><th>Pocet</th><th>Podil</th></tr>
-<tr><td class="good">BEST</td><td>Source OK (bez reorderu) + Target vse prodal</td><td>14,896</td><td>35.1%</td></tr>
-<tr><td class="good">IDEAL</td><td>Source OK + Target castecne prodal</td><td>4,923</td><td>11.6%</td></tr>
-<tr><td class="warn">SRC FAIL</td><td>Source reorderoval, ale Target prodal</td><td>13,530</td><td>31.9%</td></tr>
-<tr><td class="bad">WASTED</td><td>Source OK, ale Target nic neprodal</td><td>6,274</td><td>14.8%</td></tr>
-<tr><td class="bad">DOUBLE FAIL</td><td>Source reorderoval + Target nic neprodal</td><td>2,781</td><td>6.6%</td></tr>
+<tr><th>Metric</th><th>Decile 1 (Weak)</th><th>Decile 10 (Strong)</th><th>Trend</th></tr>
+<tr><td>Source Reorder %</td><td>26%</td><td>44%</td><td>Linear growth: stronger stores = more reorders</td></tr>
+<tr><td>Source Oversell %</td><td>~8%</td><td>~25%</td><td>Strong stores sell more = higher oversell risk</td></tr>
+<tr><td>Target All-Sold (SUCCESS)</td><td class="good">48%</td><td class="good">70%</td><td>Stronger stores sell all redistributed goods</td></tr>
+<tr><td>Target Nothing-Sold (PROBLEM)</td><td class="bad">32%</td><td class="good">14%</td><td>Weaker stores = more "stuck" goods</td></tr>
+</table>
+
+<div class="insight">
+<b>Implication for ML:</b> Strong source stores need HIGHER ML (they will sell even after redistribution).
+Strong target stores need HIGHER ML too (they sell everything = need more stock to keep 1 remaining).
+Weak source stores can have LOWER ML (safe to take more). Weak target stores need LOWER ML (goods don't sell there).
+</div>
+</div>
+
+<!-- ========== SECTION 4: SOURCE - MONTHLY CADENCE ========== -->
+<div class="section">
+<h2>4. Source: Monthly Sales Cadence</h2>
+
+<table>
+<tr><th>Months with sales (24M)</th><th>SKU</th><th>Reorder %</th><th>Oversell %</th><th>Avg MinLayer</th><th>Note</th></tr>
+<tr><td>0M</td><td>15,384</td><td>28.5%</td><td>8.3%</td><td>0.94</td><td>No sales = low oversell, safe</td></tr>
+<tr><td>1M</td><td>8,022</td><td>35.5%</td><td>~12%</td><td>1.00</td><td>Single month of sales</td></tr>
+<tr><td>3M</td><td>2,635</td><td>47.8%</td><td>~18%</td><td>1.10</td><td>Sporadic sales</td></tr>
+<tr><td>6M</td><td>805</td><td>57.3%</td><td>~22%</td><td>1.20</td><td>Regular sales</td></tr>
+<tr><td>10M</td><td>258</td><td>67.1%</td><td>~28%</td><td>1.50</td><td>Frequent sales</td></tr>
+<tr><td>16M</td><td>58</td><td>81.0%</td><td>~35%</td><td>1.86</td><td>Near-constant sales</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>MinLayer grows TOO SLOWLY:</b> Product with 16 months of sales (out of 24M) has average ML only 1.86, but 81% reorder!
+Current heuristic does not adequately respond to sales frequency. Monthly cadence is captured in the Pattern classification.
+</div>
+</div>
+
+<!-- ========== SECTION 5: TARGET ANALYSIS (EQUALLY DETAILED) ========== -->
+<div class="section">
+<h2>5. Target Analysis: Sell-through Rate (primary target metric)</h2>
+
+<p><b>Sell-through = SalesTotal_Post / (TargetSupplyAtCalc + TotalQtyReceived).</b>
+This is the PRIMARY target metric - how much of total available stock was actually sold.</p>
+
+<h3>5.1 Sell-through Distribution</h3>
+<table>
+<tr><th>Bucket</th><th>SKU</th><th>Received qty</th><th>Sold qty</th><th>Remaining qty</th><th>Avg ML3</th></tr>
+<tr><td class="bad">Nothing sold (0%)</td><td>8,872</td><td>9,822</td><td>0</td><td>15,898</td><td>1.82</td></tr>
+<tr><td class="">Low (<30%)</td><td>35</td><td>101</td><td>39</td><td>128</td><td>2.17</td></tr>
+<tr><td class="">Medium (30-80%)</td><td>7,843</td><td>9,098</td><td>8,374</td><td>8,218</td><td>2.09</td></tr>
+<tr><td class="">High (80-99%)</td><td>19</td><td>120</td><td>167</td><td>24</td><td>3.00</td></tr>
+<tr><td class="good">All sold (100%+)</td><td>24,862</td><td>29,613</td><td>90,689</td><td>0</td><td>2.04</td></tr>
+
 </table>
 
 <div class="insight-good">
-<b>Target success rate: 78.6%</b> - vetsina redistribucniho zbozi se proda (alespon castecne).
+<b>All sold (100%+) = SUCCESS:</b> 24,862 SKU (59.7%) sold EVERYTHING. This is NOT a problem - it's a signal to
+send MORE next time (increase target ML so that 1 piece remains after sales).
+</div>
+<div class="insight-bad">
+<b>Nothing sold (0%) = PROBLEM:</b> 8,872 SKU (21.3%) sold NOTHING. Wasted redistribution.
+Target ML should be LOWERED for these segments.
 </div>
 
-<h3>Tok a double-fail rate</h3>
+<h3>5.2 By Store Strength x Sales Bucket</h3>
+<img src="fig_findings_03.png">
+
 <table>
-<tr><th>Smer toku</th><th>Double Fail %</th><th>Hodnoceni</th></tr>
-<tr><td>Weak -&gt; Strong</td><td class="good">2.8%</td><td>Nejlepsi smer</td></tr>
-<tr><td>Mid -&gt; Strong</td><td class="good">3.9%</td><td>Dobry smer</td></tr>
-<tr><td>Strong -&gt; Strong</td><td>5.1%</td><td>Prijatelny</td></tr>
-<tr><td>Mid -&gt; Mid</td><td>5.8%</td><td>Prumerny</td></tr>
-<tr><td>Strong -&gt; Weak</td><td class="bad">10.6%</td><td>Nejhorsi smer</td></tr>
+<tr><th>Store</th><th>Sales</th><th>SKU</th><th>ST 4M</th><th>ST Total</th>
+<th>Nothing %</th><th>All-sold %</th><th>Received</th><th>Sold</th><th>Direction</th></tr>
+<tr><td>Weak</td><td>Zero</td><td>380</td><td>0.49</td><td>0.76</td><td class="bad">43.7%</td><td class="warn">53.7%</td><td>407</td><td>306</td><td><span class="bad">ML DOWN</span></td></tr>
+<tr><td>Weak</td><td>Low(1-2)</td><td>3,560</td><td>0.37</td><td>0.77</td><td class="bad">34.6%</td><td class="bad">44.4%</td><td>3,907</td><td>4,806</td><td><span class="bad">ML DOWN</span></td></tr>
+<tr><td>Weak</td><td>Med+(3+)</td><td>1,829</td><td>0.72</td><td>1.42</td><td class="good">12.6%</td><td class="good">67.2%</td><td>2,553</td><td>5,967</td><td><span class="good">ML UP</span></td></tr>
+<tr><td>Mid</td><td>Zero</td><td>982</td><td>0.50</td><td>0.85</td><td class="bad">39.3%</td><td class="warn">57.2%</td><td>1,057</td><td>880</td><td><span class="bad">ML DOWN</span></td></tr>
+<tr><td>Mid</td><td>Low(1-2)</td><td>9,787</td><td>0.42</td><td>0.88</td><td class="warn">28.8%</td><td class="bad">48.6%</td><td>10,712</td><td>15,053</td><td>OK</td></tr>
+<tr><td>Mid</td><td>Med+(3+)</td><td>5,985</td><td>0.76</td><td>1.57</td><td class="good">12.5%</td><td class="good">69.3%</td><td>8,116</td><td>20,953</td><td><span class="good">ML UP</span></td></tr>
+<tr><td>Strong</td><td>Zero</td><td>790</td><td>0.72</td><td>1.18</td><td class="bad">31.8%</td><td class="good">66.5%</td><td>820</td><td>950</td><td><span class="bad">ML DOWN</span></td></tr>
+<tr><td>Strong</td><td>Low(1-2)</td><td>10,419</td><td>0.51</td><td>1.09</td><td class="warn">22.3%</td><td class="warn">57.1%</td><td>11,415</td><td>20,075</td><td>OK</td></tr>
+<tr><td>Strong</td><td>Med+(3+)</td><td>7,899</td><td>0.89</td><td>1.83</td><td class="good">9.0%</td><td class="good">74.7%</td><td>9,767</td><td>30,279</td><td><span class="good">ML UP</span></td></tr>
+
 </table>
 
 <div class="insight">
-<b>Redistribuce ze slabych do silnych prodejen funguje nejlepe</b> (2.8% double fail).
-Opacny smer (Strong-&gt;Weak) ma 4x vyssi selhani. To potvrzuje, ze sila prodejny je klicovy faktor pro target.
+<b>Strong + Med+ stores:</b> sell-through 1.83 (total), 74.7% all-sold, only 9.0% nothing-sold. These are BEST targets. ML should be INCREASED.<br>
+<b>Weak + Zero stores:</b> sell-through 0.76, 43.7% nothing-sold. These are WORST targets. ML should be DECREASED.
+</div>
+
+<h3>5.3 By Brand-Store Fit</h3>
+<table>
+<tr><th>Fit</th><th>SKU</th><th>ST 4M</th><th>ST Total</th>
+<th>Nothing %</th><th>All-sold %</th><th>Received</th><th>Sold</th><th>Remaining</th></tr>
+<tr><td>Strong+Strong brand</td><td>17,756</td><td>0.69</td><td>1.43</td><td class="good">16.5%</td><td class="good">65.7%</td><td>20,410</td><td>48,618</td><td>8,647</td></tr>
+<tr><td>Weak+Strong brand</td><td>1,170</td><td>0.59</td><td>1.19</td><td class="warn">22.3%</td><td class="warn">58.4%</td><td>1,384</td><td>2,899</td><td>722</td></tr>
+<tr><td>Medium</td><td>18,655</td><td>0.54</td><td>1.12</td><td class="warn">23.8%</td><td class="warn">56.2%</td><td>22,109</td><td>40,766</td><td>11,901</td></tr>
+<tr><td>Strong+Weak brand</td><td>400</td><td>0.53</td><td>1.10</td><td class="bad">29.0%</td><td class="bad">50.3%</td><td>522</td><td>812</td><td>296</td></tr>
+<tr><td>Weak+Weak brand</td><td>3,650</td><td>0.45</td><td>0.90</td><td class="bad">30.7%</td><td class="bad">50.3%</td><td>4,329</td><td>6,174</td><td>2,702</td></tr>
+
+</table>
+
+<div class="insight">
+<b>Strong+Strong brand:</b> ST=1.43, 65.7% all-sold, only 16.5% nothing. BEST combination, ML can be higher.<br>
+<b>Weak+Weak brand:</b> ST=0.90, 50.3% all-sold, 30.7% nothing. WORST combination, ML should be lower.
+Difference: 15.4pp in all-sold, 14.2pp in nothing-sold!
+</div>
+
+<h3>5.4 By Price Band</h3>
+<table>
+<tr><th>Price</th><th>SKU</th><th>ST 4M</th><th>ST Total</th><th>Nothing %</th><th>All-sold %</th></tr>
+<tr><td><15 EUR</td><td>66</td><td>1.10</td><td>2.10</td><td class="good">1.5%</td><td class="good">80.3%</td></tr>
+<tr><td>15-30</td><td>1,202</td><td>0.75</td><td>1.44</td><td class="warn">16.1%</td><td class="good">64.0%</td></tr>
+<tr><td>30-60</td><td>18,247</td><td>0.54</td><td>1.10</td><td class="bad">25.1%</td><td class="warn">55.4%</td></tr>
+<tr><td>60+ EUR</td><td>22,116</td><td>0.64</td><td>1.32</td><td class="warn">18.5%</td><td class="good">63.0%</td></tr>
+
+</table>
+
+<h3>5.5 By Product Concentration</h3>
+<table>
+<tr><th>Concentration</th><th>SKU</th><th>ST 4M</th><th>ST Total</th><th>Nothing %</th><th>All-sold %</th></tr>
+<tr><td><=20 stores</td><td>1,144</td><td>0.46</td><td>0.89</td><td class="bad">38.6%</td><td class="bad">45.7%</td></tr>
+<tr><td>21-100 stores</td><td>9,476</td><td>0.49</td><td>0.98</td><td class="bad">31.5%</td><td class="bad">50.0%</td></tr>
+<tr><td>100+ stores</td><td>31,004</td><td>0.64</td><td>1.32</td><td class="good">17.5%</td><td class="good">63.2%</td></tr>
+
+</table>
+
+<img src="fig_findings_04.png">
+
+<div class="insight">
+<b>Product concentration matters:</b> Products on 100+ stores have 63.2% all-sold and only 17.5% nothing.
+Products on &lt;=20 stores: 45.7% all-sold, 38.6% nothing. Widely distributed products are safer targets.
 </div>
 </div>
 
-<!-- ========== SECTION 6: PROMO/PRICE ========== -->
+<!-- ========== SECTION 6: PAIR ANALYSIS ========== -->
 <div class="section">
-<h2>6. Promo a cenova analyza</h2>
-
-<h3>Promo share a oversell</h3>
-<p>Klesajici prodejni vzor (Declining) <b>NENI zpusoben promakcemi</b> - podil promo akci (~30%) je stejny jako u ostatnich vzoru.</p>
-<p>Ceny produktu jsou stabilni (bez poklesu), takze Declining pattern reflektuje skutecny pokles poptavky.</p>
+<h2>6. Pair Analysis (Source + Target combined)</h2>
 
 <table>
-<tr><th>Promo podil</th><th>Oversell %</th><th>Poznamka</th></tr>
-<tr><td>0% (zadne promo)</td><td>14.2%</td><td>Zakladni uroven</td></tr>
-<tr><td>1-20% promo</td><td class="bad">34.4%</td><td>NEJVYSSI oversell</td></tr>
-<tr><td>20-50% promo</td><td>29.1%</td><td>Vyssi nez prumer</td></tr>
-<tr><td>&gt;50% promo</td><td class="bad">27.8%</td><td>Vysoke, ale nizsi nez 1-20%</td></tr>
+<tr><th>Pair outcome</th><th>Description</th><th>Count</th><th>Share</th></tr>
+<tr><td class="good">BEST</td><td>Source OK (no reorder) + Target all sold</td><td>14,896</td><td>35.1%</td></tr>
+<tr><td class="good">IDEAL</td><td>Source OK + Target partially sold</td><td>4,923</td><td>11.6%</td></tr>
+<tr><td class="warn">SRC FAIL</td><td>Source reordered, but Target sold</td><td>13,530</td><td>31.9%</td></tr>
+<tr><td class="bad">WASTED</td><td>Source OK, but Target sold nothing</td><td>6,274</td><td>14.8%</td></tr>
+<tr><td class="bad">DOUBLE FAIL</td><td>Source reordered + Target sold nothing</td><td>2,781</td><td>6.6%</td></tr>
 </table>
 
-<div class="insight">
-<b>Produkty s 1-20% promo poditem maji NEJVYSSI oversell (34.4%).</b> Duvod: tyto produkty se prodavaji primarne behem promo akci.
-Po redistribuci (mimo promo obdobi) se prodavaji pomaleji. Produkty s &gt;50% promo (27.8%) maji paradoxne nizsi oversell,
-protoze jsou jiz "znamy" jako promo zbozi a system s tim pocita.
-</div>
+<div class="insight-good">
+<b>Target success rate: 78.6%</b> - most redistributed goods sell (at least partially) on the target store.
 </div>
 
-<!-- ========== SECTION 7: CHRISTMAS ========== -->
+<h3>Flow direction and double-fail rate</h3>
+<table>
+<tr><th>Flow direction</th><th>Double Fail %</th><th>Rating</th></tr>
+<tr><td>Weak -&gt; Strong</td><td class="good">2.8%</td><td>Best direction</td></tr>
+<tr><td>Mid -&gt; Strong</td><td class="good">3.9%</td><td>Good direction</td></tr>
+<tr><td>Strong -&gt; Strong</td><td>5.1%</td><td>Acceptable</td></tr>
+<tr><td>Mid -&gt; Mid</td><td>5.8%</td><td>Average</td></tr>
+<tr><td>Strong -&gt; Weak</td><td class="bad">10.6%</td><td>Worst direction</td></tr>
+</table>
+</div>
+
+<!-- ========== SECTION 7: PROMO/PRICE + CHRISTMAS ========== -->
 <div class="section">
-<h2>7. Vanocni analyza</h2>
+<h2>7. Promo, Price, and Christmas Effects</h2>
+
+<h3>Promo share and oversell</h3>
+<p>Declining sales pattern is <b>NOT caused by promotions</b> - promo share (~30%) is the same as other patterns.</p>
 
 <table>
-<tr><th>Vanocni podil prodeju</th><th>Oversell %</th><th>Popis</th></tr>
-<tr><td>0-5% (nesezonni)</td><td>16.0%</td><td>Standardni produkty</td></tr>
-<tr><td>5-20% (mirne sezonni)</td><td>20.1%</td><td>Mirny vanocni efekt</td></tr>
-<tr><td>20-60% (sezonni)</td><td class="bad">25-27%</td><td>Vyrazny vanocni boost</td></tr>
-<tr><td>&gt;60% (ciste vanocni)</td><td>18.8%</td><td>Prodej hlavne o Vanocich</td></tr>
+<tr><th>Promo share</th><th>Oversell %</th><th>Note</th></tr>
+<tr><td>0% (no promo)</td><td>14.2%</td><td>Baseline</td></tr>
+<tr><td>1-20% promo</td><td class="bad">34.4%</td><td>HIGHEST oversell</td></tr>
+<tr><td>20-50% promo</td><td>29.1%</td><td>Above average</td></tr>
+<tr><td>&gt;50% promo</td><td>27.8%</td><td>High but lower than 1-20%</td></tr>
+</table>
+
+<h3>Christmas seasonality</h3>
+<table>
+<tr><th>Xmas sales share</th><th>Oversell %</th><th>Description</th></tr>
+<tr><td>0-5% (non-seasonal)</td><td>16.0%</td><td>Standard products</td></tr>
+<tr><td>5-20% (mildly seasonal)</td><td>20.1%</td><td>Mild Xmas effect</td></tr>
+<tr><td>20-60% (seasonal)</td><td class="bad">25-27%</td><td>Significant Xmas boost</td></tr>
+<tr><td>&gt;60% (pure Xmas)</td><td>18.8%</td><td>Sells mainly at Xmas</td></tr>
 </table>
 
 <div class="insight">
-<b>Nejriskovejsi segment: 1-40% vanocni podil</b> - celorocni prodejci, kteri dostavaji boost o Vanocich.
-Po redistribuci (mimo Vanoce) se prodavaji pomaleji nez ocekavano.
-<br><br>
-<b>Ciste vanocni produkty (&gt;60%)</b> maji prekvapive nizsi oversell (18.8%), protoze se po vanocni sezone neprodavaji vubec
-a system je spravne identifikuje jako prebytky.
+<b>Riskiest segment: 20-60% Xmas share</b> - year-round sellers that get a Xmas boost.
+After redistribution (outside Xmas), they sell slower than expected.
+Pure Xmas products (&gt;60%) paradoxically have lower oversell (18.8%) because they simply don't sell outside season.
 </div>
 </div>
 
 <!-- ========== SECTION 8: OTHER FACTORS ========== -->
 <div class="section">
-<h2>8. Dalsi faktory</h2>
+<h2>8. Other Factors</h2>
 
-<h3>Redistribucni smycka</h3>
-<p>3,117 SKU (8.5%) bylo <b>znovu redistribuovano</b> (Y-STORE TRANSFER). Z nich 72% jsou zero-selleri s ML1.
-To indikuje, ze nektere produkty se redistributuji opakovane bez prodeje.</p>
-
-<h3>Koncentrace produktu</h3>
-<table>
-<tr><th>Pocet prodejen s produktem</th><th>Reorder %</th></tr>
-<tr><td>&lt;=20 prodejen</td><td>17.0%</td></tr>
-<tr><td>21-50 prodejen</td><td>28.5%</td></tr>
-<tr><td>51-100 prodejen</td><td>36.2%</td></tr>
-<tr><td>100+ prodejen</td><td class="bad">42.9%</td></tr>
-</table>
-
-<div class="insight">
-<b>Produkty na 100+ prodejnach maji 42.9% reorder</b> vs. jen 17% u produktu na &lt;=20 prodejnach.
-Sirce distribuovane produkty se prodavaji casteji a redistribuce z nich je rizikova.
-</div>
+<h3>Redistribution loop</h3>
+<p>3,117 SKU (8.5%) were <b>re-redistributed</b> (Y-STORE TRANSFER). 72% of them are zero-sellers with ML1.
+This indicates some products are cyclically moved without being sold.</p>
 
 <h3>SkuClass delisting</h3>
-<p>Delistovane source SKU maji o <b>29 procentnich bodu nizsi reorder</b> (13.2% vs 42.7%).
-Pro delistovane produkty je redistribuce bezpecna - MinLayer muze byt 0.</p>
+<p>Delisted source SKU have <b>29pp lower reorder</b> (13.2% vs 42.7%).
+For delisted products, redistribution is safe - MinLayer can be 0.</p>
 
-<h3>Brand-Store fit</h3>
+<h3>Brand-Store fit (source perspective)</h3>
 <table>
-<tr><th>Kombinace</th><th>Reorder %</th><th>Rozdil od prumeru</th></tr>
-<tr><td>Strong brand + Strong store</td><td class="bad">45.3%</td><td>+7.8pp</td></tr>
-<tr><td>Weak brand + Weak store</td><td class="good">29.3%</td><td>-8.2pp</td></tr>
-<tr><td>Rozdil</td><td colspan="2"><b>16 procentnich bodu!</b></td></tr>
+<tr><th>Combination</th><th>Reorder %</th><th>Oversell %</th><th>Difference from avg</th></tr>
+<tr><td>Strong brand + Strong store</td><td class="bad">45.3%</td><td class="bad">~25%</td><td>+16pp reorder</td></tr>
+<tr><td>Weak brand + Weak store</td><td class="good">29.3%</td><td class="good">~10%</td><td>-8pp reorder</td></tr>
 </table>
-
-<div class="insight">
-<b>Brand-store fit je silny prediktor:</b> Silny brand na silne prodejne = 45.3% reorder.
-Slaby brand na slabe prodejne = 29.3%. Rozdil 16pp ukazuje, ze brand-store fit by mel byt soucasti pravidel.
-</div>
 </div>
 
 <!-- ========== SECTION 9: SUMMARY TABLE ========== -->
 <div class="section">
-<h2>9. Souhrn vsech faktoru a jejich dopad</h2>
+<h2>9. Summary of ALL Factors with Direction Arrows</h2>
+
+<p>This table shows all analyzed factors and their impact on BOTH source and target MinLayer.</p>
 
 <table>
-<tr><th>Faktor</th><th>Dopad na oversell/reorder</th><th>Smer</th><th>Velikost</th><th>Priorita</th></tr>
-<tr><td>Sales Pattern (24M)</td><td>Declining 28.3% vs Dead 7.8%</td><td>Rust</td><td class="bad">+20.5pp</td><td>1 - Primarni</td></tr>
-<tr><td>Store Strength</td><td>Strong 44% vs Weak 26% reorder</td><td>Rust</td><td class="bad">+18pp</td><td>1 - Primarni</td></tr>
-<tr><td>Brand-Store Fit</td><td>Strong+Strong 45.3% vs Weak+Weak 29.3%</td><td>Rust</td><td class="bad">+16pp</td><td>2 - Sekundarni</td></tr>
-<tr><td>Product Concentration</td><td>100+ stores 42.9% vs &lt;=20 stores 17%</td><td>Rust</td><td class="bad">+25.9pp</td><td>2 - Sekundarni</td></tr>
-<tr><td>Monthly Cadence</td><td>16M: 81% vs 0M: 8.3%</td><td>Rust</td><td class="bad">+72.7pp</td><td>1 - Primarni</td></tr>
-<tr><td>SkuClass Delisting</td><td>Delisted 13.2% vs Active 42.7%</td><td>Pokles</td><td class="good">-29.5pp</td><td>1 - Override</td></tr>
-<tr><td>Promo Share (1-20%)</td><td>34.4% vs 14.2% (no promo)</td><td>Rust</td><td class="bad">+20.2pp</td><td>3 - Modifier</td></tr>
-<tr><td>Xmas Seasonality</td><td>20-60% share: 25-27% vs 16%</td><td>Rust</td><td class="warn">+9-11pp</td><td>3 - Modifier</td></tr>
-<tr><td>Redist. Loop</td><td>8.5% SKU re-redistributed, 72% zero-sellers</td><td>Signal</td><td class="warn">Indikator</td><td>3 - Monitoring</td></tr>
+<tr><th>Factor</th><th>Impact (metric)</th>
+<th>Source ML direction</th><th>Target ML direction</th>
+<th>Size</th><th>Priority</th></tr>
+
+<tr><td>Sales Pattern: Declining</td><td>Oversell 35.4% (Strong)</td>
+<td class="bad">SOURCE UP (raise ML)</td><td>-</td>
+<td class="bad">+27pp vs Dead</td><td>1 - Primary</td></tr>
+
+<tr><td>Sales Pattern: Dead/Dying + Weak</td><td>Oversell 5-8%</td>
+<td class="good">SOURCE DOWN (lower ML)</td><td>-</td>
+<td class="good">Safe, under target</td><td>1 - Primary</td></tr>
+
+<tr><td>Store Strength (source)</td><td>Strong 44% vs Weak 26% reorder</td>
+<td class="bad">SOURCE UP for strong</td><td>-</td>
+<td class="bad">+18pp</td><td>1 - Primary</td></tr>
+
+<tr><td>Store Strength (target)</td><td>Strong 74.7% all-sold</td>
+<td>-</td><td class="good">TARGET UP for strong</td>
+<td class="good">Send more to strong stores</td><td>1 - Primary</td></tr>
+
+<tr><td>Target sell-through: Weak+Zero</td><td>43.7% nothing-sold</td>
+<td>-</td><td class="bad">TARGET DOWN</td>
+<td class="bad">Send less to weak stores</td><td>1 - Primary</td></tr>
+
+<tr><td>Brand-Store Fit: Strong+Strong</td><td>65.7% all-sold target</td>
+<td class="bad">SOURCE UP (+1 modifier)</td><td class="good">TARGET UP (+1)</td>
+<td>+16pp reorder, +15pp all-sold</td><td>2 - Secondary</td></tr>
+
+<tr><td>Product Concentration (100+)</td><td>42.9% source reorder, 63.2% tgt all-sold</td>
+<td class="bad">SOURCE UP (+1)</td><td class="good">TARGET UP (+1)</td>
+<td>+25.9pp reorder</td><td>2 - Secondary</td></tr>
+
+<tr><td>Product Concentration (&lt;=20)</td><td>17% reorder, 38.6% nothing-sold</td>
+<td class="good">SOURCE DOWN (safe)</td><td class="bad">TARGET DOWN</td>
+<td>Niche product, fewer stores</td><td>2 - Secondary</td></tr>
+
+<tr><td>SkuClass Delisting</td><td>13.2% vs 42.7% reorder</td>
+<td class="good">SOURCE = 0 (override)</td><td>-</td>
+<td class="good">-29.5pp</td><td>1 - Override</td></tr>
+
+<tr><td>Xmas Seasonality (20-60%)</td><td>25-27% oversell</td>
+<td class="bad">SOURCE UP (+1)</td><td>-</td>
+<td class="warn">+9-11pp</td><td>3 - Modifier</td></tr>
+
+<tr><td>Redist. Loop</td><td>8.5% SKU re-redistributed</td>
+<td colspan="2">Monitoring signal</td>
+<td class="warn">Indicator</td><td>3 - Monitoring</td></tr>
 </table>
 
 <div class="insight">
-<b>Hlavni 3 faktory pro pravidla:</b> (1) Prodejni vzor 24M, (2) Sila prodejny, (3) Mesicni kadence.
-Tyto tri faktory vysvetluji vetsinu variability v oversell rates.
-Viz <a href="consolidated_decision_tree.html">Report 2: Decision Tree</a> pro konkretni pravidla.
+<b>4 directions for ML adjustment:</b>
+<ul>
+<li><b>SOURCE UP:</b> Declining pattern, strong store, high concentration, brand-fit strong+strong, Xmas seasonal</li>
+<li><b>SOURCE DOWN:</b> Dead/Dying on weak/mid store, delisted, low concentration = safe to take more</li>
+<li><b>TARGET UP:</b> Strong store + Med+ sales (high sell-through, high all-sold) = send more</li>
+<li><b>TARGET DOWN:</b> Weak store + Zero/Low sales (high nothing-sold, low sell-through) = send less</li>
+</ul>
+See <a href="consolidated_decision_tree.html">Report 2: Decision Tree</a> for concrete rules.
 </div>
 </div>
 
-<p><i>Generovano: 2026-03-22 03:46 | CalculationId=233 | EntityListId=3</i></p>
+<p><i>Generated: 2026-03-22 04:07 | CalculationId=233 | EntityListId=3</i></p>
 </body>
 </html>

@@ -2,9 +2,9 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>Decision Tree: Pravidla MinLayer 0-5</title>
+<title>Decision Tree: MinLayer Rules 0-5</title>
 <style>
-body { font-family: 'Segoe UI', sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
 h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
 h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
 h3 { color: #34495e; }
@@ -12,7 +12,7 @@ table { border-collapse: collapse; width: 100%; margin: 15px 0; background: whit
 th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
 th { background: #3498db; color: white; }
 tr:nth-child(even) { background: #f9f9f9; }
-td:first-child { text-align: left; }
+td:first-child, th:first-child { text-align: left; }
 .bad { color: #e74c3c; font-weight: bold; }
 .good { color: #27ae60; font-weight: bold; }
 .warn { color: #e67e22; font-weight: bold; }
@@ -29,108 +29,159 @@ pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; o
 .nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
 .nav a:hover { color: #3498db; }
 .nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
 </style>
 </head>
 <body>
 <div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html" class="active">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a></div>
 
-<h1>Decision Tree: Pravidla MinLayer 0-5</h1>
-<p><b>CalculationId=233</b> | Datum: 2025-07-13 | Generovano: 2026-03-22 03:46</p>
-<p>Tento report definuje konkretni pravidla pro nastaveni MinLayer na zaklade analytiky z
-<a href="consolidated_findings.html">Report 1: Consolidated Findings</a>.</p>
+<h1>Decision Tree: MinLayer Rules 0-5</h1>
+<p><b>CalculationId=233</b> | Date: 2025-07-13 | Generated: 2026-03-22 04:07</p>
+<p>This report defines concrete rules for MinLayer settings based on analytics from
+<a href="consolidated_findings.html">Report 1: Consolidated Findings</a>.
+The tree has <b>4 directions</b>: source up, source down, target up, target down.</p>
+
+<!-- ========== 4-DIRECTION OVERVIEW ========== -->
+<div class="section">
+<h2>1. Four-Direction Framework</h2>
+
+<img src="fig_dtree_03.png">
+
+<table>
+<tr><th>Direction</th><th>When</th><th>Action</th><th>Reason</th></tr>
+<tr class="dir-up"><td><b>SOURCE ML UP</b></td><td>Oversell &gt;20%</td><td>Keep more at source</td>
+<td>Products still selling at source, redistribution causes oversell</td></tr>
+<tr class="dir-down"><td><b>SOURCE ML DOWN</b></td><td>Oversell &lt;10%</td><td>Take more from source (be more aggressive)</td>
+<td>Products NOT selling at source, safe to take more</td></tr>
+<tr class="dir-down"><td><b>TARGET ML UP</b></td><td>High sell-through, high all-sold</td><td>Send more to target</td>
+<td>Target sells everything = success, but need 1 remaining. Send more next time.</td></tr>
+<tr class="dir-up"><td><b>TARGET ML DOWN</b></td><td>Low sell-through, high nothing-sold</td><td>Send less to target</td>
+<td>Target doesn't sell = wasted redistribution. Send less next time.</td></tr>
+</table>
+</div>
 
 <!-- ========== SOURCE RULES ========== -->
 <div class="section">
-<h2>1. Source pravidla</h2>
+<h2>2. Source Rules (with CAN LOWER and MUST RAISE)</h2>
 
-<p>Zdrojovy MinLayer urcuje, kolik kusu produktu musi zustat na zdrojove prodejne po redistribuci.
-Vyssi MinLayer = mene kusu se odveze = nizsi oversell (ale take mene redistribucnich presunu).</p>
-
-<h3>1.1 Lookup tabulka: Pattern x Store</h3>
-<p>Primarni prediktor oversell je kombinace prodejniho vzoru (24M historie) a sily prodejny
-(viz <a href="consolidated_findings.html">Findings, sekce 2 a 3</a>).</p>
-
+<h3>2.1 Lookup Table: Pattern x Store</h3>
 <img src="fig_dtree_01.png">
 
 <table>
-<tr><th>Pattern / Store</th><th>Weak</th><th>Mid</th><th>Strong</th><th>Zduvodneni</th></tr>
-<tr><td>Dead (0 prodeju 24M)</td><td>1</td><td>1</td><td>1</td><td>Zadne prodeje = nizky oversell (5-10%), ML=1 staci</td></tr>
-<tr><td>Dying (stare prodeje)</td><td>1</td><td>1</td><td>1</td><td>Podobne jako Dead, 8-13% oversell, ML=1 staci</td></tr>
-<tr><td>Sporadic (nepravidelne)</td><td>1</td><td>1</td><td>2</td><td>Strong stores maji 20% oversell -&gt; zvysit na ML=2</td></tr>
-<tr><td>Consistent (3-4 obdobi)</td><td>1</td><td>2</td><td>3</td><td>22-28% oversell, Mid i Strong prekracuji cil</td></tr>
-<tr><td>Declining (klesajici)</td><td>2</td><td>3</td><td>3</td><td>25-35% oversell! Vsechny prekracuji cil, Weak taky</td></tr>
+<tr><th>Pattern</th><th>Store</th><th>Reorder %</th><th>Oversell %</th><th>Proposed ML</th><th>Recommendation</th><th>Direction</th></tr>
+<tr class="dir-down"><td>Dead</td><td>Weak</td><td>24.5%</td><td>5.1%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
+<tr class="dir-down"><td>Dead</td><td>Mid</td><td>29.5%</td><td>7.8%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
+<tr class=""><td>Dead</td><td>Strong</td><td>31.4%</td><td>10.0%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class="dir-down"><td>Dying</td><td>Weak</td><td>29.7%</td><td>8.1%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
+<tr class="dir-down"><td>Dying</td><td>Mid</td><td>35.4%</td><td>9.7%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
+<tr class=""><td>Dying</td><td>Strong</td><td>37.1%</td><td>12.6%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>Sporadic</td><td>Weak</td><td>37.2%</td><td>10.9%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>Sporadic</td><td>Mid</td><td>44.1%</td><td>15.3%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class="dir-up"><td>Sporadic</td><td>Strong</td><td>47.8%</td><td>20.1%</td><td><b>2</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class=""><td>Consistent</td><td>Weak</td><td>46.4%</td><td>13.2%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class="dir-up"><td>Consistent</td><td>Mid</td><td>56.0%</td><td>22.7%</td><td><b>2</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class="dir-up"><td>Consistent</td><td>Strong</td><td>56.5%</td><td>28.0%</td><td><b>3</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class="dir-up"><td>Declining</td><td>Weak</td><td>55.3%</td><td>25.1%</td><td><b>2</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class="dir-up"><td>Declining</td><td>Mid</td><td>64.7%</td><td>28.3%</td><td><b>3</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class="dir-up"><td>Declining</td><td>Strong</td><td>68.0%</td><td>35.4%</td><td><b>3</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+
 </table>
 
-<div class="insight">
-<b>Logika:</b> Dead a Dying produkty se neprodavaji, takze redistribuce z nich je bezpecna (ML=1).
-Consistent a Declining produkty se stale prodavaji, a pri redistribuci se zdrojova prodejna "vyprazdni" a musi doobjednat.
-Silne prodejny maji vyssi riziko, protoze prodavaji vice.
+<p><b>* = 0 for delisted items, but business rule: A-O (SkuClass 9) and Z-O (SkuClass 11) minimum ML=1.</b></p>
+
+<div class="insight-good">
+<b>CAN LOWER ML (source down):</b> Dead+Weak (5.1%), Dead+Mid (7.8%), Dying+Weak (8.1%), Dying+Mid (9.7%).
+Proposed ML=0* means delisted items get ML=0, active items get ML=1 (business rule).
+This frees up ~16,040 SKU for more aggressive redistribution.
 </div>
 
-<h3>1.2 Business rules (Overrides)</h3>
+<div class="insight-bad">
+<b>MUST RAISE ML (source up):</b> 6 segments with oversell &gt;20%.
+Declining+Strong goes from ML~1.1 to ML=3, Consistent+Strong from ML~2 to ML=3.
+This protects ~7,889 SKU from excessive oversell.
+</div>
+
+<h3>2.2 Business Rules (Overrides)</h3>
 <table>
-<tr><th>Pravidlo</th><th>Podminka</th><th>MinLayer</th><th>Zduvodneni</th></tr>
-<tr><td>Active orderable</td><td>SkuClass = A-O(9)</td><td>MIN = 1</td><td>Aktivni zbozi nesmi mit ML=0</td></tr>
-<tr><td>Z orderable</td><td>SkuClass = Z-O(11)</td><td>MIN = 1</td><td>Z zbozi stale objednavatelne</td></tr>
-<tr><td>Delisted</td><td>SkuClass = D(3), L(4), R(5)</td><td>= 0</td><td>Delistovane - bezpecne odvest vse (-29pp reorder)</td></tr>
+<tr><th>Rule</th><th>Condition</th><th>MinLayer</th><th>Reason</th></tr>
+<tr><td>Active orderable</td><td>SkuClass = A-O (9)</td><td>MIN = 1</td><td>Active goods must stay in stock</td></tr>
+<tr><td>Z orderable</td><td>SkuClass = Z-O (11)</td><td>MIN = 1</td><td>Z goods still orderable</td></tr>
+<tr><td>Delisted</td><td>SkuClass = D(3), L(4), R(5)</td><td>= 0</td><td>Delisted - safe to take all (-29pp reorder)</td></tr>
 </table>
 
-<h3>1.3 Modifikatory</h3>
+<h3>2.3 Modifiers (added to base ML)</h3>
 <table>
-<tr><th>Modifikator</th><th>Podminka</th><th>Uprava</th><th>Zduvodneni (viz Findings)</th></tr>
-<tr><td>Vanocni sezonnost</td><td>Xmas share 20-60%</td><td>+1</td><td>Sekce 7: +9-11pp oversell pro sezonni produkty</td></tr>
-<tr><td>Brand-Store fit</td><td>Strong brand + Strong store</td><td>+1</td><td>Sekce 8: +16pp oversell gap</td></tr>
-<tr><td>Siroka distribuce</td><td>Produkt na 100+ prodejnach</td><td>+1</td><td>Sekce 8: +25.9pp reorder gap</td></tr>
+<tr><th>Modifier</th><th>Condition</th><th>Adjustment</th><th>Reason (see Findings)</th></tr>
+<tr><td>Xmas seasonality</td><td>Xmas share 20-60%</td><td>+1</td><td>Sec 7: +9-11pp oversell for seasonal products</td></tr>
+<tr><td>Brand-Store fit</td><td>Strong brand + Strong store</td><td>+1</td><td>Sec 8: +16pp reorder gap</td></tr>
+<tr><td>Wide distribution</td><td>Product on 100+ stores</td><td>+1</td><td>Sec 8: +25.9pp reorder gap</td></tr>
 </table>
 
 <div class="insight">
-<b>CAP:</b> Vysledny MinLayer je omezen na maximum 5. Modifikatory se prictou k base hodnote z lookup tabulky.
+<b>CAP:</b> Final MinLayer is capped at maximum 5. Modifiers are added to the base value from lookup table.
 </div>
 </div>
 
 <!-- ========== TARGET RULES ========== -->
 <div class="section">
-<h2>2. Target pravidla (sales-based)</h2>
+<h2>3. Target Rules (sell-through based)</h2>
 
-<p><b>Cil:</b> Poslat dostatek kusu, aby se produkt prodaval A 1 kus zustal na prodejne.
-Pokud se vse proda (all-sold), je to uspech, ale priste posleme vice.</p>
+<p><b>Goal:</b> Send enough pieces so the product sells AND 1 piece remains at the store.
+All-sold = success but send more next time. Nothing-sold = problem, send less.</p>
 
-<h3>2.1 Lookup tabulka: SalesBucket x Store</h3>
-
+<h3>3.1 Lookup Table: SalesBucket x Store</h3>
 <img src="fig_dtree_02.png">
 
 <table>
-<tr><th>SalesBucket / Store</th><th>Weak</th><th>Mid</th><th>Strong</th><th>Zduvodneni</th></tr>
-<tr><td>Zero (0 prodeju)</td><td>1</td><td>1</td><td>2</td><td>Zadne prodeje, ale Strong stores prodaji vse (66.5%)</td></tr>
-<tr><td>Low (1-2 prodeje)</td><td>1</td><td>2</td><td>3</td><td>Nizke prodeje, Mid/Strong stores maji &gt;56% all-sold</td></tr>
-<tr><td>Med (3+ prodeju)</td><td>2</td><td>3</td><td>4</td><td>Castejsi prodeje, vyssi ML = vice zbozi zusane</td></tr>
-<tr><td>High (ML3=3)</td><td>3</td><td>4</td><td>5</td><td>Vysoke prodeje, ML3 Strong: 81.4% all-sold</td></tr>
+<tr><th>Sales Bucket</th><th>Store</th><th>ST Total</th><th>All-sold %</th><th>Nothing %</th><th>Proposed ML</th><th>Direction</th></tr>
+<tr class="dir-up"><td>Zero</td><td>Weak</td><td>0.76</td><td>53.7%</td><td>43.7%</td><td><b>1</b></td><td>DOWN (send less)</td></tr>
+<tr class="dir-up"><td>Zero</td><td>Mid</td><td>0.85</td><td>57.2%</td><td>39.3%</td><td><b>1</b></td><td>DOWN (send less)</td></tr>
+<tr class="dir-down"><td>Zero</td><td>Strong</td><td>1.18</td><td>66.5%</td><td>31.8%</td><td><b>2</b></td><td>UP (send more)</td></tr>
+<tr class="dir-up"><td>Low(1-2)</td><td>Weak</td><td>0.77</td><td>44.4%</td><td>34.6%</td><td><b>1</b></td><td>DOWN (send less)</td></tr>
+<tr class=""><td>Low(1-2)</td><td>Mid</td><td>0.88</td><td>48.6%</td><td>28.8%</td><td><b>2</b></td><td>OK</td></tr>
+<tr class=""><td>Low(1-2)</td><td>Strong</td><td>1.09</td><td>57.1%</td><td>22.3%</td><td><b>3</b></td><td>OK</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Weak</td><td>1.42</td><td>67.2%</td><td>12.6%</td><td><b>2</b></td><td>UP (send more)</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Mid</td><td>1.57</td><td>69.3%</td><td>12.5%</td><td><b>3</b></td><td>UP (send more)</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Strong</td><td>1.83</td><td>74.7%</td><td>9.0%</td><td><b>4</b></td><td>UP (send more)</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Weak</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>3</b></td><td>UP (send more)</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Mid</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>4</b></td><td>UP (send more)</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Strong</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>5</b></td><td>UP (send more)</td></tr>
+
 </table>
 
-<h3>2.2 Data podporujici target pravidla</h3>
-<p>Proc navysujeme target ML pro silne prodejny? Protoze silne prodejny prodaji vse a pak nemaji zasobu:</p>
-
+<h3>3.2 Target sell-through categories and actions</h3>
 <table>
-<tr><th>Segment</th><th>All-sold %</th><th>Avg extra ks potreba</th><th>Vyznam</th></tr>
-<tr><td>ML1 Strong</td><td class="bad">65.6%</td><td>1.79 ks/target</td><td>65% targetu vse prodalo, kazdy potrebuje v prumeru 1.8 ks navic</td></tr>
-<tr><td>ML2 Strong</td><td class="bad">61.8%</td><td>2.51 ks/target</td><td>Vyssi ML, ale stale 62% all-sold</td></tr>
-<tr><td>ML3 Strong</td><td class="bad">81.4%</td><td>5.19 ks/target</td><td>81% all-sold! Tyto targety potrebuji vyrazne vice</td></tr>
+<tr><th>Category</th><th>Sell-through</th><th>Color</th><th>Action</th></tr>
+<tr><td class="bad">Nothing sold (0%)</td><td>0%</td><td>RED (problem)</td><td>ML DOWN - don't send to this store/product</td></tr>
+<tr><td class="warn">Low ST (&lt;30% at 4M)</td><td>&lt;30%</td><td>YELLOW (warning)</td><td>ML DOWN - sells too slowly</td></tr>
+<tr><td>Medium ST (30-80%)</td><td>30-80%</td><td>Neutral</td><td>ML OK - reasonable sell-through</td></tr>
+<tr><td class="good">High ST (80-99%)</td><td>80-99%</td><td>GREEN</td><td>ML OK/UP - selling well, 1+ remains</td></tr>
+<tr><td class="good">All sold (100%+)</td><td>100%+</td><td>GREEN (success!)</td><td>ML UP - everything sold, send more next time</td></tr>
 </table>
 
-<div class="insight">
-<b>"Extra needed"</b> = kolik vice kusu bychom meli poslat, aby po vsech prodejich zustal alespon 1 kus.
-Napr. ML3 Strong: prumerny target potrebuje 5.19 kusu navic. Pokud zvysime target MinLayer, posime vice kusu,
-a je pravdepodobnejsi, ze po prodejich alespon 1 kus zustane.
+<div class="insight-good">
+<b>Key principle:</b> Target all-sold = SUCCESS (green, not red!). It means redistribution worked perfectly.
+The only issue is that nothing remains at the store. Solution: send more next time (higher target ML).
 </div>
+
+<h3>3.3 Target modifiers</h3>
+<table>
+<tr><th>Modifier</th><th>Condition</th><th>Adjustment</th><th>Reason</th></tr>
+<tr><td>Brand-Store fit strong</td><td>Strong brand + Strong store</td><td>+1 to target ML</td><td>65.7% all-sold, high sell-through</td></tr>
+<tr><td>Brand-Store fit weak</td><td>Weak brand + Weak store</td><td>-1 to target ML</td><td>30.7% nothing-sold</td></tr>
+<tr><td>Wide distribution</td><td>Product on 100+ stores</td><td>+1</td><td>63.2% all-sold vs 45.7%</td></tr>
+<tr><td>Niche product</td><td>Product on &lt;=20 stores</td><td>-1</td><td>38.6% nothing-sold</td></tr>
+</table>
 </div>
 
 <!-- ========== PSEUDOCODE ========== -->
 <div class="section">
-<h2>3. Pseudokod</h2>
+<h2>4. Pseudocode</h2>
 
-<img src="fig_dtree_03.png">
-
-<h3>3.1 Source MinLayer</h3>
+<h3>4.1 Source MinLayer</h3>
 <pre>
 FUNCTION CalculateSourceMinLayer(sku, store):
     -- 1. Delisting override
@@ -140,7 +191,7 @@ FUNCTION CalculateSourceMinLayer(sku, store):
     -- 2. Classify sales pattern (24M)
     pattern = ClassifySalesPattern24M(sku, store)
     -- Dead: 0 sales in 24M
-    -- Dying: sales only in periods A/B, nothing recent
+    -- Dying: sales only in older periods, nothing recent
     -- Sporadic: irregular sales, not in every period
     -- Consistent: sales in 3-4 of 4 periods
     -- Declining: B &gt; C &gt; D (each period lower)
@@ -149,14 +200,20 @@ FUNCTION CalculateSourceMinLayer(sku, store):
     strength = ClassifyStoreStrength(store.Decile)
     -- Weak: decile 1-3, Mid: 4-7, Strong: 8-10
 
-    -- 4. Lookup base MinLayer
+    -- 4. Lookup base MinLayer (UPDATED with 0* cells)
     base = SOURCE_LOOKUP[pattern][strength]
+    --        Weak  Mid  Strong
+    -- Dead:    0*   0*    1
+    -- Dying:   0*   0*    1
+    -- Sporad:  1    1     2
+    -- Cons:    1    2     3
+    -- Decl:    2    3     3
 
-    -- 5. Business rules
+    -- 5. Business rules (A-O/Z-O minimum 1)
     IF sku.SkuClass IN (9, 11):     -- A-O, Z-O
         base = MAX(base, 1)
 
-    -- 6. Modifiers
+    -- 6. Modifiers (SOURCE UP reasons)
     IF sku.XmasShare BETWEEN 0.20 AND 0.60:
         base = base + 1
     IF BrandStoreFit(sku, store) == 'Strong+Strong':
@@ -167,14 +224,14 @@ FUNCTION CalculateSourceMinLayer(sku, store):
     RETURN MIN(base, 5)
 </pre>
 
-<h3>3.2 Target MinLayer</h3>
+<h3>4.2 Target MinLayer</h3>
 <pre>
 FUNCTION CalculateTargetMinLayer(sku, store):
     -- 1. Classify sales bucket
     bucket = ClassifySalesBucket(sku, store)
-    -- Zero: 0 sales
-    -- Low: 1-2 sales
-    -- Med: 3+ sales
+    -- Zero: 0 sales 6M
+    -- Low: 1-2 sales 6M
+    -- Med+: 3+ sales 6M
     -- High: current ML3 = 3
 
     -- 2. Classify store strength
@@ -182,12 +239,27 @@ FUNCTION CalculateTargetMinLayer(sku, store):
 
     -- 3. Lookup base MinLayer
     base = TARGET_LOOKUP[bucket][strength]
+    --            Weak  Mid  Strong
+    -- Zero:       1     1     2
+    -- Low(1-2):   1     2     3
+    -- Med+(3+):   2     3     4
+    -- High(ML3=3):3     4     5
 
-    RETURN MIN(base, 5)
+    -- 4. Modifiers (TARGET UP / TARGET DOWN)
+    IF BrandStoreFit(sku, store) == 'Strong+Strong':
+        base = base + 1       -- TARGET UP
+    IF BrandStoreFit(sku, store) == 'Weak+Weak':
+        base = base - 1       -- TARGET DOWN
+    IF sku.StoreCount &gt; 100:
+        base = base + 1       -- TARGET UP (wide distribution)
+    IF sku.StoreCount &lt;= 20:
+        base = MAX(base - 1, 1) -- TARGET DOWN (niche product)
+
+    RETURN CLAMP(base, 1, 5)  -- min 1 (A-O/Z-O rule), max 5
 </pre>
 </div>
 
-<p><i>Generovano: 2026-03-22 03:46 | CalculationId=233 | EntityListId=3 |
-Viz <a href="consolidated_backtest.html">Report 3: Backtest</a> pro dopad navrhovanych pravidel.</i></p>
+<p><i>Generated: 2026-03-22 04:07 | CalculationId=233 | EntityListId=3 |
+See <a href="consolidated_backtest.html">Report 3: Backtest</a> for impact of proposed rules.</i></p>
 </body>
 </html>
