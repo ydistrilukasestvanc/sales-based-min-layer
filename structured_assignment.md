@@ -6,17 +6,81 @@
 - **JAZYK: Vysvetlenia a texty v reportoch VŽDY ČESKY.** Parametre, premenné, termíny (source, target, sell-through, oversell, reorder, MinLayer, SKU, ...) VŽDY anglicky. Toto je MUST.
 - **Všetky zistenia z konverzácie VŽDY zapisovať do tohto zadania** (ak sú to nápady/prístupy) alebo do `reports/vX/findings.md` (ak sú to výsledky).
 - **Výstupy = vždy 3 reporty:** 1) Findings (zistenia + korelácie), 2) Decision tree (pravidlá), 3) Backtest (dopad pravidiel s objemami).
+- **Výstupy VŽDY aj GRAFICKY** — Python skript (`generate_consolidated_reports.py`) generuje 3 HTML reporty + PNG grafy (heatmapy, bar charty, scatter ploty, waterfall). Grafy sú POVINNÁ súčasť každej verzie. Skript používa matplotlib + seaborn, embedded dáta, a generuje self-contained HTML s CSS + navigáciou medzi reportmi.
 - **Reporty sú VERZOVANÉ** v podadresároch `reports/v1/`, `reports/v2/` atď. Každá verzia je self-contained (skript + popis + reporty + grafy + findings.md). Staré verzie sa nemažú.
 - **Toto zadanie NEOBSAHUJE výsledky.** Výsledky sú vždy v `reports/vX/findings.md`. Tu sú len: inštrukcie, nápady, prístupy, hypotézy, brainstorming.
 - **Nová verzia začína s čistým štítom** – žiadne predpoklady z predchádzajúcej verzie.
-- **Overview tabuľka VŽDY obsahuje celkové metriky:** oversell (SKU + qty), reorder (SKU + qty), sell-through + ST-1pc (qty) – všetko aj v quantity, nie len percentá. Vždy 4M aj total.
-- **Business rule: A-O (9) a Z-O (11) minimum ML=1.** Len tieto triedy môžu byť target.
+- **Overview tabuľka VŽDY obsahuje celkové metriky:** overprosim  (SKU + qty), reorder (SKU + qty), sell-through + ST-1pc (qty) – všetko aj v quantity, nie len percentá. Vždy 4M aj total.
+- **MinLayer rozsah: 0-4.** Hodnota 0 = odvézt/neposlať nič (resp. všetko). Hodnota 4 = maximálna ochrana.
+- **Business rule: A-O (9) a Z-O (11) = ORDERABLE → NIKDY ML=0.** Minimum ML=1 pre orderable SKU. ML=0 len pre delisted (D/L) alebo non-orderable triedy. Toto je HARD CONSTRAINT, nie odporúčanie.
 
 ### Metriky – VŽDY uvádať OBE, NIKDY nemiešať
-- **REORDER** = inbound po redistribúcii. Informačná metrika – nemusí súvisieť s redistribúciou.
-- **OVERSELL** = sales-based: predalo sa viac ako zostalo po redistribúcii (capped na redistrib. qty). PRIMÁRNA metrika pre source.
 - Vo VŠETKÝCH štatistikách VŽDY uvádzať OBE metriky vedľa seba. Sú to rôzne ukazovatele.
 - Vždy uvádzať **4M aj total** verziu oboch metrík.
+
+#### REORDER (informačná metrika, source)
+Inbound po redistribúcii. Nemusí súvisieť s redistribúciou (bežné doobjednávky).
+```
+Reorder_SKU  = 1 ak SkuId má aspoň 1 záznam v Inbound po ApplicationDate
+Reorder_Qty  = SUM(Inbound.Quantity) pre dané obdobie (4M / total)
+Reorder_Rate = Reorder_SKU_count / Total_Source_SKU × 100
+```
+
+#### OVERSELL (PRIMÁRNA metrika, source)
+Predalo sa viac, než čo na source **zostalo** po redistribúcii. Cappované na redistrib. qty.
+```
+RemainingAfterRedist = SourceAvailableSupply - TotalQtyRedistributed
+Oversell_Qty = LEAST(
+    GREATEST(Sales_Post - RemainingAfterRedist, 0),
+    TotalQtyRedistributed
+)
+```
+- `SourceAvailableSupply` = zásoba na source v momente kalkulácie
+- `TotalQtyRedistributed` = SUM(Quantity) zo všetkých párov pre daný SourceSkuId
+- `Sales_Post` = SUM(SaleTransaction.Quantity) za obdobie po ApplicationDate (4M / total)
+- `RemainingAfterRedist` = koľko ks zostane na source po odvezení
+- Oversell nastáva IBA ak predaj prekročí zostatok. Ak source predá menej než zostalo → oversell = 0.
+- Cap na `TotalQtyRedistributed` = nemôže byť oversell viac ks než sme odviezli.
+
+**Príklad:**
+| Supply | Redist | Remaining | Sales Post | Oversell |
+|---|---|---|---|---|
+| 5 | 1 | 4 | 3 | MAX(3-4,0) = **0** (zásoba stačila) |
+| 2 | 1 | 1 | 2 | MIN(MAX(2-1,0), 1) = **1** |
+| 3 | 2 | 1 | 5 | MIN(MAX(5-1,0), 2) = **2** (cap na redistrib qty) |
+| 3 | 1 | 2 | 0 | MAX(0-2,0) = **0** (nič sa nepredalo) |
+
+#### SELL-THROUGH (ST) (PRIMÁRNA metrika, target)
+Koľko z prijatého + existujúceho sa predalo. Cappované na 100%.
+```
+Base = TargetAvailableSupply + TotalQtyReceived
+Sold = SUM(SaleTransaction.Quantity) za obdobie po ApplicationDate (4M / total)
+ST = LEAST(Sold, Base) / Base × 100
+```
+- `TargetAvailableSupply` = zásoba na target v momente kalkulácie
+- `TotalQtyReceived` = SUM(Quantity) zo všetkých párov pre daný TargetSkuId
+- ST = 100% keď sa predalo všetko alebo viac
+
+#### SELL-THROUGH-1pc (ST1) (doplnková metrika, target)
+Ideálny stav = zostáva presne 1 ks (nie stockout, ale minimum). ST1 = 100% pri 1 ks zvyšku.
+```
+Ak Sold >= Base:
+    ST1 = ST (= 100%)
+Ak Sold < Base AND Base > 1:
+    ST1 = LEAST(Sold, Base - 1) / (Base - 1) × 100
+Ak Base <= 1:
+    ST1 = NULL (nemá zmysel)
+```
+
+#### NOTHING-SOLD (flag, target)
+```
+NothingSold = 1 ak SUM(Sales_Post) = 0 za dané obdobie
+```
+
+#### ALL-SOLD (flag, target)
+```
+AllSold = 1 ak SUM(Sales_Post) >= Base (predalo sa všetko)
+```
 
 ### Source pravidlá
 - **Cieľ OVERSELL rate:** 4M: 5-10%, 9M: <20%. Cieľom NIE JE nulový reorder.
@@ -25,8 +89,6 @@
 ### Target pravidlá – ROVNAKO DÔLEŽITÉ ako source
 - **Target all-sold = ÚSPECH.** Signál na zvýšenie target ML.
 - **Target nothing-sold = PROBLÉM.** Zbytočná redistribúcia.
-- **SELL-THROUGH (ST)** = LEAST(Sold, Base) / Base, kde Base = TargetSupplyAtCalc + TotalQtyReceived. Cappované na 100%.
-- **SELL-THROUGH-1pc (ST1):** Ak Sold >= Base: ST1 = ST. Ak Sold < Base: ST1 = LEAST(Sold, Base-1)/(Base-1). ST1 = 100% keď zostáva presne 1 ks = IDEÁLNY STAV.
 - **Low sell-through (<30% po 4M) = PROBLÉM:** predáva sa pomaly → ML ZNÍŽIŤ.
 - **Target ML sa môže aj ZNÍŽIŤ** – ak sell-through je nízky.
 - **Target ML sa ZVÝŠI** – ak silné predajne predajú všetko.
@@ -176,19 +238,21 @@ Detekcia SKU ktoré boli redistribuované opakovane:
 ### FÁZE 10: Decision tree
 Rozhodovací strom s 4 smermi: source up/down, target up/down
 
-**Source lookup:** Pattern × Store Strength → ML 0-5
+**Source lookup:** Pattern × Store Strength → ML 0-4
 - Vstupné signály: predajný vzorec, mesačná kadencia, last sale gap, phantom stock flag, redistribučný ratio
 - Výstup: navrhovaná source ML pre každý segment
+- **CONSTRAINT: A-O / Z-O (orderable) → MIN ML=1, NIKDY 0**
 
-**Target lookup:** SalesBucket × Store Strength → ML 0-5
+**Target lookup:** SalesBucket × Store Strength → ML 0-4
 - Vstupné signály: sell-through, ST-1pc, nothing-sold flag, brand-store fit
 - Výstup: navrhovaná target ML pre každý segment
+- **CONSTRAINT: A-O / Z-O (orderable) → MIN ML=1, NIKDY 0**
 
-**Modifikátory (úprava base ML):**
+**Modifikátory (úprava base ML, výsledok cappovaný na 0-4):**
 - Xmas seasonal flag → +1 / -1 podľa smeru
 - Brand-store mismatch → -1 na target
 - Vysoká product concentration (Gini) → opatrnosť na source
-- Delisting (SkuClass zmena) → ML=0
+- Delisting (SkuClass zmena) → ML=0 (jediný prípad keď orderable môže ísť na 0)
 - Redistribučná slučka → penalizácia
 
 ### FÁZE 11: Backtest
