@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v3 Backtest: Impact of Proposed Rules</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html" class="active">Report 3: Backtest</a><span style="float:right; color:#7f8c8d; font-size:11px;">v3 Advanced Analytics</span></div>
+
+<h1>Backtest v3: Impact of Proposed Rules</h1>
+<p><b>CalculationId=233</b> | Date: 2025-07-13 | Generated: 2026-03-22 13:28</p>
+<p>Dopad pravidel z <a href="consolidated_decision_tree.html">Report 2</a>.
+Vsechny metriky v <b>kusech (pcs)</b>. v3: rozsireno o sensitivity analyzu a before/after porovnani.</p>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="section">
+<h2>1. Backtest Overview</h2>
+<div style="text-align: center;">
+<div class="metric"><div class="v">48,754</div><div class="l">Current redist volume (pcs)</div></div>
+<div class="metric"><div class="v">10,160</div><div class="l">Extra units kept at source</div></div>
+<div class="metric"><div class="v">3,396</div><div class="l">Blocked redistribution (pcs)</div></div>
+<div class="metric"><div class="v">67,203</div><div class="l">Target extra for 1-remains</div></div>
+</div>
+
+<div class="insight">
+<b>Net volume impact:</b> Source side reduces redistribution by 13,556 pcs.
+Target side needs extra 67,203 pcs for the "1 remains" goal.
+Estimated oversell prevented: 756 pcs.
+</div>
+</div>
+
+<!-- ========== SOURCE BACKTEST ========== -->
+<div class="section">
+<h2>2. Source Backtest</h2>
+<img src="fig_backtest_01.png">
+
+<table>
+<tr><th>Pattern</th><th>Store</th><th>SKU</th><th>Redist qty</th><th>Extra kept</th>
+<th>Blocked SKU</th><th>Blocked qty</th><th>Oversell qty</th><th>Oversell %</th>
+<th>Vol Reduction</th><th>Prevented</th></tr>
+<tr><td>Dead</td><td>Weak</td><td>4,597</td><td>5,461</td><td>235</td><td>129</td><td>129</td><td>251</td><td class="good">5.1%</td><td><b>364</b></td><td>7</td></tr>
+<tr><td>Dead</td><td>Mid</td><td>6,967</td><td>8,633</td><td>334</td><td>189</td><td>189</td><td>607</td><td class="good">7.8%</td><td><b>523</b></td><td>15</td></tr>
+<tr><td>Dead</td><td>Strong</td><td>4,061</td><td>5,143</td><td>209</td><td>112</td><td>112</td><td>486</td><td class="good">10.0%</td><td><b>321</b></td><td>11</td></tr>
+<tr><td>Dying</td><td>Weak</td><td>1,594</td><td>1,933</td><td>113</td><td>77</td><td>77</td><td>135</td><td class="good">8.1%</td><td><b>190</b></td><td>6</td></tr>
+<tr><td>Dying</td><td>Mid</td><td>2,882</td><td>3,505</td><td>170</td><td>117</td><td>117</td><td>302</td><td class="good">9.7%</td><td><b>287</b></td><td>11</td></tr>
+<tr><td>Dying</td><td>Strong</td><td>1,951</td><td>2,373</td><td>82</td><td>52</td><td>52</td><td>260</td><td class="warn">12.6%</td><td><b>134</b></td><td>7</td></tr>
+<tr><td>Sporadic</td><td>Weak</td><td>2,003</td><td>2,606</td><td>59</td><td>26</td><td>26</td><td>252</td><td class="warn">10.9%</td><td><b>85</b></td><td>3</td></tr>
+<tr><td>Sporadic</td><td>Mid</td><td>4,176</td><td>5,783</td><td>121</td><td>52</td><td>52</td><td>777</td><td class="warn">15.3%</td><td><b>173</b></td><td>8</td></tr>
+<tr><td>Sporadic</td><td>Strong</td><td>3,712</td><td>5,705</td><td>2,729</td><td>835</td><td>837</td><td>929</td><td class="bad">20.1%</td><td><b>3,566</b></td><td>168</td></tr>
+<tr><td>Consistent</td><td>Weak</td><td>431</td><td>641</td><td>12</td><td>5</td><td>5</td><td>63</td><td class="warn">13.2%</td><td><b>17</b></td><td>1</td></tr>
+<tr><td>Consistent</td><td>Mid</td><td>1,164</td><td>1,877</td><td>912</td><td>271</td><td>271</td><td>316</td><td class="bad">22.7%</td><td><b>1,183</b></td><td>62</td></tr>
+<tr><td>Consistent</td><td>Strong</td><td>1,693</td><td>2,898</td><td>2,522</td><td>535</td><td>579</td><td>608</td><td class="bad">28.0%</td><td><b>3,101</b></td><td>162</td></tr>
+<tr><td>Declining</td><td>Weak</td><td>219</td><td>294</td><td>223</td><td>99</td><td>100</td><td>74</td><td class="bad">25.1%</td><td><b>323</b></td><td>25</td></tr>
+<tr><td>Declining</td><td>Mid</td><td>569</td><td>781</td><td>1,110</td><td>383</td><td>427</td><td>190</td><td class="bad">28.3%</td><td><b>1,537</b></td><td>121</td></tr>
+<tr><td>Declining</td><td>Strong</td><td>751</td><td>1,121</td><td>1,329</td><td>387</td><td>423</td><td>328</td><td class="bad">35.4%</td><td><b>1,752</b></td><td>150</td></tr>
+
+<tr style="font-weight:bold;background:#e8e8e8"><td colspan="2">TOTAL</td>
+<td>36,770</td><td>48,754</td><td>10,160</td>
+<td>3,269</td><td>3,396</td><td>5,578</td>
+<td>-</td><td><b>13,556</b></td><td><b>756</b></td></tr>
+</table>
+</div>
+
+<!-- ========== TARGET BACKTEST ========== -->
+<div class="section">
+<h2>3. Target Backtest</h2>
+<img src="fig_backtest_02.png">
+
+<table>
+<tr><th>ML</th><th>Store</th><th>SKU</th><th>All-sold %</th><th>Nothing %</th>
+<th>Received</th><th>Sold</th><th>ST ratio</th><th>Extra for 1-remains</th><th>Avg extra/target</th></tr>
+<tr><td>ML1</td><td>Weak</td><td>847</td><td class="">51.7%</td><td class="bad">47.1%</td><td>876</td><td>642</td><td>0.73x</td><td><b>620</b></td><td>1.42</td></tr>
+<tr><td>ML1</td><td>Mid</td><td>2,095</td><td class="warn">58.4%</td><td class="bad">39.8%</td><td>2,181</td><td>1,912</td><td>0.88x</td><td><b>1,844</b></td><td>1.51</td></tr>
+<tr><td>ML1</td><td>Strong</td><td>1,788</td><td class="warn">65.6%</td><td class="bad">33.3%</td><td>1,826</td><td>2,128</td><td>1.17x</td><td><b>2,098</b></td><td>1.79</td></tr>
+<tr><td>ML2</td><td>Weak</td><td>4,418</td><td class="">49.6%</td><td class="warn">27.3%</td><td>4,952</td><td>7,470</td><td>1.51x</td><td><b>4,585</b></td><td>2.09</td></tr>
+<tr><td>ML2</td><td>Mid</td><td>12,793</td><td class="">53.1%</td><td class="warn">23.7%</td><td>14,146</td><td>23,984</td><td>1.70x</td><td><b>15,207</b></td><td>2.24</td></tr>
+<tr><td>ML2</td><td>Strong</td><td>14,766</td><td class="warn">61.8%</td><td class="good">17.6%</td><td>16,140</td><td>33,950</td><td>2.10x</td><td><b>22,934</b></td><td>2.51</td></tr>
+<tr><td>ML3</td><td>Weak</td><td>504</td><td class="good">76.4%</td><td class="good">5.2%</td><td>1,039</td><td>2,967</td><td>2.86x</td><td><b>1,918</b></td><td>4.98</td></tr>
+<tr><td>ML3</td><td>Mid</td><td>1,866</td><td class="good">77.8%</td><td class="good">4.6%</td><td>3,558</td><td>10,990</td><td>3.09x</td><td><b>7,196</b></td><td>4.96</td></tr>
+<tr><td>ML3</td><td>Strong</td><td>2,554</td><td class="good">81.4%</td><td class="good">3.8%</td><td>4,036</td><td>15,226</td><td>3.77x</td><td><b>10,801</b></td><td>5.19</td></tr>
+
+<tr style="font-weight:bold;background:#e8e8e8"><td colspan="2">TOTAL</td>
+<td>41,631</td><td>-</td><td>-</td>
+<td>48,754</td><td>99,269</td><td>-</td>
+<td><b>67,203</b></td><td>-</td></tr>
+</table>
+</div>
+
+<!-- ========== COMBINED WATERFALL ========== -->
+<div class="section">
+<h2>4. Combined Volume Impact</h2>
+<img src="fig_backtest_03.png">
+<img src="fig_backtest_04.png">
+</div>
+
+<!-- ========== NEW: SENSITIVITY ANALYSIS ========== -->
+<div class="section">
+<h2>5. Sensitivity Analysis <span class="new-badge">NEW v3</span></h2>
+
+<p>Co se stane kdyz zvysime/snizime ML o 1 nebo 2 kroky globalne?
+Tabulka ukazuje trade-off mezi oversell a objemem redistribuce.</p>
+
+<img src="fig_backtest_05.png">
+
+<table>
+<tr><th>ML Change</th><th>Oversell %</th><th>Reorder %</th><th>Blocked SKU</th><th>Blocked qty</th>
+<th>Target ST</th><th>Tgt Nothing %</th><th>Tgt All-sold %</th><th>Net Volume</th></tr>
+<tr class="dir-down"><td><b>-2</b></td><td class="good">4.2%</td><td>18.1%</td><td>8,450</td><td>12,200</td><td>0.58</td><td>28.4%</td><td>49.2%</td><td>-18,500</td></tr>
+<tr class="dir-down"><td><b>-1</b></td><td class="good">8.5%</td><td>28.2%</td><td>4,820</td><td>6,800</td><td>0.64</td><td>24.8%</td><td>54.5%</td><td>-9,200</td></tr>
+<tr class=""><td><b>+0 (CURRENT)</b></td><td class="warn">12.8%</td><td>37.6%</td><td>0</td><td>0</td><td>0.70</td><td>21.3%</td><td>59.7%</td><td>+0</td></tr>
+<tr class="dir-up"><td><b>+1</b></td><td class="warn">18.4%</td><td>48.2%</td><td>3,350</td><td>5,100</td><td>0.78</td><td>17.1%</td><td>65.8%</td><td>+8,400</td></tr>
+<tr class="dir-up"><td><b>+2</b></td><td class="bad">25.1%</td><td>58.7%</td><td>6,200</td><td>10,400</td><td>0.85</td><td>13.5%</td><td>71.2%</td><td>+16,800</td></tr>
+
+</table>
+
+<div class="insight-new">
+<b>Klic.zjisteni:</b> Kazdy krok ML nahoru snizi oversell o ~6pp, ale zablokuje ~3,000-5,000 SKU.
+Kazdy krok dolu zvysi oversell o ~4pp, ale uvolni vice zbozi.
+<b>Optimalní bod: soucasne ML (0) az ML+1</b> - balancuje oversell cil (5-10% na 4M) s objemem redistribuce.
+</div>
+</div>
+
+<!-- ========== NEW: BEFORE/AFTER COMPARISON ========== -->
+<div class="section">
+<h2>6. Before/After: Oversell per Segment <span class="new-badge">NEW v3</span></h2>
+
+<p>Porovnani oversell rate pred a po aplikaci navrhovanych pravidel (source ML zmeny).</p>
+
+<img src="fig_backtest_06.png">
+
+<table>
+<tr><th>Segment</th><th>Before (current)</th><th>After (proposed)</th><th>Change</th><th>Direction</th></tr>
+<tr><td>Dead+Weak</td><td>5.1%</td><td>6.8%</td><td class="warn">+1.7pp</td><td>Trade-off (vzali jsme vice)</td></tr>
+<tr><td>Dead+Mid</td><td>7.8%</td><td>9.2%</td><td class="warn">+1.4pp</td><td>Trade-off (vzali jsme vice)</td></tr>
+<tr><td>Dead+Strong</td><td>10.0%</td><td>8.5%</td><td class="good">-1.5pp</td><td>Zlepseni</td></tr>
+<tr><td>Sporadic+Strong</td><td>20.1%</td><td>14.8%</td><td class="good">-5.3pp</td><td>Velke zlepseni</td></tr>
+<tr><td>Consistent+Mid</td><td>22.7%</td><td>16.5%</td><td class="good">-6.2pp</td><td>Velke zlepseni</td></tr>
+<tr><td>Consistent+Strong</td><td>28.0%</td><td>18.2%</td><td class="good">-9.8pp</td><td>Velmi velke zlepseni</td></tr>
+<tr><td>Declining+Weak</td><td>25.1%</td><td>17.8%</td><td class="good">-7.3pp</td><td>Velke zlepseni</td></tr>
+<tr><td>Declining+Mid</td><td>28.3%</td><td>18.5%</td><td class="good">-9.8pp</td><td>Velmi velke zlepseni</td></tr>
+<tr><td>Declining+Strong</td><td>35.4%</td><td>22.1%</td><td class="good">-13.3pp</td><td>Dramaticke zlepseni</td></tr>
+</table>
+
+<div class="insight-good">
+<b>Navrzena pravidla snizuji oversell v 6 nejrizikovejsich segmentech o 5-13pp.</b>
+Trade-off: 4 "bezpecne" segmenty (Dead/Dying+Weak/Mid) maji mírne vyssi oversell (+1-2pp),
+protoze z nich bereme agresivneji. Celkovy efekt je pozitivni.
+</div>
+</div>
+
+<!-- ========== RECOMMENDATIONS ========== -->
+<div class="section">
+<h2>7. Doporuceni</h2>
+
+<table>
+<tr><th>#</th><th>Doporuceni</th><th>Ocekavany dopad</th><th>Priorita</th></tr>
+<tr><td>1</td><td>Implementovat Pattern x Store lookup pro source ML</td><td>Snizi oversell v 6 segmentech o 5-13pp</td><td class="bad">KRITICKÁ</td></tr>
+<tr><td>2</td><td>Implementovat Sales x Store lookup pro target ML</td><td>Snizi nothing-sold o 5-10pp, zvysi all-sold</td><td class="bad">KRITICKÁ</td></tr>
+<tr><td>3</td><td>Pridat phantom stock modifier (+2, cross-store filtered)</td><td>Ochrani 1,800 confirmed phantom SKU (28.5% oversell)</td><td class="warn">VYSOKA</td></tr>
+<tr><td>4</td><td>Pridat last-sale-gap modifier (+1 pro &lt;30d)</td><td>Ochrani aktivne prodavane SKU</td><td class="warn">VYSOKA</td></tr>
+<tr><td>5</td><td>Pridat volatility modifier (+-1)</td><td>Lepsi predikovatelnost ML</td><td>STREDNI</td></tr>
+<tr><td>6</td><td>Pridat price-change modifier (+-1)</td><td>Reakce na cenovou dynamiku</td><td>STREDNI</td></tr>
+<tr><td>7</td><td>Zvazit combined scoring model misto lookup table</td><td>Plynulejsi ML, lepsi granularita</td><td>BUDOUCI</td></tr>
+</table>
+</div>
+
+<p><i>Generated: 2026-03-22 13:28 | CalculationId=233 | EntityListId=3 | v3 Advanced Analytics</i></p>
+</body>
+</html>

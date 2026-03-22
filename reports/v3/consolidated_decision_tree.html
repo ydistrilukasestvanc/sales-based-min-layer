@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v3 Decision Tree: MinLayer Rules 0-5</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html" class="active">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a><span style="float:right; color:#7f8c8d; font-size:11px;">v3 Advanced Analytics</span></div>
+
+<h1>Decision Tree v3: MinLayer Rules 0-5</h1>
+<p><b>CalculationId=233</b> | Date: 2025-07-13 | Generated: 2026-03-22 13:28</p>
+<p>Pravidla vychazi z <a href="consolidated_findings.html">Report 1</a>.
+Strom ma <b>4 smery</b>: source up, source down, target up, target down.
+<b>v3: rozsireno o 6 novych modifikatoru</b> (stockout, volatility, last-sale-gap, redist ratio, price change).</p>
+
+<!-- ========== 4-DIRECTION OVERVIEW ========== -->
+<div class="section">
+<h2>1. 4-Direction Framework</h2>
+<img src="fig_dtree_03.png">
+
+<table>
+<tr><th>Direction</th><th>When</th><th>Action</th><th>Reason</th></tr>
+<tr class="dir-up"><td><b>SOURCE UP</b></td><td>Oversell &gt;20%</td><td>Ponechat vice na source</td><td>Produkty se stale prodavaji</td></tr>
+<tr class="dir-down"><td><b>SOURCE DOWN</b></td><td>Oversell &lt;10%</td><td>Vzit vice ze source</td><td>Produkty se neprodavaji</td></tr>
+<tr class="dir-down"><td><b>TARGET UP</b></td><td>High sell-through</td><td>Poslat vice na target</td><td>Target proda vse</td></tr>
+<tr class="dir-up"><td><b>TARGET DOWN</b></td><td>Low sell-through</td><td>Poslat mene na target</td><td>Target neproda</td></tr>
+</table>
+</div>
+
+<!-- ========== SOURCE RULES ========== -->
+<div class="section">
+<h2>2. Source pravidla</h2>
+
+<h3>2.1 Lookup: Pattern x Store</h3>
+<img src="fig_dtree_01.png">
+<table>
+<tr><th>Pattern</th><th>Store</th><th>Reorder %</th><th>Oversell %</th><th>ML</th><th>Rec</th><th>Dir</th></tr>
+<tr class="dir-down"><td>Dead</td><td>Weak</td><td>24.5%</td><td>5.1%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
+<tr class="dir-down"><td>Dead</td><td>Mid</td><td>29.5%</td><td>7.8%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
+<tr class=""><td>Dead</td><td>Strong</td><td>31.4%</td><td>10.0%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class="dir-down"><td>Dying</td><td>Weak</td><td>29.7%</td><td>8.1%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
+<tr class="dir-down"><td>Dying</td><td>Mid</td><td>35.4%</td><td>9.7%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
+<tr class=""><td>Dying</td><td>Strong</td><td>37.1%</td><td>12.6%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>Sporadic</td><td>Weak</td><td>37.2%</td><td>10.9%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>Sporadic</td><td>Mid</td><td>44.1%</td><td>15.3%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class="dir-up"><td>Sporadic</td><td>Strong</td><td>47.8%</td><td>20.1%</td><td><b>2</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class=""><td>Consistent</td><td>Weak</td><td>46.4%</td><td>13.2%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class="dir-up"><td>Consistent</td><td>Mid</td><td>56.0%</td><td>22.7%</td><td><b>2</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class="dir-up"><td>Consistent</td><td>Strong</td><td>56.5%</td><td>28.0%</td><td><b>3</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class="dir-up"><td>Declining</td><td>Weak</td><td>55.3%</td><td>25.1%</td><td><b>2</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class="dir-up"><td>Declining</td><td>Mid</td><td>64.7%</td><td>28.3%</td><td><b>3</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+<tr class="dir-up"><td>Declining</td><td>Strong</td><td>68.0%</td><td>35.4%</td><td><b>3</b></td><td>MUST RAISE ML</td><td>UP</td></tr>
+
+</table>
+<p><b>* = 0 pro delisted, ale A-O/Z-O minimum ML=1.</b></p>
+
+<h3>2.2 Business Rules (Overrides)</h3>
+<table>
+<tr><th>Rule</th><th>Condition</th><th>ML</th><th>Reason</th></tr>
+<tr><td>Active orderable</td><td>SkuClass = A-O (9)</td><td>MIN = 1</td><td>Aktivni zbozi musi zustat</td></tr>
+<tr><td>Z orderable</td><td>SkuClass = Z-O (11)</td><td>MIN = 1</td><td>Z zbozi stale objednatelne</td></tr>
+<tr><td>Delisted</td><td>SkuClass = D(3), L(4), R(5)</td><td>= 0</td><td>Delisted = bezpecne vzit vse</td></tr>
+</table>
+
+<h3>2.3 Modifikatory (base + modifiers, v3 updated) <span class="new-badge">UPDATED</span></h3>
+<table>
+<tr><th>Modifier</th><th>Condition</th><th>Adj</th><th>Evidence</th><th>Status</th></tr>
+<tr><td>Xmas sezónnost</td><td>Xmas share 20-60%</td><td>+1</td><td>+9-11pp oversell</td><td>v2</td></tr>
+<tr><td>Brand-Store fit strong</td><td>Strong brand + Strong store</td><td>+1</td><td>+16pp reorder gap</td><td>v2</td></tr>
+<tr><td>Siroka distribuce</td><td>Product on 100+ stores</td><td>+1</td><td>+25.9pp reorder gap</td><td>v2</td></tr>
+<tr style="background:#d1ecf1"><td>Phantom stock (confirmed)</td><td>Supply bez predeje + product se jinde prodava</td><td>+2</td><td>+19pp oversell, cross-store filtrovan</td><td class="new-badge">NEW v3</td></tr>
+<tr style="background:#d1ecf1"><td>Recentni prodej</td><td>Last sale &lt;30 dni</td><td>+1</td><td>+23pp oversell vs 365+d gap</td><td class="new-badge">NEW v3</td></tr>
+<tr style="background:#d1ecf1"><td>Cenovy pokles</td><td>Price decrease &gt;10%</td><td>+1</td><td>+8pp oversell vs stabilni cena</td><td class="new-badge">NEW v3</td></tr>
+<tr style="background:#d1ecf1"><td>Vysoka volatilita</td><td>Product CV &gt;2.0</td><td>+1</td><td>+13pp oversell vs low CV</td><td class="new-badge">NEW v3</td></tr>
+<tr style="background:#d4edda"><td>Nizka volatilita</td><td>Product CV &lt;0.5</td><td>-1</td><td>Nizsi oversell, predikovatelny</td><td class="new-badge">NEW v3</td></tr>
+<tr style="background:#d4edda"><td>Stary prodej</td><td>Last sale &gt;365 dni</td><td>-1</td><td>5.9% oversell = safe</td><td class="new-badge">NEW v3</td></tr>
+</table>
+
+<img src="fig_dtree_04.png">
+
+<div class="insight-new">
+<b>v3 pridal 7 novych modifikatoru (4 UP, 3 DOWN).</b> Stockout a last-sale-gap jsou nejsilnejsi prediktory.
+Modifier je pridavan k base hodnote z lookup table. Vysledek je cappovany na 0-5.
+</div>
+</div>
+
+<!-- ========== TARGET RULES ========== -->
+<div class="section">
+<h2>3. Target pravidla</h2>
+
+<h3>3.1 Lookup: SalesBucket x Store</h3>
+<img src="fig_dtree_02.png">
+<table>
+<tr><th>Sales</th><th>Store</th><th>ST Total</th><th>All-sold %</th><th>Nothing %</th><th>ML</th><th>Dir</th></tr>
+<tr class="dir-up"><td>Zero</td><td>Weak</td><td>0.76</td><td>53.7%</td><td>43.7%</td><td><b>1</b></td><td>DOWN</td></tr>
+<tr class="dir-up"><td>Zero</td><td>Mid</td><td>0.85</td><td>57.2%</td><td>39.3%</td><td><b>1</b></td><td>DOWN</td></tr>
+<tr class="dir-down"><td>Zero</td><td>Strong</td><td>1.18</td><td>66.5%</td><td>31.8%</td><td><b>2</b></td><td>UP</td></tr>
+<tr class="dir-up"><td>Low(1-2)</td><td>Weak</td><td>0.77</td><td>44.4%</td><td>34.6%</td><td><b>1</b></td><td>DOWN</td></tr>
+<tr class=""><td>Low(1-2)</td><td>Mid</td><td>0.88</td><td>48.6%</td><td>28.8%</td><td><b>2</b></td><td>OK</td></tr>
+<tr class=""><td>Low(1-2)</td><td>Strong</td><td>1.09</td><td>57.1%</td><td>22.3%</td><td><b>3</b></td><td>OK</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Weak</td><td>1.42</td><td>67.2%</td><td>12.6%</td><td><b>2</b></td><td>UP</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Mid</td><td>1.57</td><td>69.3%</td><td>12.5%</td><td><b>3</b></td><td>UP</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Strong</td><td>1.83</td><td>74.7%</td><td>9.0%</td><td><b>4</b></td><td>UP</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Weak</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>3</b></td><td>UP</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Mid</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>4</b></td><td>UP</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Strong</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>5</b></td><td>UP</td></tr>
+
+</table>
+
+<h3>3.2 Target modifikatory (v3 updated) <span class="new-badge">UPDATED</span></h3>
+<table>
+<tr><th>Modifier</th><th>Condition</th><th>Adj</th><th>Evidence</th><th>Status</th></tr>
+<tr><td>Brand Strong+Strong</td><td>Strong brand + Strong store</td><td>+1</td><td>65.7% all-sold</td><td>v2</td></tr>
+<tr><td>Brand Weak+Weak</td><td>Weak brand + Weak store</td><td>-1</td><td>30.7% nothing-sold</td><td>v2</td></tr>
+<tr><td>Siroka distrib.</td><td>100+ stores</td><td>+1</td><td>63.2% all-sold</td><td>v2</td></tr>
+<tr><td>Niche product</td><td>&le;20 stores</td><td>-1</td><td>38.6% nothing-sold</td><td>v2</td></tr>
+<tr style="background:#d1ecf1"><td>Nizka volatilita (tgt)</td><td>CV &lt;0.5</td><td>+1</td><td>64.5% all-sold, predikovatelny</td><td class="new-badge">NEW v3</td></tr>
+<tr style="background:#d1ecf1"><td>Vysoka volatilita (tgt)</td><td>CV &gt;2.0</td><td>-1</td><td>29.4% nothing-sold</td><td class="new-badge">NEW v3</td></tr>
+<tr style="background:#d1ecf1"><td>Cenovy pokles (tgt)</td><td>Price down &gt;10%</td><td>+1</td><td>63.8% all-sold (vice lidi kupuje)</td><td class="new-badge">NEW v3</td></tr>
+</table>
+</div>
+
+<!-- ========== COMBINED SCORING ========== -->
+<div class="section">
+<h2>4. Combined Scoring Model <span class="new-badge">NEW v3</span></h2>
+
+<p>Alternativni pristup k lookup table: synteticky score 0-100 kombinujici vsechny faktory.</p>
+
+<img src="fig_dtree_05.png">
+
+<h3>4.1 Source Risk Score vahy</h3>
+<table>
+<tr><th>Factor</th><th>Weight</th><th>Low value</th><th>High value</th></tr>
+<tr><td>Sales Pattern</td><td>30%</td><td>Dead = 0</td><td>Declining = 100</td></tr>
+<tr><td>Store Strength</td><td>20%</td><td>Weak = 0</td><td>Strong = 100</td></tr>
+<tr><td>Phantom Stock (cross-store)</td><td>15%</td><td>Not phantom = 0</td><td>Confirmed = 100</td></tr>
+<tr><td>Product Volatility</td><td>15%</td><td>CV&lt;0.5 = 0</td><td>CV&gt;2.0 = 100</td></tr>
+<tr><td>Last Sale Gap</td><td>10%</td><td>365+d = 0</td><td>0-30d = 100</td></tr>
+<tr><td>Price Change</td><td>5%</td><td>Increase = 0</td><td>Decrease &gt;10% = 100</td></tr>
+<tr><td>Xmas Season</td><td>5%</td><td>Non-seasonal = 0</td><td>20-60% = 100</td></tr>
+</table>
+
+<h3>4.2 Target Opportunity Score vahy</h3>
+<table>
+<tr><th>Factor</th><th>Weight</th><th>Low value</th><th>High value</th></tr>
+<tr><td>Sales Bucket</td><td>30%</td><td>Zero = 0</td><td>Med+ = 100</td></tr>
+<tr><td>Store Strength</td><td>25%</td><td>Weak = 0</td><td>Strong = 100</td></tr>
+<tr><td>Brand-Store Fit</td><td>15%</td><td>Weak+Weak = 0</td><td>Str+Str = 100</td></tr>
+<tr><td>Brand-Store Fit (tgt)</td><td>10%</td><td>Weak+Weak = 0</td><td>Strong+Strong = 100</td></tr>
+<tr><td>Product Volatility</td><td>10%</td><td>CV&gt;2.0 = 0</td><td>CV&lt;0.5 = 100</td></tr>
+<tr><td>Price Change</td><td>5%</td><td>Increase &gt;10% = 0</td><td>Decrease &gt;10% = 100</td></tr>
+<tr><td>Concentration</td><td>5%</td><td>&le;20 stores = 0</td><td>100+ stores = 100</td></tr>
+</table>
+
+<div class="insight-new">
+<b>Combined score nabizi plynulejsi ML nez diskretni lookup table.</b>
+Mapping: score 0-20 = ML0-1, 21-40 = ML1, 41-60 = ML2, 61-80 = ML3, 81-100 = ML4-5.
+</div>
+</div>
+
+<!-- ========== PSEUDOCODE ========== -->
+<div class="section">
+<h2>5. Pseudocode (v3 updated)</h2>
+
+<h3>5.1 Source MinLayer</h3>
+<pre>
+FUNCTION CalculateSourceMinLayer_v3(sku, store):
+    -- 1. Delisting override
+    IF sku.SkuClass IN (3, 4, 5):   -- D, L, R
+        RETURN 0
+
+    -- 2. Base ML from Pattern x Store lookup
+    pattern = ClassifySalesPattern24M(sku, store)
+    strength = ClassifyStoreStrength(store.Decile)
+    base = SOURCE_LOOKUP[pattern][strength]
+
+    -- 3. Business rules (A-O/Z-O min 1)
+    IF sku.SkuClass IN (9, 11):
+        base = MAX(base, 1)
+
+    -- 4. v2 Modifiers
+    IF sku.XmasShare BETWEEN 0.20 AND 0.60: base += 1
+    IF BrandStoreFit(sku, store) == 'Strong+Strong': base += 1
+    IF sku.StoreCount > 100: base += 1
+
+    -- 5. NEW v3 Modifiers (UP)
+    IF IsConfirmedPhantomStock(sku, store):      -- cross-store filtered
+        base += 2                                -- strong signal: +19pp oversell
+    IF sku.LastSaleGapDays < 30: base += 1      -- recent sale
+    IF sku.PriceChangePct < -10: base += 1      -- price decreased
+    IF sku.VolatilityCV > 2.0: base += 1        -- unpredictable
+
+    -- 6. NEW v3 Modifiers (DOWN)
+    IF sku.VolatilityCV < 0.5: base -= 1        -- very predictable
+    IF sku.LastSaleGapDays > 365: base -= 1     -- long time no sale
+
+    RETURN CLAMP(base, 0, 5)
+</pre>
+
+<h3>5.2 Target MinLayer</h3>
+<pre>
+FUNCTION CalculateTargetMinLayer_v3(sku, store):
+    -- 1. Base ML from Sales x Store lookup
+    bucket = ClassifySalesBucket(sku, store)
+    strength = ClassifyStoreStrength(store.Decile)
+    base = TARGET_LOOKUP[bucket][strength]
+
+    -- 2. v2 Modifiers
+    IF BrandStoreFit(sku, store) == 'Strong+Strong': base += 1
+    IF BrandStoreFit(sku, store) == 'Weak+Weak': base -= 1
+    IF sku.StoreCount > 100: base += 1
+    IF sku.StoreCount <= 20: base -= 1
+
+    -- 3. NEW v3 Modifiers (UP)
+    IF sku.VolatilityCV < 0.5: base += 1        -- predictable demand
+    IF sku.PriceChangePct < -10: base += 1      -- cheaper = sells more
+
+    -- 4. NEW v3 Modifiers (DOWN)
+    IF sku.VolatilityCV > 2.0: base -= 1        -- unpredictable
+
+    RETURN CLAMP(base, 1, 5)   -- min 1 (A-O/Z-O rule)
+</pre>
+</div>
+
+<p><i>Generated: 2026-03-22 13:28 | CalculationId=233 | EntityListId=3 | v3 Advanced Analytics</i></p>
+</body>
+</html>
