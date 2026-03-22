@@ -110,9 +110,11 @@ Pro každý source/target SKU spočítat:
 - Prodeje 4M po redistribuci
 - Prodeje celkem po redistribuci do teď
 - Prodeje v prosinci 2025
-- NOT_SOLD: zásoba (pre + přidané) - prodané po redistribuci; pokud > 0, kolik zůstalo neprodáno
-- Zda zůstal alespoň 1 kus (cíl)
+- ALL_SOLD: vše prodáno = **ÚSPĚCH** (redistribuce splnila účel, produkt se prodal). Pokud nic nezůstalo → příležitost poslat příště víc.
+- NOTHING_SOLD: nic neprodáno = **JEDINÝ SKUTEČNÝ PROBLÉM** na targetu (zbytečný přesun)
+- PARTIAL_SOLD + 1ks zbývá: **IDEÁLNÍ STAV** (prodalo se, 1 ks zůstal dle business rule A-O/Z-O)
 - Změna SkuClass po redistribuci (z A/Z na D/L/R/C)
+- **POZOR: "all sold" NENÍ problém! Je to signál, že MinLayer na target by mohl být i vyšší (poslat víc kusů, aby 1 zůstal).**
 
 ### FÁZE 1b: Prodejní vzorce (NOVÉ – navržené na základě dat)
 Na základě prvních výsledků přidávám tyto metriky, které se ukázaly jako důležité:
@@ -186,20 +188,20 @@ Každý redistribuční řádek klasifikovat do skupin:
 7. **NOVÉ: Delisted po redistribuci** – SKU změnilo class na D/L → reorder je logický (prodejna si objedná náhradu)
 8. **NOVÉ: Vysoká volatilita produktu** – produkt má velké výkyvy, redistribuce je riskantnější
 
-**TARGET problémy (NOT SOLD):**
-1. **Slabá prodejna** – nízké tržby, produkt se tam přirozeně neprodává
-2. **SkuClass změna** – produkt delisted po redistribuci → neprodá se
-3. **Přesycení** – příliš mnoho dovezeno, víc než prodejna uměla prodat
-4. **Sezónní výkyv** – cíl měl dobré prodeje jen v sezóně, pak pokles
-5. **Brand-store mismatch** – prodejna není silná v daném brandu
-6. **NOVÉ: Vysoko-obrátkový target** – prodejně se prodalo VŠE a objednala znovu → redistribuce selhala v cíli "udržet zásobu 1ks"
-7. **NOVÉ: Koncentrovaný produkt** – produkt se přirozeně prodává jen na pár prodejnách
+**TARGET výsledky (3 kategorie):**
+- **ALL SOLD = ÚSPĚCH:** Redistribuce splnila účel, produkt se prodal. Pokud nezůstal 1 ks → příležitost příště poslat víc (zvýšit target MinLayer).
+- **PARTIAL + 1ks zbývá = IDEÁLNÍ:** Prodalo se, 1 ks zůstal dle business rule.
+- **NOTHING SOLD = PROBLÉM:** Jediný skutečný neúspěch na targetu. Příčiny:
+  1. **Slabá prodejna** – nízké tržby, produkt se tam přirozeně neprodává
+  2. **SkuClass změna** – produkt delisted po redistribuci → neprodá se
+  3. **Brand-store mismatch** – prodejna není silná v daném brandu
+  4. **Koncentrovaný produkt** – produkt se přirozeně prodává jen na pár prodejnách → na nové prodejně se neprodá
 
 ### FÁZE 8: Souhrnný report
 Pro každou skupinu:
 - Počet SKU / řádků redistribuce / celková hodnota (Quantity × StockPrice)
-- Úspěšnost SOURCE (% bez reorderu / oversell) – za 4M a celkově
-- Úspěšnost TARGET (% kde se prodalo / zůstal 1 ks) – za 4M a celkově
+- Úspěšnost SOURCE (% bez oversell) – za 4M a celkově
+- Úspěšnost TARGET: % all-sold (ÚSPĚCH), % partial+1ks (IDEÁLNÍ), % nothing-sold (PROBLÉM)
 - Podíl vánočního období na výsledcích
 - **NOVÉ: Průměrný MinLayer3 v každé skupině** – aby bylo jasné, zda vyšší/nižší vrstva koreluje s problémem
 - **NOVÉ: Doporučený MinLayer rozsah** – na základě analýzy, jaký MinLayer by zabránil problému
@@ -306,8 +308,8 @@ Pro každou skupinu:
 - **Zero-sellers na silných prodejnách** (MinLayer3=1, Sales6M=0, Store 8-10): 41% reorder, 37.2% qty ratio → VELKÝ problém.
 - **Zero-sellers na slabých prodejnách** (MinLayer3=1, Sales6M=0, Store 1-3): 30.7% reorder → STÁLE vysoké.
 - **Low-sellers (1-2) na silných prodejnách** (MinLayer3=1): 53.2% reorder → KRITICKÉ.
-- **Target MinLayer3=3, Med+ sales, Strong store**: 81.4% all-sold → redistribuce tu selhává v udržení zásoby.
-- **Target MinLayer3=1, Zero sales, Weak store**: 43.7% nothing-sold → sem nemá smysl posílat.
+- **Target MinLayer3=3, Med+ sales, Strong store**: 81.4% all-sold → SKVĚLÝ výsledek! Příležitost poslat i víc kusů, aby 1 zůstal.
+- **Target MinLayer3=1, Zero sales, Weak store**: 43.7% nothing-sold → PROBLÉM, sem nemá smysl posílat.
 
 ### Delisting analýza
 - **Source**: 6,047 SKU delistováno po redistribuci → jen 13.2% reorder (vs 42.7% u aktivních). Delisting = -29pp reorder.
@@ -350,10 +352,12 @@ Klasifikace 36,770 source SKU do 5 vzorců (4 půlroční periody):
 - **Doporučení:** SKU redistribuované v posledních 6-12M: ML +2
 
 #### 2. Párová analýza Source↔Target
-- **IDEAL (src OK + tgt partial):** 11.6% párů (4,923)
-- **GOOD-ISH (src OK + tgt all sold):** 35.1% (14,896) – src OK ale tgt prodá vše
-- **WASTED (src OK + tgt nothing):** 14.8% (6,274) – zbytečný přesun
-- **DOUBLE FAIL (src reorder + tgt nothing):** 6.6% (2,781) – kompletní selhání
+- **BEST (src OK + tgt all sold):** 35.1% (14,896) – NEJLEPŠÍ výsledek! Source nepotřebuje reorder a target vše prodal.
+- **IDEAL (src OK + tgt partial + 1ks zbývá):** 11.6% párů (4,923) – perfektní stav s 1ks na skladě.
+- **SRC FAIL + tgt sold:** 24.5% (10,390) + 7.4% (3,140) – source problém, ale target je v pořádku (prodal).
+- **WASTED (src OK + tgt nothing):** 14.8% (6,274) – zbytečný přesun, target neprodal.
+- **DOUBLE FAIL (src reorder + tgt nothing):** 6.6% (2,781) – kompletní selhání obou stran.
+- **Celkový target ÚSPĚCH (all sold + partial):** 78.6% párů → redistribuce na targetu funguje v 4 z 5 případů!
 - **Nejlepší tok:** Weak→Strong (2.8% double fail)
 - **Nejhorší tok:** Strong→Weak (10.6% double fail), *→Weak (17-19% wasted)
 
