@@ -7,12 +7,15 @@
       "Edit(*)",
       "Glob(*)",
       "Grep(*)",
+      "Agent(*)",
       "mcp__ydistri-kb__query_database",
       "mcp__ydistri-kb__list_databases",
       "mcp__ydistri-kb__list_repos",
       "mcp__ydistri-kb__search_skills",
       "mcp__ydistri-kb__search_code",
-      "mcp__ydistri-kb__get_file"
-    ]
+      "mcp__ydistri-kb__get_file",
+      "mcp__ydistri-kb__github_cli"
+    ],
+    "deny": []
   }
 }

@@ -246,6 +246,13 @@ Pro každou skupinu:
 - **DŮLEŽITÉ: Reorder/Oversell vždy reportovat ve dvou dimenzích:** (1) počet SKU, (2) množství kusů. Reorder 1ks z 10 redistribuovaných NENÍ neúspěch. Klíčový je poměr ReorderQty/RedistributedQty (= "míra zbytečnosti"). Časové hledisko taktéž důležité.
 - **BUSINESS RULE: SkuClass A-O (9) a Z-O (11) MUSÍ mít na skladě minimálně 1 ks.** Jen tyto třídy mohou být Target. Navrhovaný MinLayer nesmí být 0 pro tyto třídy – minimum je vždy 1.
 - **BACKTEST KOREKCE: Vyhodnocovat úspěšnost redistribuce podľa realizovaných SALES (SaleTransaction), NIE podľa Inbound.** Inbound mohol a nemusel prebehnúť nezávisle na redistribúcii. Oversell (predaje > zostávajúca zásoba) je správna metrika.
+- **CIEĽOVÉ OVERSELL RATE:** 4M po redistribúcii: 5-10%. 9M (~teraz): <20%. Cieľom NIE JE nulový reorder – to by vyžadovalo extrémnu defenzívu. Cieľom je rozumné zníženie.
+- **DÔLEŽITÉ:** Aktuálny oversell (4M) pre ML0=1.1%, ML1=3.6% sú UŽ TERAZ v cieli! Problém je len ML2 (22.2% total) a špecifické segmenty (Declining+Strong: 35.4%).
+- **VIANOČNÉ PREDAJE:** Treba overiť, či sú štatisticky relevantné pre decision tree. Ak kalkulácia prebieha v júli, posledných 6M (jan-júl) neobsahuje Vianoce. Ale 6M pred tým (júl-jan) ÁNO obsahuje november+december. Otázka: mal by mať 6M perióda s Vianocami inú váhu? Predaje v Nov+Dec môžu byť nafúknuté sezónnosťou.
+- **6M vs 24M:** 6-mesačná analýza NIE JE irelevantná – je dôležitá pre aktuálnu frekvenciu. Ale 24M analýza (vzorec) zachytáva dlhodobé správanie. Obe majú rôznu váhu: 6M = aktuálny stav, 24M = historický vzorec. Pre decision tree sú komplementárne.
+- **VÁHA VIANOČNÝCH MESIACOV:** Ak je v 6M okne Nov+Dec, predaje sú pravdepodobne vyššie (sezónnosť). Toto treba zohľadniť – buď váhou alebo separate Xmas flagom.
+- **Target all-sold = ÚSPECH.** Nie je to problém. Ak sa predá všetko → príležitosť poslať viac. Jediný target problém = nothing-sold.
+- **Cieľom NIE JE nulový reorder** – to by bolo príliš defenzívne. Cieľ: 4M oversell 5-10%, 9M oversell <20%.
 
 ---
 
@@ -373,6 +380,14 @@ Klasifikace 36,770 source SKU do 5 vzorců (4 půlroční periody):
 - Ale MinLayer roste pomalu: 0M→ML0.94, 10M→ML1.50, 16M→ML1.86
 - **Počet aktivních měsíců je LEPŠÍ prediktor než 6M frekvence**
 - Navrhovaná tabulka: 0M→0, 1-2M→1, 3-5M→2, 6-9M→3, 10-15M→4, 16+→5
+
+#### Vianočná analýza (NOVÉ ZISTENIE)
+- **Vianoce SÚ štatisticky relevantné!** SKU so sezónnym Xmas liftom: **29.1% oversell** vs 17-19% bez Xmas.
+- Pre calc 233 (júl 2025): posledných 6M (jan-júl) NEOBSAHUJE Vianoce. Ale predchádzajúcich 6M (júl-dec 2024) ÁNO.
+- **Xmas podiel z 12M predajov vs oversell:** 0% Xmas→15.9%, 21-40%→26.5%, 41-60%→25.4%, 61-100%→18.8%
+- Paradox: 61-100% Xmas má NIŽŠÍ oversell (18.8%) než 21-60% (25-27%). Dôvod: čisto sezónne produkty (>60% Xmas) majú nízky ML (0.99) a po Vianociach sa nepredávajú → menej oversell.
+- **Najrizikovejšie: 1-40% Xmas podiel** (26-27% oversell) = produkty, ktoré sa predávajú celoročne AJ cez Vianoce. Xmas nafukuje frekvenciu → MinLayer je príliš nízky.
+- **Doporučenie pre decision tree:** Ak >=20% predajov spadá do Nov+Dec → "seasonal flag" → znížiť váhu Xmas mesiacov v frekvencii alebo pridať +1 ML pre sezónne produkty.
 
 #### 5. Product concentration
 - <=20 prodejen: 16-17% reorder. 100+ prodejen: **42.9% reorder** (2.5×)
