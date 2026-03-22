@@ -533,41 +533,46 @@ html1 = f"""<!DOCTYPE html>
 <div class="metric"><div class="v">48,754</div><div class="l">Total redistributed pcs</div></div>
 </div>
 
-<h3>Source: Overall metrics (SKU + quantity)</h3>
+<h3>Source: Overall metrics (SKU + quantity) - 4M and total</h3>
 <table>
-<tr><th>Metric</th><th>SKU</th><th>% SKU</th><th>Quantity (pcs)</th><th>% of redistributed qty</th></tr>
-<tr><td style="text-align:left"><b>Total redistributed</b></td><td>36,770</td><td>100%</td><td>48,754</td><td>100%</td></tr>
-<tr><td style="text-align:left"><b>Reorder</b> (any inbound after redist)</td><td>13,841</td><td>37.6%</td><td>16,615</td><td>34.1%</td></tr>
-<tr><td style="text-align:left"><b>Oversell</b> (sales > remaining supply)</td><td>4,718</td><td>12.8%</td><td>5,578</td><td>11.4%</td></tr>
-<tr><td style="text-align:left"><b>Oversell 4M</b></td><td>1,317</td><td>3.6%</td><td>1,464</td><td>3.0%</td></tr>
+<tr><th>Metric</th><th colspan="2">4 months</th><th colspan="2">Total (~9M)</th></tr>
+<tr><th></th><th>SKU (%)</th><th>Qty (pcs)</th><th>SKU (%)</th><th>Qty (pcs)</th></tr>
+<tr><td style="text-align:left"><b>Total redistributed</b></td><td>36,770</td><td>48,754</td><td>36,770</td><td>48,754</td></tr>
+<tr><td style="text-align:left"><b>Reorder</b> (any inbound)</td><td>7,087 (19.3%)</td><td>7,980 (16.4%)</td><td>13,841 (37.6%)</td><td>16,615 (34.1%)</td></tr>
+<tr><td style="text-align:left"><b>Oversell</b> (sales-based)</td><td>1,317 (3.6%)</td><td>1,464 (3.0%)</td><td>4,718 (12.8%)</td><td>5,578 (11.4%)</td></tr>
 </table>
 
-<h3>Target: Overall metrics (SKU + quantity)</h3>
+<h3>Target: Overall metrics (SKU + quantity) - 4M and total</h3>
+<p><b>Sell-through formula:</b> LEAST(QuantitySold, SupplyBefore + QtyRedistributed) / (SupplyBefore + QtyRedistributed) -- capped at 100%</p>
 <table>
-<tr><th>Metric</th><th>SKU</th><th>% SKU</th><th>Quantity (pcs)</th></tr>
-<tr><td style="text-align:left"><b>Total received</b></td><td>41,631</td><td>100%</td><td>48,754</td></tr>
-<tr><td style="text-align:left"><b>Total sold (post-redist)</b></td><td>-</td><td>-</td><td>99,269</td></tr>
-<tr><td style="text-align:left"><b>Remaining stock</b></td><td>-</td><td>-</td><td>24,268</td></tr>
-<tr><td style="text-align:left"><b>All sold (sell-through 100%+)</b></td><td class="good">24,862</td><td class="good">59.7%</td><td>-</td></tr>
-<tr><td style="text-align:left"><b>Nothing sold</b></td><td class="bad">8,872</td><td class="bad">21.3%</td><td>9,822 pcs received but unsold</td></tr>
-<tr><td style="text-align:left"><b>Overall sell-through</b></td><td>-</td><td>-</td><td>122.3% (targets sold more than received due to pre-existing stock)</td></tr>
+<tr><th>Metric</th><th colspan="2">4 months</th><th colspan="2">Total (~9M)</th></tr>
+<tr><th></th><th>SKU (%)</th><th>Qty (pcs)</th><th>SKU (%)</th><th>Qty (pcs)</th></tr>
+<tr><td style="text-align:left"><b>Total supply</b> (pre + redist)</td><td colspan="2">81,196</td><td colspan="2">81,196</td></tr>
+<tr><td style="text-align:left"><b>Capped sold</b></td><td>-</td><td>37,577</td><td>-</td><td>56,928</td></tr>
+<tr style="background:#d4edda"><td style="text-align:left"><b>Sell-through</b></td><td colspan="2"><b>46.3%</b></td><td colspan="2"><b>70.1%</b></td></tr>
+<tr><td style="text-align:left"><b>All sold</b> (SUCCESS)</td><td class="good">13,631 (32.7%)</td><td>-</td><td class="good">24,862 (59.7%)</td><td>-</td></tr>
+<tr><td style="text-align:left"><b>Nothing sold</b> (PROBLEM)</td><td class="bad">17,552 (42.2%)</td><td>-</td><td class="bad">8,872 (21.3%)</td><td>-</td></tr>
+<tr><td style="text-align:left"><b>Remaining stock</b></td><td>-</td><td>43,619</td><td>-</td><td>24,268</td></tr>
 </table>
 
-<h3>Oversell rate vs target by MinLayer</h3>
-<p>Target 4M oversell: <b>5-10%</b> | Target 9M total: <b>&lt;20%</b>. Goal is NOT zero reorder.</p>
+<h3>All metrics by MinLayer</h3>
+<p>Oversell targets: 4M: <b>5-10%</b> | total: <b>&lt;20%</b>. Goal is NOT zero reorder.</p>
 
 <table>
-<tr><th>MinLayer</th><th>SKU</th><th>Reorder %</th><th>Reorder qty</th><th>Oversell 4M %</th><th>Oversell total %</th><th>Status</th></tr>
-<tr><td>ML0</td><td>1,709</td><td>6.3%</td><td>121</td><td class="good">1.1%</td><td class="good">2.3%</td><td class="good">ON TARGET</td></tr>
-<tr><td>ML1</td><td>31,965</td><td>38.0%</td><td>13,978</td><td class="good">3.6%</td><td class="good">12.5%</td><td class="good">ON TARGET</td></tr>
-<tr><td>ML2</td><td>2,680</td><td>52.3%</td><td>2,052</td><td class="warn">5.1%</td><td class="bad">22.2%</td><td class="bad">EXCEEDS total</td></tr>
-<tr><td>ML3</td><td>416</td><td>46.9%</td><td>464</td><td class="good">3.4%</td><td class="good">18.0%</td><td class="good">ON TARGET (tight)</td></tr>
+<tr><th rowspan="2">ML</th><th rowspan="2">SKU</th><th colspan="2">Reorder (inbound)</th><th colspan="2">Oversell (sales)</th><th rowspan="2">Redist qty</th><th rowspan="2">Status</th></tr>
+<tr><th>4M % (qty)</th><th>Total % (qty)</th><th>4M % (qty)</th><th>Total % (qty)</th></tr>
+<tr><td>0</td><td>1,709</td><td>3.3% (66)</td><td>6.3% (121)</td><td class="good">1.1% (20)</td><td class="good">2.3% (43)</td><td>2,061</td><td class="good">OK</td></tr>
+<tr><td>1</td><td>31,965</td><td>19.6% (6,883)</td><td>38.0% (13,978)</td><td class="good">3.6% (1,241)</td><td class="good">12.5% (4,564)</td><td>40,598</td><td class="good">OK</td></tr>
+<tr><td>2</td><td>2,680</td><td>25.6% (890)</td><td>52.3% (2,052)</td><td class="warn">5.1% (180)</td><td class="bad">22.2% (812)</td><td>4,716</td><td class="bad">EXCEEDS</td></tr>
+<tr><td>3</td><td>416</td><td>16.6% (141)</td><td>46.9% (464)</td><td class="good">3.4% (23)</td><td class="good">18.0% (159)</td><td>1,379</td><td class="good">OK (tight)</td></tr>
+<tr style="font-weight:bold;background:#e8e8e8"><td>ALL</td><td>36,770</td><td>19.3% (7,980)</td><td>37.6% (16,615)</td><td>3.6% (1,464)</td><td>12.8% (5,578)</td><td>48,754</td><td>-</td></tr>
 </table>
 
 <div class="insight-good">
-<b>Key takeaway:</b> Oversell (sales-based) is much lower than reorder (inbound-based): 12.8% vs 37.6% of SKU.
-Reorder includes purchases unrelated to redistribution. Oversell is the true impact metric.
-ML0/ML1 are within target. Only ML2 (22.2% total oversell) exceeds the 20% target.
+<b>Key takeaway:</b> Oversell (sales-based) is much lower than reorder (inbound-based): 12.8% vs 37.6% SKU, 11.4% vs 34.1% qty.
+Reorder includes purchases unrelated to redistribution. <b>Oversell is the true impact metric.</b>
+At 4M: oversell is only 3.6% (target 5-10%) - already well within target.
+At total: 12.8% (target &lt;20%) - also within target overall. Only ML2 (22.2%) exceeds.
 </div>
 </div>
 
