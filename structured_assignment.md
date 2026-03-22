@@ -191,9 +191,35 @@ Pro každou skupinu:
 - Analýza bude parametrizovatelná na jiné CalculationId a jiné EntityListId
 - Python analýzy na vzorku SKU, ověření v DB (výkonnější)
 - Všechny slepé uličky a neočekávané zjištění logovat do "Log zjištění"
+- Všechny tabulky v temp schématu mají prefix **SBM_**
+- Pokud v průběhu analýz objevím statisticky významnou věc, zařadím ji do analýz, ověřím a přidám do postupu
+- Všechny instrukce průběžně zapisuji do tohoto souboru
+
+---
+
+## Vytvořené temp tabulky (FÁZE 0)
+
+| Tabulka | Řádků | Popis | Indexy |
+|---|---|---|---|
+| temp.SBM_RedistSkus | 42 404 | Redistribuční páry s MinLayer3 z JSON | SourceSkuId, TargetSkuId, ProductId |
+| temp.SBM_AllSkuIds | 1 148 386 | Všechna SKU pro dotčené produkty (excl ecomm) | SkuId, ProductId |
+| temp.SBM_Sales | 6 325 193 | Prodeje 2024-07 až 2026-03 | SkuId+Date |
+| temp.SBM_Supply | 812 650 | Historie zásoby source+target SKU | SkuId+DateFrom+DateTo |
+| temp.SBM_Inbound | 27 054 | Příjmy source SKU po redistribuci | SkuId+Date |
+| temp.SBM_Outbound | 67 599 | Výdaje source+target po 2025-07 | SkuId+Date |
+| temp.SBM_SkuSnapshotCalc | 78 401 | Snapshot atributů k datu kalkulace (AV=134) | SkuId |
+| temp.SBM_SkuSnapshotNow | 78 401 | Aktuální snapshot atributů (AV=385) | SkuId |
+| temp.SBM_StoreStrength | 352 | Síla prodejen (decily dle tržeb 6M) | WarehouseId |
+| temp.SBM_StoreBrandStrength | 37 858 | Síla prodejen per brand (kvintily) | WarehouseId+BrandId |
 
 ---
 
 ## Log zjištění (průběžně doplňovaný)
 
-_Zatím prázdný – bude doplňován během analýzy._
+### FÁZE 0 – Příprava dat
+- **MinLayer EntityList 3 vs. celkový**: SourceMinLayerAll je MAX přes listy (3,5,7...), SourceMinLayer3 je jen pro list 3. Distribuce se liší – List 3 source: 0(1798), 1(36404), 2(3504), 3(698). Celkový source: 0(1798), 1(31778), 2(7969), 3+(858) → list 7 a 5 přidávají vyšší hodnoty.
+- **Income tabulka = Inbound** (v zadání "Income", v DB "Inbound")
+- **DB tool** – po fixu autocommit funguje CREATE TABLE, INSERT, CREATE INDEX v temp schématu
+- **Ecomm WarehouseId=300** vyloučen z cross-product analýzy i percentilů
+- **Redistribuce proběhla 2025-07-14 až 2025-07-29**, referenční datum globálně 2025-07-13
+- **AttributeValueId**: kalkulace=134 (2025-07-13), aktuální=385 (2026-03-20)
