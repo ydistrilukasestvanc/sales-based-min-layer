@@ -105,9 +105,20 @@ Klasifikácia source SKU do vzorov podľa 4 polročných periód:
 - Brand-store fit: celková sila vs sila v danom brande → mismatch analýza
 - Matice prietoku (odkiaľ kam): decil source × decil target
 
-### FÁZE 4: Stockout analýza
-- Stockouty pred redistribúciou (indikátor phantom stocku)
-- Korelácia dĺžky stockoutu s oversell/reorder
+### FÁZE 4: Phantom Stock analýza (LEN SOURCE)
+**Phantom stock** = source SKU kde:
+1. Zásoby existovali dlhodobo (mesiace bez stockoutu = AvailableSupply > 0 kontinuálne)
+2. Žiadne alebo minimálne predaje počas tejto doby
+3. Po navrhnutí redistribúcie sa predaje VRÁTILI (oversell)
+
+Vysvetlenie: produkt fyzicky nebol v regáli (backstore, krádež), systém videl zásobu, ale zákazník produkt nemohol kúpiť. Keď sme navrhli odvoz, produkt sa vrátil do regálu a začal sa predávať.
+
+**DÔLEŽITÉ: Očistenie od šumu (false positives):**
+- Ak sa produkt nepredával predtým, štatisticky je logické, že potom bude predaj vyšší → to samo o sebe NIE JE phantom stock
+- **Cross-store filter:** Phantom stock vzorec musí byť prítomný LEN na tomto konkrétnom SKU (store), NIE naprieč všetkými predajňami rovnakého product_id. Ak rovnaký product_id nepredáva na VŠETKÝCH predajniach → nie je to phantom stock, ale product-level trend (zomierajúci produkt)
+- Teda: porovnať predaje pred redistribúciou na TOMTO SKU vs ostatné SKU rovnakého product_id. Ak ostatné predajne predávajú normálne a len TOTO SKU nie → phantom stock kandidát
+
+**Phantom stock sa NETÝKA target strany** – na target nemá zmysel (target dostáva nový tovar).
 
 ### FÁZE 5: Cenová analýza
 - Cenové pásma vs oversell/sell-through
