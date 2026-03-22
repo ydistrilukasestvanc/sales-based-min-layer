@@ -18,13 +18,17 @@
 - Vo VŠETKÝCH štatistikách VŽDY uvádzať OBE metriky vedľa seba. Sú to rôzne ukazovatele.
 - Vždy uvádzať **4M aj total** verziu oboch metrík.
 
-#### REORDER (informačná metrika, source)
-Inbound po redistribúcii. Nemusí súvisieť s redistribúciou (bežné doobjednávky).
+#### REORDER (metrika, source)
+Inbound po redistribúcii — cappované na redistrib. qty (rovnaký princíp ako oversell).
+Bežné doobjednávky prekračujúce redistribuované množstvo sa nepočítajú — tie by sa objednali aj bez redistribúcie.
 ```
 Reorder_SKU  = 1 ak SkuId má aspoň 1 záznam v Inbound po ApplicationDate
-Reorder_Qty  = SUM(Inbound.Quantity) pre dané obdobie (4M / total)
+Raw_Inbound  = SUM(Inbound.Quantity) pre dané obdobie (4M / total)
+Reorder_Qty  = LEAST(Raw_Inbound, TotalQtyRedistributed)
 Reorder_Rate = Reorder_SKU_count / Total_Source_SKU × 100
 ```
+- Cap na `TotalQtyRedistributed` = nemôže byť reorder viac ks, než sme odviezli.
+- Ak source dostal 5 ks inboundu, ale redistribuoval sa len 1 ks → reorder = 1 (nie 5).
 
 #### OVERSELL (PRIMÁRNA metrika, source)
 Predalo sa viac, než čo na source **zostalo** po redistribúcii. Cappované na redistrib. qty.
@@ -83,7 +87,8 @@ AllSold = 1 ak SUM(Sales_Post) >= Base (predalo sa všetko)
 ```
 
 ### Source pravidlá
-- **Cieľ OVERSELL rate:** 4M: 5-10%, 9M: <20%. Cieľom NIE JE nulový reorder.
+- **Cieľ OVERSELL rate:** 4M: 5-10%, 9M: <20%.
+- **Cieľ REORDER rate:** znížiť o 10-15% oproti aktuálnemu stavu na total období. Reorder je tiež dôležitá metrika — indikuje, že source bol príliš agresívne vyčerpaný a musel sa znova doplniť.
 - **Source ML sa môže aj ZNÍŽIŤ** – ak sa dá identifikovať, že produkty sa na source nepredávajú. Analyzovať kedy je bezpečné byť agresívnejší.
 
 ### Target pravidlá – ROVNAKO DÔLEŽITÉ ako source
