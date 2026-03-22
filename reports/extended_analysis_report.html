@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Rozšířená analytika – 5 nových analýz + Backtest</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+h1 { color: #2c3e50; border-bottom: 3px solid #e74c3c; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #e74c3c; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 12px; }
+th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: right; }
+th { background: #e74c3c; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 11px; overflow-x: auto; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+</style>
+</head>
+<body>
+
+<h1>Rozšířená analytika: 5 nových analýz + Backtest</h1>
+<p>CalculationId=233 | EntityListId=3 | 2026-03-22 03:14</p>
+
+<!-- SECTION 1: PAIR ANALYSIS -->
+<div class="section">
+<h2>1. Párová analýza Source↔Target</h2>
+<p>Každý z 42,404 redistribučních párů klasifikován dle výsledku na obou stranách:</p>
+
+<div style="text-align:center;">
+<div class="metric"><div class="v" style="color:#27ae60">11.6%</div><div class="l">IDEAL<br>src OK + tgt partial</div></div>
+<div class="metric"><div class="v" style="color:#f39c12">35.1%</div><div class="l">GOOD-ISH<br>src OK + tgt all sold</div></div>
+<div class="metric"><div class="v" style="color:#e74c3c">14.8%</div><div class="l">WASTED<br>src OK + tgt nothing</div></div>
+<div class="metric"><div class="v" style="color:#8e44ad">6.6%</div><div class="l">DOUBLE FAIL<br>src reorder + tgt nothing</div></div>
+</div>
+
+<img src="fig14_pair_outcomes.png">
+
+<div class="insight-bad">
+<b>Pouze 11.6% párů je IDEÁLNÍCH</b> (source nereorderoval + target prodal částečně = zůstal 1+ ks).
+35.1% je "good-ish" (source OK, ale target prodal vše → spustí reorder na targetu).
+<b>6.6% je DOUBLE FAIL</b> – source musel reorderovat A zároveň target neprodal nic. To je 2,781 párů = čistá ztráta.
+14.8% je WASTED – source nepotřeboval reorder, ale target nic neprodal → zbytečný přesun 6,853 ks.
+</div>
+
+<h3>Párové výsledky dle toku Source→Target (síla prodejny)</h3>
+<img src="fig18_pair_flow_heatmap.png">
+
+<div class="insight">
+<b>Nejvíc IDEAL párů:</b> Weak→Weak (13.7%), Weak→Strong (12.8%), Weak→Mid (12.8%). Přesouvání ze slabých prodejen funguje nejlépe!<br>
+<b>Nejvíc DOUBLE FAIL:</b> Strong→Weak (10.6%), Weak→Weak (8.7%), Mid→Weak (9.6%). Posílání na slabé prodejny z jakéhokoliv zdroje má vysoký double-fail.<br>
+<b>Nejvíc WASTED:</b> Mid→Weak a Weak→Weak (18.8%). Na slabé prodejny se často neprodá nic.
+<br><br>
+<b>Závěr:</b> Nejlepší tok je Weak→Strong (2.8% double fail, 13.0% wasted). Nejhorší je *→Weak.
+Pravidla pro target by měla omezit posílání na slabé prodejny.
+</div>
+</div>
+
+<!-- SECTION 2: REDISTRIBUTION LOOP -->
+<div class="section">
+<h2>2. Redistribuční smyčka (Y-STORE TRANSFER loop)</h2>
+<p>3,117 source SKU (8.5%) obdrželo po redistribuci nový Y-STORE TRANSFER inbound = byly redistribuovány ZNOVU.</p>
+
+<div style="text-align:center;">
+<div class="metric"><div class="v" style="color:#e74c3c">3,117</div><div class="l">SKU ve smyčce</div></div>
+<div class="metric"><div class="v" style="color:#e74c3c">4,054 ks</div><div class="l">Znovu redistribuováno</div></div>
+<div class="metric"><div class="v">160 dní</div><div class="l">Průměr dní do smyčky</div></div>
+<div class="metric"><div class="v">71.6%</div><div class="l">Z toho ML3=1 Zero-sellers</div></div>
+</div>
+
+<div class="insight-bad">
+<b>71.6% smyčkových SKU (2,231) jsou zero-sellers s MinLayer3=1.</b>
+Tyto SKU neměly žádné prodeje za 6M, byly redistribuovány, a za ~160 dní přišla další redistribuce zpět na ně.
+Loop ratio je ~100% – vrátí se prakticky stejné množství, co se odvezlo. To je cyklické přesouvání bez přidané hodnoty.
+<br><br>
+<b>Doporučení:</b> SKU, které byly v posledních 6-12 měsících redistribuovány, by měly mít zvýšený MinLayer (+2).
+Toto by eliminovalo většinu smyček.
+</div>
+</div>
+
+<!-- SECTION 3: MONTHLY CADENCE -->
+<div class="section">
+<h2>3. Měsíční kadence prodejů (24M)</h2>
+<p>Kolik měsíců z posledních 24 mělo alespoň 1 prodej? Toto je výrazně lepší prediktor než binární 6M frekvence.</p>
+
+<img src="fig15_monthly_cadence.png">
+
+<div class="insight-bad">
+<b>Reorder rate roste téměř lineárně s počtem aktivních měsíců:</b><br>
+0 měsíců → 28.5% | 3 měsíce → 47.8% | 6 měsíců → 57.3% | 10 měsíců → 67.1% | 16+ měsíců → 81%<br><br>
+<b>Ale MinLayer roste mnohem pomaleji!</b> 0 měsíců: ML=0.94 | 10 měsíců: ML=1.50 | 16 měsíců: ML=1.86<br>
+SKU s 10+ aktivními měsíci má 67%+ reorder, ale průměrný MinLayer je jen 1.5! To je zásadní nesoulad.<br><br>
+<b>Doporučení:</b> Počet aktivních měsíců (z 24M) by měl být PRIMÁRNÍ vstup pro MinLayer kalkulaci.
+Navrhovaná tabulka: 0M→ML0, 1-2M→ML1, 3-5M→ML2, 6-9M→ML3, 10-15M→ML4, 16+M→ML5.
+</div>
+</div>
+
+<!-- SECTION 4: PRODUCT CONCENTRATION -->
+<div class="section">
+<h2>4. Koncentrace produktu</h2>
+<p>Na kolika prodejnách se produkt prodává? Koncentrovaný produkt (málo prodejen) = redistribuce na novou prodejnu rizikovější.</p>
+
+<img src="fig16_product_concentration.png">
+
+<div class="insight">
+<b>Masivní rozdíl:</b> Produkty prodávané na <=20 prodejnách: 16.6-17.0% source reorder.<br>
+Produkty na 100+ prodejnách: <b>42.9% source reorder</b> – 2.5× víc!<br><br>
+Proč? Široce distribuované produkty se prodávají pravidelněji → vyšší šance, že se na source prodá odvezený kus.
+Koncentrované produkty se prodávají jen na několika místech → na source se po redistribuci nic nestane.<br><br>
+Target: 100+ prodejen = 63.2% all-sold (vs. 44.3% u 6-20 prodejen). Široce distribuované produkty se prodávají všude → i na targetu se prodá vše.
+<br><br>
+<b>Doporučení:</b> Počet prodejen produktu jako vstup pro MinLayer. Widespread (100+): +1 na source ML, -1 na target ML (nepotřebujeme tam tolik, prodá se i méně).
+</div>
+</div>
+
+<!-- SECTION 5: BACKTEST -->
+<div class="section">
+<h2>5. Backtest navrhovaných Source pravidel</h2>
+<p>Aplikace navrhovaných pravidel (sales pattern × store strength → MinLayer 0-5) na skutečná data kalkulace 233.</p>
+
+<img src="fig17_backtest.png">
+
+<table>
+<tr><th>Dopad</th><th>SKU</th><th>% z celku</th><th>Mělo reorder</th><th>% reorder</th><th>Reorder ks</th><th>Redistrib. ks</th><th>Qty ratio</th></tr>
+<tr><td style="text-align:left">Beze změny (ML stejný)</td><td>18,088</td><td>49.2%</td><td>6,083</td><td>33.6%</td><td>7,047</td><td>23,107</td><td>30.5%</td></tr>
+<tr><td style="text-align:left">Snížení ML (víc se odveze)</td><td>6,044</td><td>16.4%</td><td>1,691</td><td>28.0%</td><td>1,910</td><td>7,430</td><td>25.7%</td></tr>
+<tr><td style="text-align:left">Zvýšení ML (odveze se méně)</td><td>6,876</td><td>18.7%</td><td>2,961</td><td>43.1%</td><td>4,340</td><td>11,973</td><td>36.2%</td></tr>
+<tr><td style="text-align:left"><b>Zvýšení ML → NEPROBĚHNE</b></td><td>5,762</td><td>15.7%</td><td class="bad">3,106</td><td class="bad">53.9%</td><td>3,318</td><td>6,244</td><td>53.1%</td></tr>
+</table>
+
+<div class="insight-good">
+<b>5,762 SKU by se neredistribuovalo</b> (navrhovaný ML >= aktuální zásoba).<br>
+Z nich <b>3,106 (53.9%) skutečně mělo reorder</b> → tyto reordery bychom ušetřili!<br>
+Ale 2,656 (46.1%) nemělo reorder → tyto redistribuce by se ztratily (false positive).<br><br>
+<b>Bilance:</b><br>
+- Ušetřeno: 3,106 zbytečných reorderů (SKU) a 3,318 ks reorder množství<br>
+- Ztraceno: 2,823 ks úspěšných redistribucí (SKU kde nebylo reorder a redistribuce proběhla)<br>
+- <b>Čistý přínos: 3,318 - 2,823 = 495 ks netto úspora</b><br>
+- Plus: 6,876 SKU s méně redistribuovanými ks (43.1% reorder) → další úspory<br><br>
+<b>Celkový odhad:</b> Snížení reorderu z 13,841 na ~9,000-10,000 SKU (27-35% úspora).
+</div>
+</div>
+
+<!-- SECTION 6: TREND VERIFICATION -->
+<div class="section">
+<h2>6. Ověření: Trend analýza používá jen PRE-redistribuční data</h2>
+<p>Kontrola, zda vstupní data pro product trend jsou výhradně z období PŘED redistribucí:</p>
+
+<table>
+<tr><th>Období</th><th>Datum od</th><th>Datum do</th><th>Status</th></tr>
+<tr><td style="text-align:left">Sales_Older (referenční)</td><td>2024-07-13</td><td>2025-01-12</td><td class="good">PRE-redistribuce</td></tr>
+<tr><td style="text-align:left">Sales_Recent (srovnávané)</td><td>2025-01-13</td><td>2025-07-12</td><td class="good">PRE-redistribuce</td></tr>
+<tr><td style="text-align:left">Redistribuce</td><td colspan="2">2025-07-13</td><td><b>REFERENČNÍ DATUM</b></td></tr>
+<tr><td style="text-align:left">Post-redistribuce (výsledky)</td><td>2025-07-13</td><td>2026-03-22</td><td>POST (jen výsledky)</td></tr>
+</table>
+
+<div class="insight-good">
+<b>POTVRZENO:</b> Trend analýza (Growing/Declining/Stable) je počítána výhradně z dat PŘED redistribucí.
+Oba srovnávané periody (Older: 2024-07 až 2025-01, Recent: 2025-01 až 2025-07) končí před referenčním datem.
+Výsledky redistribuce (reorder/oversell/not-sold) jsou z POST období a slouží jen k vyhodnocení, ne jako vstup.
+Trend je tedy validní prediktor pro decision tree.
+</div>
+</div>
+
+<p><i>2026-03-22 03:14 | CalculationId=233 | EntityListId=3</i></p>
+</body>
+</html>

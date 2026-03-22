@@ -242,6 +242,8 @@ Pro každou skupinu:
 - Pokud v průběhu analýz objevím statisticky významnou věc, zařadím ji do analýz, ověřím a přidám do postupu
 - Všechny instrukce průběžně zapisuji do tohoto souboru
 - **DŮLEŽITÉ: Reorder/Oversell vždy reportovat ve dvou dimenzích:** (1) počet SKU, (2) množství kusů. Reorder 1ks z 10 redistribuovaných NENÍ neúspěch. Klíčový je poměr ReorderQty/RedistributedQty (= "míra zbytečnosti"). Časové hledisko taktéž důležité.
+- **BUSINESS RULE: SkuClass A-O (9) a Z-O (11) MUSÍ mít na skladě minimálně 1 ks.** Jen tyto třídy mohou být Target. Navrhovaný MinLayer nesmí být 0 pro tyto třídy – minimum je vždy 1.
+- **BACKTEST KOREKCE: Vyhodnocovat úspěšnost redistribuce podľa realizovaných SALES (SaleTransaction), NIE podľa Inbound.** Inbound mohol a nemusel prebehnúť nezávisle na redistribúcii. Oversell (predaje > zostávajúca zásoba) je správna metrika.
 
 ---
 
@@ -336,4 +338,43 @@ Klasifikace 36,770 source SKU do 5 vzorců (4 půlroční periody):
 - **Source MinLayer** závisí primárně na prodejním vzorci (24M) + síla prodejny. Rozsah 0-5.
 - **Target MinLayer** závisí primárně na frekvenci prodejů (6M) + síla prodejny. Rozsah 0-5.
 - Source a Target pravidla jsou ODLIŠNÁ.
-- Odhad: snížení reorderu o 3,000-5,000 SKU (z 13,841 na ~9,000-11,000).
+- **Business rule:** A-O (SkuClassId=9) a Z-O (SkuClassId=11) MUSÍ mít ML minimálně 1. Jen tyto mohou být target.
+- Backtest verze V2 korigován na SALES-based metriku (oversell), ne inbound.
+
+### Rozšířené analýzy (nové)
+
+#### 1. Redistribuční smyčka (Y-STORE TRANSFER loop)
+- **3,117 SKU (8.5%)** dostalo novou Y-ST redistribuci po redistribuci calc 233
+- 71.6% z nich jsou ML3=1 zero-sellers → cyklické přesouvání bez přidané hodnoty
+- Průměr 160 dní do smyčky, loop ratio ~100% (vrátí se co se odvezlo)
+- **Doporučení:** SKU redistribuované v posledních 6-12M: ML +2
+
+#### 2. Párová analýza Source↔Target
+- **IDEAL (src OK + tgt partial):** 11.6% párů (4,923)
+- **GOOD-ISH (src OK + tgt all sold):** 35.1% (14,896) – src OK ale tgt prodá vše
+- **WASTED (src OK + tgt nothing):** 14.8% (6,274) – zbytečný přesun
+- **DOUBLE FAIL (src reorder + tgt nothing):** 6.6% (2,781) – kompletní selhání
+- **Nejlepší tok:** Weak→Strong (2.8% double fail)
+- **Nejhorší tok:** Strong→Weak (10.6% double fail), *→Weak (17-19% wasted)
+
+#### 3. Backtest V2 (OVERSELL-based, s business rule)
+- **5,762 SKU by se neredistribuovalo** → z nich 1,563 (27.1%) mělo oversell
+- **Ušetřeno:** 1,670 ks oversell (redistribuované kusy by se prodaly i tak)
+- **Ztraceno:** 4,496 ks úspěšných redistribucí (false positive)
+- SkuClass enforcement: A-O a Z-O nikdy nemají ML=0 (31,773 + 3,288 SKU)
+- KOREKCE: Inbound-based reorder (předchozí verze) ukazoval 53.9% problém, oversell-based jen 27.1% → inbound zkresloval
+
+#### 4. Měsíční kadence (24M)
+- Reorder roste lineárně: 0 měsíců → 28.5%, 6M → 57.3%, 10M → 67.1%, 16M → 81%
+- Ale MinLayer roste pomalu: 0M→ML0.94, 10M→ML1.50, 16M→ML1.86
+- **Počet aktivních měsíců je LEPŠÍ prediktor než 6M frekvence**
+- Navrhovaná tabulka: 0M→0, 1-2M→1, 3-5M→2, 6-9M→3, 10-15M→4, 16+→5
+
+#### 5. Product concentration
+- <=20 prodejen: 16-17% reorder. 100+ prodejen: **42.9% reorder** (2.5×)
+- Široce distribuované produkty = vyšší riziko na source
+- Target: 100+ prodejen = 63.2% all-sold vs 44.3% u 6-20
+
+#### 6. Ověření product trend analýzy
+- POTVRZENO: Sales_Older (2024-07 až 2025-01) a Sales_Recent (2025-01 až 2025-07) jsou OBĚ PRE-redistribuce
+- Trend je validní vstup pro decision tree
