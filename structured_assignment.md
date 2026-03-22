@@ -1,12 +1,33 @@
 # Strukturované zadání: Analytika SalesBased MinLayers pro CalculationId=233
 
 ## GLOBÁLNE INŠTRUKCIE (platia pre všetky analýzy, nie len toto zadanie)
+
+### Všeobecné
 - **Všetky zistenia z konverzácie VŽDY zapisovať do tohto zadania.** Ak niečo zistím, okamžite to zapíšem sem – log musí byť kompletný pre rekonštrukciu.
 - **Výstupy = vždy 3 reporty:** 1) Findings (zistenia + korelácie), 2) Decision tree (pravidlá), 3) Backtest (dopad pravidiel s objemami, nie len SKU count).
-- **Target all-sold = ÚSPECH.** Nikdy to neoznačovať ako problém. Jediný target problém = nothing-sold.
-- **Cieľom NIE JE nulový reorder/oversell.** Cieľ: rozumné zníženie (4M: 5-10%, 9M: <20%).
-- **Backtest vždy na SALES (oversell)**, nie na inbound. Backtest musí ukazovať zmenu OBJEMU redistribúcie (koľko ks viac/menej), nie len počet SKU.
 - **Business rule: A-O (9) a Z-O (11) minimum ML=1.** Len tieto triedy môžu byť target.
+
+### Metriky – VŽDY uvádať OBE, NIKDY nemiešať
+- **REORDER** = inbound po redistribúcii (objednalo sa nové zboží). Informačná metrika – ukazuje, že prodejna niečo objednala, ale nemusí to súvisieť s redistribúciou.
+- **OVERSELL** = sales-based: predalo sa viac ako zostalo po redistribúcii (capped na redistrib. qty). Toto je PRIMÁRNA metrika pre vyhodnotenie source.
+- Vo VŠETKÝCH štatistikách VŽDY uvádzať OBE metriky vedľa seba (reorder % + oversell %). Sú to rôzne ukazovatele a nesmú sa miešať.
+
+### Source pravidlá
+- **Cieľ OVERSELL rate:** 4M: 5-10%, 9M: <20%. Cieľom NIE JE nulový reorder – to by bolo príliš defenzívne.
+- **Source ML sa môže aj ZNÍŽIŤ** (byť agresívnejší) – ak sa dá identifikovať, že produkty sa na source nepredávajú (Dead vzorec, slabá prodejna, delistované). Treba analyzovať kedy je bezpečné znížiť ML.
+
+### Target pravidlá – ROVNAKO DÔLEŽITÉ ako source
+- **Target all-sold = ÚSPECH.** Nikdy to neoznačovať ako problém. Signál na zvýšenie target ML (poslať viac).
+- **Target nothing-sold = PROBLÉM.** Zbytočná redistribúcia.
+- **Target SELL-THROUGH rate** = koľko z poslaného sa predalo. Ideál: predať všetko do 1 ks. Problém je aj keď sa predá MÁLO (nie nič, ale málo) a po 4M zostane príliš veľa = low sell-through. V takom prípade treba target ML ZNÍŽIŤ.
+- **Target ML sa môže aj ZNÍŽIŤ** – ak sa na danej predajni/brandu/produkte predáva málo. Sem nemá zmysel posielať veľa.
+- **Target ML sa ZVÝŠI** – ak sa na silných predajniach predá všetko → treba poslať viac, aby zostal 1 ks.
+- **Target analytika musí byť ROVNAKO podrobná ako source:** analýza cez predaje, silu predajne, brand-store fit, cenu, sezónnosť, koncentráciu produktu. Nie len "nothing sold / all sold".
+
+### Backtest
+- **Backtest vždy na SALES (oversell)**, nie na inbound.
+- **Backtest musí ukazovať zmenu OBJEMU** redistribúcie (koľko ks viac/menej), nie len počet SKU.
+- **Decision tree musí obsahovať pravidlá pre ZVÝŠENIE aj ZNÍŽENIE** source ML aj target ML. 4 smery: source up, source down, target up, target down.
 
 **Git repo:** git@github.com:ydistrilukasestvanc/sales-based-min-layer.git
 
@@ -122,7 +143,12 @@ Pro každý source/target SKU spočítat:
 - NOTHING_SOLD: nic neprodáno = **JEDINÝ SKUTEČNÝ PROBLÉM** na targetu (zbytečný přesun)
 - PARTIAL_SOLD + 1ks zbývá: **IDEÁLNÍ STAV** (prodalo se, 1 ks zůstal dle business rule A-O/Z-O)
 - Změna SkuClass po redistribuci (z A/Z na D/L/R/C)
-- **POZOR: "all sold" NENÍ problém! Je to signál, že MinLayer na target by mohl být i vyšší (poslat víc kusů, aby 1 zůstal).**
+- **SELL-THROUGH RATE** = SalesTotal_Post / (TargetSupplyAtCalc + TotalQtyReceived). Koľko % z celkovej zásoby sa predalo.
+  - Ideál: sell-through ~100% a zostane 1 ks (all sold alebo near-all sold)
+  - Problém A: sell-through = 0% → nothing sold → ML ZNÍŽIŤ (nepredáva sa tu)
+  - Problém B: sell-through < 30% po 4M → low sell-through → ML ZNÍŽIŤ (predáva sa pomaly)
+  - Úspech: sell-through > 80% → ML OK alebo ZVÝŠIŤ (predáva sa dobre, poslať viac)
+- **POZOR: "all sold" NENÍ problém! Je to signál, že MinLayer na target by mohol být i vyšší (poslat víc kusů, aby 1 zůstal).**
 
 ### FÁZE 1b: Prodejní vzorce (NOVÉ – navržené na základě dat)
 Na základě prvních výsledků přidávám tyto metriky, které se ukázaly jako důležité:
@@ -196,14 +222,19 @@ Každý redistribuční řádek klasifikovat do skupin:
 7. **NOVÉ: Delisted po redistribuci** – SKU změnilo class na D/L → reorder je logický (prodejna si objedná náhradu)
 8. **NOVÉ: Vysoká volatilita produktu** – produkt má velké výkyvy, redistribuce je riskantnější
 
-**TARGET výsledky (3 kategorie):**
-- **ALL SOLD = ÚSPĚCH:** Redistribuce splnila účel, produkt se prodal. Pokud nezůstal 1 ks → příležitost příště poslat víc (zvýšit target MinLayer).
-- **PARTIAL + 1ks zbývá = IDEÁLNÍ:** Prodalo se, 1 ks zůstal dle business rule.
-- **NOTHING SOLD = PROBLÉM:** Jediný skutečný neúspěch na targetu. Příčiny:
-  1. **Slabá prodejna** – nízké tržby, produkt se tam přirozeně neprodává
-  2. **SkuClass změna** – produkt delisted po redistribuci → neprodá se
-  3. **Brand-store mismatch** – prodejna není silná v daném brandu
-  4. **Koncentrovaný produkt** – produkt se přirozeně prodává jen na pár prodejnách → na nové prodejně se neprodá
+**TARGET výsledky (4 kategorie podľa sell-through):**
+- **ALL SOLD (sell-through ~100%) = ÚSPECH:** Redistribúcia splnila účel. ML ZVÝŠIŤ (poslať viac, aby zostal 1 ks).
+- **HIGH SELL-THROUGH (>80%) + zostáva 1+ ks = IDEÁLNY STAV.** ML ponechať.
+- **LOW SELL-THROUGH (<30% po 4M) = PROBLÉM:** Predáva sa pomaly, príliš veľa zostáva. ML ZNÍŽIŤ. Príčiny:
+  1. **Slabá prodejna** – nízke tržby, produkt sa tam prirodzene nepredáva
+  2. **Brand-store mismatch** – predajňa nie je silná v danom brande
+  3. **Koncentrovaný produkt** – predáva sa len na pár predajniach
+  4. **Sezónny produkt** – predával sa v sezóne, teraz nie
+- **NOTHING SOLD (sell-through = 0%) = NAJVÄČŠÍ PROBLÉM:** Zbytočná redistribúcia. ML výrazne ZNÍŽIŤ alebo neposielať.
+  1. **SkuClass zmena** – produkt delistovaný po redistribúcii
+  2. **Slabá prodejna + slabý brand** – kombinácia
+
+**Analýza target musí byť ROVNAKO podrobná ako source:** rovnaké dimenzie (sila predajne, brand-store fit, cena, predajný vzorec, sezónnosť, koncentrácia).
 
 ### FÁZE 8: Souhrnný report
 Pro každou skupinu:
@@ -412,3 +443,47 @@ Klasifikace 36,770 source SKU do 5 vzorců (4 půlroční periody):
 #### 6. Ověření product trend analýzy
 - POTVRZENO: Sales_Older (2024-07 až 2025-01) a Sales_Recent (2025-01 až 2025-07) jsou OBĚ PRE-redistribuce
 - Trend je validní vstup pro decision tree
+
+#### 7. SOURCE: Reorder vs Oversell vedľa seba (15 segmentov)
+Segmenty kde je BEZPEČNÉ ZNÍŽIŤ source ML (oversell <10%):
+- Dead+Weak: reorder=24.5%, **oversell=5.1%** → CAN LOWER ML
+- Dead+Mid: reorder=29.5%, **oversell=7.8%** → CAN LOWER ML
+- Dying+Weak: reorder=29.7%, **oversell=8.1%** → CAN LOWER ML
+- Dying+Mid: reorder=35.4%, **oversell=9.7%** → CAN LOWER ML
+
+Segmenty kde TREBA ZVÝŠIŤ source ML (oversell >20%):
+- Declining+Strong: reorder=68.0%, **oversell=35.4%** → MUST RAISE
+- Declining+Mid: reorder=64.7%, **oversell=28.3%** → MUST RAISE
+- Declining+Weak: reorder=55.3%, **oversell=25.1%** → MUST RAISE
+- Consistent+Strong: reorder=56.5%, **oversell=28.0%** → MUST RAISE
+- Consistent+Mid: reorder=56.0%, **oversell=22.7%** → MUST RAISE
+- Sporadic+Strong: reorder=47.8%, **oversell=20.1%** → MUST RAISE
+
+OK segmenty (oversell 10-20%): Dead+Strong, Dying+Strong, Sporadic+Mid, Sporadic+Weak, Consistent+Weak
+
+#### 8. TARGET: Sell-through analýza (NOVÉ – rovnako podrobné ako source)
+**Sell-through distribúcia:**
+- Nothing sold (0%): 8,872 SKU (21.3%) → PROBLÉM, ML znížiť
+- Low (<30%): 35 SKU (0.1%) → zanedbateľné
+- Medium (30-80%): 7,843 SKU (18.8%) → OK
+- High (80-99%): 19 SKU (0.05%) → zanedbateľné
+- All sold (100%+): 24,862 SKU (59.7%) → ÚSPECH, ML zvýšiť
+
+**Sell-through podľa Store × Sales6M (4M a total):**
+- Weak+Zero: ST_4M=0.49, ST_total=0.76, 43.7% nothing → ML ZNÍŽIŤ
+- Weak+Low: ST_4M=0.37, ST_total=0.77, 34.6% nothing → ML ZNÍŽIŤ
+- Strong+Med+: ST_4M=0.89, ST_total=1.83, 9.0% nothing → ML ZVÝŠIŤ (sell-through >100% = predá sa viac ako zásoby)
+- Strong+Low: ST_4M=0.51, ST_total=1.09, 22.3% nothing → ML OK
+
+**Sell-through podľa Brand-store fit:**
+- Strong+Strong brand: ST_total=1.43, 16.5% nothing, 65.7% all-sold → NAJLEPŠÍ. ML ZVÝŠIŤ.
+- Weak+Weak brand: ST_total=0.90, 30.7% nothing, 50.3% all-sold → NAJHORŠÍ. ML ZNÍŽIŤ.
+
+**Sell-through podľa ceny:**
+- <15 EUR: ST_total=2.10, 1.5% nothing → levné sa predajú vždy, ML ZVÝŠIŤ
+- 30-60 EUR: ST_total=1.10, 25.1% nothing → stredné najhoršie
+- 60+ EUR: ST_total=1.32, 18.5% nothing → drahé OK
+
+**Sell-through podľa koncentrácie produktu:**
+- <=20 predajní: ST_total=0.89, 38.6% nothing → ML ZNÍŽIŤ (produkt sa tu nepredáva)
+- 100+ predajní: ST_total=1.32, 17.5% nothing → ML ZVÝŠIŤ
