@@ -21,13 +21,15 @@
 | `analysis_decision_tree.py` | `reports/decision_tree_report.html` + fig10-13 | Po změně pravidel |
 | `analysis_extended.py` | `reports/extended_analysis_report.html` + fig14+ | Nové analýzy (loop, páry, backtest...) |
 
-### HTML reporty
+### HTML reporty (3 konsolidované – finální verze)
 | Report | Obsah | Klíčová zjištění |
 |---|---|---|
-| `full_analysis_report.html` | 10 sekcí: MinLayer distribuce, store decile, zero-sellers, redistr. ratio, SkuClass, cena, trend, stockout, timing, inbound typy | Source reorder 37.6%, lineární závislost na store decile, bimodální reorder (all-or-nothing) |
-| `combined_segmentation_report.html` | Kombinované heatmapy (MinLayer × Sales × Store), brand-store fit, decision tree vizualizace | Brand-store fit = 16pp rozdíl, kritické segmenty identifikovány |
-| `decision_tree_report.html` | Prodejní vzorce (24M), navržená pravidla Source (0-5) i Target (0-5) | Declining vzorec = 65% reorder, Source≠Target pravidla |
-| `extended_analysis_report.html` | Redistribuční smyčka, párová analýza, backtest, měsíční kadence, product concentration | TBD |
+| `consolidated_findings.html` | Kompletní analytika: oversell raty, predajné vzorce (24M), sila predajní, mesačná kadencia, párová analýza, promo/cena, Vianoce, SkuClass, koncentrácia | ML0/ML1 už v cieli, len 6 z 15 segmentov nad cieľom, declining=35% oversell |
+| `consolidated_decision_tree.html` | Navrhované pravidlá Source (0-5) aj Target (0-5), lookup tabuľky, business rules, modifikátory | Source: vzorec×sila, Target: frekvencia×sila. Pravidlá sú ODLIŠNÉ. |
+| `consolidated_backtest.html` | Dopad navrhovaných pravidiel: zmena objemu redistribúcie, ušetrené oversell, target extra kapacita | Blocked: ~3.3k SKU (-2.7k ks), oversell v blokovaných: 25-35%. Target: +66k extra ks pre udržanie 1ks. |
+
+### Staré reporty (nahradené konsolidovanými)
+`full_analysis_report.html`, `combined_segmentation_report.html`, `decision_tree_report.html`, `extended_analysis_report.html` – NAHRADENÉ vyššie uvedenými.
 
 ### Grafy (PNG)
 | Graf | Co ukazuje |

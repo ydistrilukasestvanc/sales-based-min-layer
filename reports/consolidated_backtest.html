@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Backtest: Dopad navrhovanych pravidiel</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html" class="active">Report 3: Backtest</a></div>
+
+<h1>Backtest: Dopad navrhovanych pravidiel</h1>
+<p><b>CalculationId=233</b> | Datum: 2025-07-13 | Generovano: 2026-03-22 03:46</p>
+<p>Tento report ukazuje ocekavany dopad pravidel z
+<a href="consolidated_decision_tree.html">Report 2: Decision Tree</a> na redistribucni objemy a oversell.</p>
+
+<!-- ========== SOURCE BACKTEST ========== -->
+<div class="section">
+<h2>1. Source Backtest</h2>
+
+<p>Pro kazdy segment (Pattern x Store) ukazujeme:</p>
+<ul>
+<li><b>Current Qty</b> = celkove redistribuovane mnozstvi v aktualni kalkulaci</li>
+<li><b>Extra Kept</b> = kolik vice kusu by zustalo na source (kvuli zvysenemu MinLayer)</li>
+<li><b>Blocked SKU</b> = kolik SKU by se vubec neredistribuovalo (ML vyssi nez dostupna zasoba)</li>
+<li><b>Blocked Qty</b> = mnozstvi, ktere by se neredistribuovalo</li>
+<li><b>Oversell %</b> = soucasna mira oversell v segmentu</li>
+</ul>
+
+<img src="fig_backtest_01.png">
+
+<table>
+<tr><th>Pattern</th><th>Store</th><th>SKU</th><th>Current Qty</th><th>Extra Kept</th><th>Blocked SKU</th><th>Blocked Qty</th><th>Oversell %</th></tr><tr><td>Consistent</td><td>Mid</td><td>1,164</td><td>1,877</td>
+    <td>912</td><td>271</td><td>271</td>
+    <td class="bad">22.7%</td></tr><tr><td>Consistent</td><td>Strong</td><td>1,693</td><td>2,898</td>
+    <td>2,522</td><td>535</td><td>579</td>
+    <td class="bad">28.0%</td></tr><tr><td>Consistent</td><td>Weak</td><td>431</td><td>641</td>
+    <td>12</td><td>5</td><td>5</td>
+    <td class="good">13.2%</td></tr><tr><td>Dead</td><td>Mid</td><td>6,967</td><td>8,633</td>
+    <td>334</td><td>189</td><td>189</td>
+    <td class="good">7.8%</td></tr><tr><td>Dead</td><td>Strong</td><td>4,061</td><td>5,143</td>
+    <td>209</td><td>112</td><td>112</td>
+    <td class="good">10.0%</td></tr><tr><td>Dead</td><td>Weak</td><td>4,597</td><td>5,461</td>
+    <td>235</td><td>129</td><td>129</td>
+    <td class="good">5.1%</td></tr><tr><td>Declining</td><td>Mid</td><td>569</td><td>781</td>
+    <td>1,110</td><td>383</td><td>427</td>
+    <td class="bad">28.3%</td></tr><tr><td>Declining</td><td>Strong</td><td>751</td><td>1,121</td>
+    <td>1,329</td><td>387</td><td>423</td>
+    <td class="bad">35.4%</td></tr><tr><td>Declining</td><td>Weak</td><td>219</td><td>294</td>
+    <td>223</td><td>99</td><td>100</td>
+    <td class="bad">25.1%</td></tr><tr><td>Dying</td><td>Mid</td><td>2,882</td><td>3,505</td>
+    <td>170</td><td>117</td><td>117</td>
+    <td class="good">9.7%</td></tr><tr><td>Dying</td><td>Strong</td><td>1,951</td><td>2,373</td>
+    <td>82</td><td>52</td><td>52</td>
+    <td class="good">12.6%</td></tr><tr><td>Dying</td><td>Weak</td><td>1,594</td><td>1,933</td>
+    <td>113</td><td>77</td><td>77</td>
+    <td class="good">8.1%</td></tr><tr><td>Sporadic</td><td>Mid</td><td>4,176</td><td>5,783</td>
+    <td>121</td><td>52</td><td>52</td>
+    <td class="warn">15.3%</td></tr><tr><td>Sporadic</td><td>Strong</td><td>3,712</td><td>5,705</td>
+    <td>2,729</td><td>835</td><td>837</td>
+    <td class="bad">20.1%</td></tr><tr><td>Sporadic</td><td>Weak</td><td>2,003</td><td>2,606</td>
+    <td>59</td><td>26</td><td>26</td>
+    <td class="good">10.9%</td></tr>
+<tr style="font-weight:bold; background:#e8e8e8;">
+<td colspan="2">CELKEM</td><td>36,770</td><td>48,754</td>
+<td>10,160</td><td>3,269</td><td>3,396</td>
+<td>-</td></tr>
+</table>
+
+<div class="insight">
+<b>Interpretace:</b>
+<ul>
+<li><b>3,269 SKU</b> by se neredistribuovalo (blokovano vyssi ML).</li>
+<li><b>3,396 ks</b> by se neodvezlo z techto blokovanych SKU.</li>
+<li><b>10,160 ks</b> by navic zustalo na source prodejnach (mene odvezeno i u redistributed SKU).</li>
+<li>Vetsina blokovanych SKU je z <b>Declining/Strong</b> (387) a <b>Sporadic/Strong</b> (835) - presne segmenty s nejvyssim oversell.</li>
+</ul>
+</div>
+
+<div class="insight-good">
+<b>Cileny dopad:</b> Z celkovych 3,269 blokovanych SKU maji segmenty s &gt;20% oversell celkem
+2,510 blokovanych SKU.
+To znamena, ze vetsina blokovani miri presne na problematicke segmenty.
+</div>
+</div>
+
+<!-- ========== TARGET BACKTEST ========== -->
+<div class="section">
+<h2>2. Target Backtest</h2>
+
+<p>Pro kazdy target segment (ML x Store) ukazujeme:</p>
+<ul>
+<li><b>All-sold %</b> = kolik targetu prodalo vsechny redistribuovane kusy (= uspech, ale priste posleme vice)</li>
+<li><b>Nothing-sold %</b> = kolik targetu neprodalo nic (= problem)</li>
+<li><b>Extra needed (pcs)</b> = kolik vice kusu bychom meli poslat, aby po prodejich zustal alespon 1 kus</li>
+<li><b>Avg extra/target</b> = prumerna potreba na 1 target SKU</li>
+</ul>
+
+<img src="fig_backtest_02.png">
+
+<table>
+<tr><th>MinLayer</th><th>Store</th><th>SKU</th><th>All-sold %</th><th>Nothing %</th><th>Extra needed (pcs)</th><th>Avg extra/target</th></tr><tr><td>ML1</td><td>Mid</td><td>2,095</td>
+    <td class="warn">58.4%</td><td>39.8%</td>
+    <td>1,844</td><td>1.51</td></tr><tr><td>ML1</td><td>Strong</td><td>1,788</td>
+    <td class="warn">65.6%</td><td>33.3%</td>
+    <td>2,098</td><td>1.79</td></tr><tr><td>ML1</td><td>Weak</td><td>847</td>
+    <td class="">51.7%</td><td>47.1%</td>
+    <td>620</td><td>1.42</td></tr><tr><td>ML2</td><td>Mid</td><td>12,793</td>
+    <td class="">53.1%</td><td>23.7%</td>
+    <td>15,207</td><td>2.24</td></tr><tr><td>ML2</td><td>Strong</td><td>14,766</td>
+    <td class="warn">61.8%</td><td>17.6%</td>
+    <td>22,934</td><td>2.51</td></tr><tr><td>ML2</td><td>Weak</td><td>4,418</td>
+    <td class="">49.6%</td><td>27.3%</td>
+    <td>4,585</td><td>2.09</td></tr><tr><td>ML3</td><td>Mid</td><td>1,866</td>
+    <td class="bad">77.8%</td><td>4.6%</td>
+    <td>7,196</td><td>4.96</td></tr><tr><td>ML3</td><td>Strong</td><td>2,554</td>
+    <td class="bad">81.4%</td><td>3.8%</td>
+    <td>10,801</td><td>5.19</td></tr><tr><td>ML3</td><td>Weak</td><td>504</td>
+    <td class="bad">76.4%</td><td>5.2%</td>
+    <td>1,918</td><td>4.98</td></tr>
+<tr style="font-weight:bold; background:#e8e8e8;">
+<td colspan="2">CELKEM</td><td>41,631</td>
+<td>-</td><td>-</td><td>67,203</td><td>-</td></tr>
+</table>
+
+<div class="insight">
+<b>Co znamena "extra needed":</b> Pokud je target all-sold, znamena to, ze jsme poslali PRILIS MALO kusu.
+"Extra needed" ukazuje, kolik vice kusu bychom meli poslat, aby po vsech prodejich zustal alespon 1 kus.
+<br><br>
+Napr. ML3 Strong: 81.4% all-sold, prumerny target potrebuje 5.19 kusu navic. Pokud zvysime target MinLayer z 3 na 4-5,
+posime vice kusu a je pravdepodobnejsi, ze alespon 1 kus zustane.
+</div>
+
+<div class="insight-bad">
+<b>Celkem 67,203 ks navic</b> by melo proudit do systemu s navrzenymi target ML zvysenimi.
+To je vyrazne navyseni objemu, ale vetsina smeruje do silnych prodejen (Strong), kde je vysoka pravdepodobnost prodeje.
+</div>
+</div>
+
+<!-- ========== COMBINED IMPACT ========== -->
+<div class="section">
+<h2>3. Celkovy dopad</h2>
+
+<img src="fig_backtest_03.png">
+
+<h3>3.1 Source strana</h3>
+<table>
+<tr><th>Metrika</th><th>Hodnota</th><th>Vyznam</th></tr>
+<tr><td>Blokovane SKU</td><td class="bad">3,269</td><td>SKU, ktere by se vubec neredistribuovaly</td></tr>
+<tr><td>Blokovane ks</td><td class="bad">3,396</td><td>Kusy, ktere by zustaly na source</td></tr>
+<tr><td>Extra kept ks</td><td class="warn">10,160</td><td>Vice kusu zustane na source i u redistributed SKU</td></tr>
+<tr><td>Snizeni oversell</td><td class="good">Cilene na segmenty &gt;20%</td><td>Vetsina blokovani v Declining, Consistent/Strong</td></tr>
+</table>
+
+<h3>3.2 Target strana</h3>
+<table>
+<tr><th>Metrika</th><th>Hodnota</th><th>Vyznam</th></tr>
+<tr><td>Extra needed ks</td><td class="good">67,203</td><td>Vice kusu posime do targetu s vysokym all-sold</td></tr>
+<tr><td>Hlavni beneficienti</td><td>Strong stores</td><td>ML2/ML3 Strong prodejny dostanou vice kusu</td></tr>
+<tr><td>Ocekavany efekt</td><td>Vice "1 zustane"</td><td>Vyssi ML = mensi sance ze se vse proda</td></tr>
+</table>
+
+<h3>3.3 Celkova zmena objemu</h3>
+<div class="insight">
+<b>Source:</b> -13,556 ks (mene odeslano ze source)
+<br>
+<b>Target:</b> +67,203 ks (vice prijato na target)
+<br>
+<b>Net:</b> +53,647 ks zmena v redistribucnim objemu
+<br><br>
+<b>Vysvetleni:</b> Na source strane drzime vice kusu (vyssi MinLayer = mene odvezeme). Na target strane posisme vice kusu
+(vyssi MinLayer = posisme vice, aby 1 zustal). Celkovy efekt zavisna na pomeru obou stran.
+</div>
+
+<div class="insight-good">
+<b>Klicovy zaver:</b>
+<ul>
+<li>Source pravidla <b>cilene blokuji</b> redistribuci z problematickych segmentu (Declining, Consistent/Strong)</li>
+<li>Target pravidla <b>navysuji objem</b> pro silne prodejny, kde se zbozi prodava</li>
+<li>Celkovy efekt: <b>mensi oversell</b> na source strane, <b>lepsi zasobeni</b> na target strane</li>
+<li>Pravidla jsou <b>konzervativni</b> - Dead a Dying segmenty (22,000+ SKU) zustavaji na ML=1</li>
+</ul>
+</div>
+</div>
+
+<p><i>Generovano: 2026-03-22 03:46 | CalculationId=233 | EntityListId=3 |
+Viz <a href="consolidated_findings.html">Report 1: Findings</a> pro kompletni analytiku,
+<a href="consolidated_decision_tree.html">Report 2: Decision Tree</a> pro pravidla.</i></p>
+</body>
+</html>

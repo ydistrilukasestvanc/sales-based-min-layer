@@ -14,7 +14,13 @@
       "mcp__ydistri-kb__search_skills",
       "mcp__ydistri-kb__search_code",
       "mcp__ydistri-kb__get_file",
-      "mcp__ydistri-kb__github_cli"
+      "mcp__ydistri-kb__github_cli",
+      "Bash(ls *.html)",
+      "Bash(ls *.png)",
+      "Bash(ls /c/web/ydistri/sales-based-min-layers/reports/consolidated_*)",
+      "Bash(ls *.py)",
+      "Bash(cd:*)",
+      "Bash(PYTHONUTF8=1 python generate_consolidated_reports.py)"
     ],
     "deny": []
   }

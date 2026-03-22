@@ -1,5 +1,13 @@
 # Strukturované zadání: Analytika SalesBased MinLayers pro CalculationId=233
 
+## GLOBÁLNE INŠTRUKCIE (platia pre všetky analýzy, nie len toto zadanie)
+- **Všetky zistenia z konverzácie VŽDY zapisovať do tohto zadania.** Ak niečo zistím, okamžite to zapíšem sem – log musí byť kompletný pre rekonštrukciu.
+- **Výstupy = vždy 3 reporty:** 1) Findings (zistenia + korelácie), 2) Decision tree (pravidlá), 3) Backtest (dopad pravidiel s objemami, nie len SKU count).
+- **Target all-sold = ÚSPECH.** Nikdy to neoznačovať ako problém. Jediný target problém = nothing-sold.
+- **Cieľom NIE JE nulový reorder/oversell.** Cieľ: rozumné zníženie (4M: 5-10%, 9M: <20%).
+- **Backtest vždy na SALES (oversell)**, nie na inbound. Backtest musí ukazovať zmenu OBJEMU redistribúcie (koľko ks viac/menej), nie len počet SKU.
+- **Business rule: A-O (9) a Z-O (11) minimum ML=1.** Len tieto triedy môžu byť target.
+
 **Git repo:** git@github.com:ydistrilukasestvanc/sales-based-min-layer.git
 
 ## Základní kontext
@@ -394,6 +402,13 @@ Klasifikace 36,770 source SKU do 5 vzorců (4 půlroční periody):
 - Široce distribuované produkty = vyšší riziko na source
 - Target: 100+ prodejen = 63.2% all-sold vs 44.3% u 6-20
 
+#### Promo/cenová analýza pre Declining vzorec (NOVÉ)
+- **Declining SKU promo podiel:** 30.8% C-perioda vs 24.1% D-perioda → promo KLESÁ v D, nie rastie
+- **Priemerná cena stála stabilne:** C=68.28 vs D=69.60 EUR → žiadny cenový prepad
+- **Cross-store promo analýza:** 1-20% promo produkty majú NAJVYŠŠÍ oversell (34.4%), >50% promo = 27.8%
+- **Cenové zmeny produktu:** Stabilná cena (1,185 SKU) = 31.7% oversell, pokles >15% (7 SKU) = 28.6%
+- **ZÁVER:** Declining vzorec NIE JE spôsobený promo akciami ani cenovými zmenami! Promo podiel je rovnaký ako u iných vzorov (~30%). Problém je v tom, že produkt sa stále predáva (klesajúco ale konzistentne) a MinLayer to podceňuje.
+- **Zaujímavosť:** Produkty s malým promo podielom (1-20%) majú vyšší oversell než tie s veľkým (>50%). Možné vysvetlenie: produkty s veľa promo sa predávajú hlavne v promo → po redistribúcii (mimo promo) sa toľko nepredajú.
 #### 6. Ověření product trend analýzy
 - POTVRZENO: Sales_Older (2024-07 až 2025-01) a Sales_Recent (2025-01 až 2025-07) jsou OBĚ PRE-redistribuce
 - Trend je validní vstup pro decision tree

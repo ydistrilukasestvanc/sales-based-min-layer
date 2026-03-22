@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Konsolidovana analytika: SalesBased MinLayers - Calc 233</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html" class="active">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a></div>
+
+<h1>Konsolidovana analytika: SalesBased MinLayers - Calc 233</h1>
+<p><b>CalculationId=233</b> | EntityListId=3 | Datum kalkulace: 2025-07-13 | Monitoring: do 2026-03-22 | Generovano: 2026-03-22 03:46</p>
+
+<!-- ========== SECTION 1: OVERVIEW ========== -->
+<div class="section">
+<h2>1. Prehled</h2>
+
+<div style="text-align: center;">
+<div class="metric"><div class="v">42,404</div><div class="l">Redistribucnich paru</div></div>
+<div class="metric"><div class="v">36,770</div><div class="l">Source SKU</div></div>
+<div class="metric"><div class="v">41,631</div><div class="l">Target SKU</div></div>
+<div class="metric"><div class="v">48,754 ks</div><div class="l">Celkem presunuto</div></div>
+</div>
+
+<h3>Cilove miry oversell</h3>
+<p>Cil pro 4M oversell: <b>5-10%</b> | Cil pro 9M total: <b>&lt;20%</b></p>
+
+<table>
+<tr><th>MinLayer</th><th>4M Oversell</th><th>9M Total Oversell</th><th>Stav</th></tr>
+<tr><td>ML0</td><td class="good">1.1%</td><td class="good">2.3%</td><td class="good">V CILI</td></tr>
+<tr><td>ML1</td><td class="good">3.6%</td><td class="good">12.5%</td><td class="good">V CILI</td></tr>
+<tr><td>ML2</td><td class="warn">5.1%</td><td class="bad">22.2%</td><td class="bad">PREKRACUJE total cil</td></tr>
+<tr><td>ML3</td><td class="good">3.4%</td><td class="good">18.0%</td><td class="good">V CILI</td></tr>
+</table>
+
+<div class="insight-good">
+<b>Klicovy zaver:</b> ML0 a ML1 jsou JIZ v cilovych mezich. ML3 je tesne pod cilem. Jediny problem je ML2 (22.2% total oversell),
+ktery prekracuje 20% cil. Optimalizace by se mela zameret primarne na ML2 segment.
+</div>
+</div>
+
+<!-- ========== SECTION 2: SALES PATTERNS ========== -->
+<div class="section">
+<h2>2. Prodejni vzory (24M historie) - primarni prediktor</h2>
+
+<p>Analyza 24-mesicni prodejni historie odhalila 5 vzoru, ktere silne predikuji oversell risk po redistribuci.</p>
+
+<table>
+<tr><th>Pattern</th><th>Popis</th><th>SKU</th><th>Oversell %</th><th>Avg MinLayer</th></tr>
+<tr><td>Dead</td><td>0 prodeju za 24M</td><td>15,625</td><td>7.8%</td><td>0.94</td></tr>
+<tr><td>Dying</td><td>Prodeje jen ve starsich obdobich</td><td>6,427</td><td>9.7%</td><td>0.90</td></tr>
+<tr><td>Sporadic</td><td>Nepravidelne prodeje</td><td>9,891</td><td>15.3%</td><td>1.10</td></tr>
+<tr><td>Consistent</td><td>Prodeje v 3-4 obdobich</td><td>3,288</td><td class="bad">22.7%</td><td>1.70</td></tr>
+<tr><td>Declining</td><td>Klesajici trend (B&gt;C&gt;D)</td><td>1,539</td><td class="bad">28.3%</td><td>1.10</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>Declining pattern je NEJHORSI:</b> 28.3% oversell navzdory nizkemu prumerenemu MinLayer (1.1).
+Tyto produkty maji klesajici prodeje - redistribuce z nich odvazi zbozi, ale zdrojova prodejna ho stale prodava (jen mene nez drive).
+</div>
+
+<h3>Kombinace Pattern x Store Strength</h3>
+<img src="fig_findings_01.png">
+
+<table>
+<tr><th>Pattern</th><th>Weak</th><th>Mid</th><th>Strong</th></tr>
+<tr><td>Dead</td><td class="good">5.1%</td><td class="good">7.8%</td><td class="good">10.0%</td></tr>
+<tr><td>Dying</td><td class="good">8.1%</td><td class="good">9.7%</td><td class="good">12.6%</td></tr>
+<tr><td>Sporadic</td><td class="good">10.9%</td><td class="good">15.3%</td><td class="bad">20.1%</td></tr>
+<tr><td>Consistent</td><td class="good">13.2%</td><td class="bad">22.7%</td><td class="bad">28.0%</td></tr>
+<tr><td>Declining</td><td class="bad">25.1%</td><td class="bad">28.3%</td><td class="bad">35.4%</td></tr>
+</table>
+
+<div class="insight">
+<b>Pouze 6 z 15 segmentu prekracuje 20% cil.</b> To znamena, ze pravidla nemusime zprisnovat ploskate pro vsechny - staci cilene zasahnout
+problematicke kombinace (Sporadic/Strong, Consistent/Mid+Strong, Declining/vsechny).
+</div>
+</div>
+
+<!-- ========== SECTION 3: STORE STRENGTH ========== -->
+<div class="section">
+<h2>3. Sila prodejny</h2>
+
+<img src="fig_findings_02.png">
+
+<p>Sila prodejny (merena decilem prodejnosti) ma linearni vliv na obe strany redistribuce:</p>
+
+<table>
+<tr><th>Metrika</th><th>Decil 1 (Weak)</th><th>Decil 10 (Strong)</th><th>Trend</th></tr>
+<tr><td>Source Reorder %</td><td>26%</td><td>44%</td><td>Linearni rust: silnejsi prodejny = vice reorderu</td></tr>
+<tr><td>Target All-Sold (SUCCESS)</td><td>48%</td><td>70%</td><td>Silnejsi prodejny prodaji vsechen redistribuovany tovar</td></tr>
+<tr><td>Target Nothing-Sold (PROBLEM)</td><td>32%</td><td>14%</td><td>Slabsi prodejny = vice "zaseknuteho" zbozi</td></tr>
+</table>
+
+<div class="insight">
+<b>Tok redistribuci:</b> Vetsina redistribuci proudi Mid-&gt;Strong a Strong-&gt;Strong.
+To znamena, ze redistributujeme prevazne mezi silnymi prodejnami, kde je vysoka sance prodeje na obou stranach.
+</div>
+</div>
+
+<!-- ========== SECTION 4: MONTHLY CADENCE ========== -->
+<div class="section">
+<h2>4. Mesicni kadence prodeju</h2>
+
+<p>Kolik mesicu za poslednich 24M mel produkt prodeje na dane prodejne?</p>
+
+<img src="fig_findings_03.png">
+
+<table>
+<tr><th>Mesice s prodeji</th><th>SKU</th><th>Oversell / Reorder %</th><th>Avg MinLayer</th><th>Poznamka</th></tr>
+<tr><td>0M</td><td>15,384</td><td>8.3% oversell</td><td>0.94</td><td>Zadne prodeje = nizky oversell</td></tr>
+<tr><td>1M</td><td>8,022</td><td>35.5% reorder</td><td>1.00</td><td>Jediny mesic prodeju</td></tr>
+<tr><td>3M</td><td>2,635</td><td>47.8% reorder</td><td>1.10</td><td>Sporadicke prodeje</td></tr>
+<tr><td>6M</td><td>805</td><td>57.3% reorder</td><td>1.20</td><td>Pravidelnejsi prodeje</td></tr>
+<tr><td>10M</td><td>258</td><td>67.1% reorder</td><td>1.50</td><td>Caste prodeje</td></tr>
+<tr><td>16M</td><td>58</td><td>81.0% reorder</td><td>1.86</td><td>Temer stale prodeje</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>MinLayer roste PRILIS POMALU:</b> Produkt s 16 mesici prodeju (ze 24M) ma prumerny ML jen 1.86, ale 81% reorder!
+Soucasna heuristika nedostatecne reaguje na frekvenci prodeju. Navrhujeme vyssi ML pro produkty s castymi prodeji.
+</div>
+</div>
+
+<!-- ========== SECTION 5: PAIR ANALYSIS ========== -->
+<div class="section">
+<h2>5. Analyza redistribucnich paru</h2>
+
+<p>Kazdy par source-target muzeme klasifikovat podle vysledku na obou stranach:</p>
+
+<img src="fig_findings_04.png">
+
+<table>
+<tr><th>Vysledek paru</th><th>Popis</th><th>Pocet</th><th>Podil</th></tr>
+<tr><td class="good">BEST</td><td>Source OK (bez reorderu) + Target vse prodal</td><td>14,896</td><td>35.1%</td></tr>
+<tr><td class="good">IDEAL</td><td>Source OK + Target castecne prodal</td><td>4,923</td><td>11.6%</td></tr>
+<tr><td class="warn">SRC FAIL</td><td>Source reorderoval, ale Target prodal</td><td>13,530</td><td>31.9%</td></tr>
+<tr><td class="bad">WASTED</td><td>Source OK, ale Target nic neprodal</td><td>6,274</td><td>14.8%</td></tr>
+<tr><td class="bad">DOUBLE FAIL</td><td>Source reorderoval + Target nic neprodal</td><td>2,781</td><td>6.6%</td></tr>
+</table>
+
+<div class="insight-good">
+<b>Target success rate: 78.6%</b> - vetsina redistribucniho zbozi se proda (alespon castecne).
+</div>
+
+<h3>Tok a double-fail rate</h3>
+<table>
+<tr><th>Smer toku</th><th>Double Fail %</th><th>Hodnoceni</th></tr>
+<tr><td>Weak -&gt; Strong</td><td class="good">2.8%</td><td>Nejlepsi smer</td></tr>
+<tr><td>Mid -&gt; Strong</td><td class="good">3.9%</td><td>Dobry smer</td></tr>
+<tr><td>Strong -&gt; Strong</td><td>5.1%</td><td>Prijatelny</td></tr>
+<tr><td>Mid -&gt; Mid</td><td>5.8%</td><td>Prumerny</td></tr>
+<tr><td>Strong -&gt; Weak</td><td class="bad">10.6%</td><td>Nejhorsi smer</td></tr>
+</table>
+
+<div class="insight">
+<b>Redistribuce ze slabych do silnych prodejen funguje nejlepe</b> (2.8% double fail).
+Opacny smer (Strong-&gt;Weak) ma 4x vyssi selhani. To potvrzuje, ze sila prodejny je klicovy faktor pro target.
+</div>
+</div>
+
+<!-- ========== SECTION 6: PROMO/PRICE ========== -->
+<div class="section">
+<h2>6. Promo a cenova analyza</h2>
+
+<h3>Promo share a oversell</h3>
+<p>Klesajici prodejni vzor (Declining) <b>NENI zpusoben promakcemi</b> - podil promo akci (~30%) je stejny jako u ostatnich vzoru.</p>
+<p>Ceny produktu jsou stabilni (bez poklesu), takze Declining pattern reflektuje skutecny pokles poptavky.</p>
+
+<table>
+<tr><th>Promo podil</th><th>Oversell %</th><th>Poznamka</th></tr>
+<tr><td>0% (zadne promo)</td><td>14.2%</td><td>Zakladni uroven</td></tr>
+<tr><td>1-20% promo</td><td class="bad">34.4%</td><td>NEJVYSSI oversell</td></tr>
+<tr><td>20-50% promo</td><td>29.1%</td><td>Vyssi nez prumer</td></tr>
+<tr><td>&gt;50% promo</td><td class="bad">27.8%</td><td>Vysoke, ale nizsi nez 1-20%</td></tr>
+</table>
+
+<div class="insight">
+<b>Produkty s 1-20% promo poditem maji NEJVYSSI oversell (34.4%).</b> Duvod: tyto produkty se prodavaji primarne behem promo akci.
+Po redistribuci (mimo promo obdobi) se prodavaji pomaleji. Produkty s &gt;50% promo (27.8%) maji paradoxne nizsi oversell,
+protoze jsou jiz "znamy" jako promo zbozi a system s tim pocita.
+</div>
+</div>
+
+<!-- ========== SECTION 7: CHRISTMAS ========== -->
+<div class="section">
+<h2>7. Vanocni analyza</h2>
+
+<table>
+<tr><th>Vanocni podil prodeju</th><th>Oversell %</th><th>Popis</th></tr>
+<tr><td>0-5% (nesezonni)</td><td>16.0%</td><td>Standardni produkty</td></tr>
+<tr><td>5-20% (mirne sezonni)</td><td>20.1%</td><td>Mirny vanocni efekt</td></tr>
+<tr><td>20-60% (sezonni)</td><td class="bad">25-27%</td><td>Vyrazny vanocni boost</td></tr>
+<tr><td>&gt;60% (ciste vanocni)</td><td>18.8%</td><td>Prodej hlavne o Vanocich</td></tr>
+</table>
+
+<div class="insight">
+<b>Nejriskovejsi segment: 1-40% vanocni podil</b> - celorocni prodejci, kteri dostavaji boost o Vanocich.
+Po redistribuci (mimo Vanoce) se prodavaji pomaleji nez ocekavano.
+<br><br>
+<b>Ciste vanocni produkty (&gt;60%)</b> maji prekvapive nizsi oversell (18.8%), protoze se po vanocni sezone neprodavaji vubec
+a system je spravne identifikuje jako prebytky.
+</div>
+</div>
+
+<!-- ========== SECTION 8: OTHER FACTORS ========== -->
+<div class="section">
+<h2>8. Dalsi faktory</h2>
+
+<h3>Redistribucni smycka</h3>
+<p>3,117 SKU (8.5%) bylo <b>znovu redistribuovano</b> (Y-STORE TRANSFER). Z nich 72% jsou zero-selleri s ML1.
+To indikuje, ze nektere produkty se redistributuji opakovane bez prodeje.</p>
+
+<h3>Koncentrace produktu</h3>
+<table>
+<tr><th>Pocet prodejen s produktem</th><th>Reorder %</th></tr>
+<tr><td>&lt;=20 prodejen</td><td>17.0%</td></tr>
+<tr><td>21-50 prodejen</td><td>28.5%</td></tr>
+<tr><td>51-100 prodejen</td><td>36.2%</td></tr>
+<tr><td>100+ prodejen</td><td class="bad">42.9%</td></tr>
+</table>
+
+<div class="insight">
+<b>Produkty na 100+ prodejnach maji 42.9% reorder</b> vs. jen 17% u produktu na &lt;=20 prodejnach.
+Sirce distribuovane produkty se prodavaji casteji a redistribuce z nich je rizikova.
+</div>
+
+<h3>SkuClass delisting</h3>
+<p>Delistovane source SKU maji o <b>29 procentnich bodu nizsi reorder</b> (13.2% vs 42.7%).
+Pro delistovane produkty je redistribuce bezpecna - MinLayer muze byt 0.</p>
+
+<h3>Brand-Store fit</h3>
+<table>
+<tr><th>Kombinace</th><th>Reorder %</th><th>Rozdil od prumeru</th></tr>
+<tr><td>Strong brand + Strong store</td><td class="bad">45.3%</td><td>+7.8pp</td></tr>
+<tr><td>Weak brand + Weak store</td><td class="good">29.3%</td><td>-8.2pp</td></tr>
+<tr><td>Rozdil</td><td colspan="2"><b>16 procentnich bodu!</b></td></tr>
+</table>
+
+<div class="insight">
+<b>Brand-store fit je silny prediktor:</b> Silny brand na silne prodejne = 45.3% reorder.
+Slaby brand na slabe prodejne = 29.3%. Rozdil 16pp ukazuje, ze brand-store fit by mel byt soucasti pravidel.
+</div>
+</div>
+
+<!-- ========== SECTION 9: SUMMARY TABLE ========== -->
+<div class="section">
+<h2>9. Souhrn vsech faktoru a jejich dopad</h2>
+
+<table>
+<tr><th>Faktor</th><th>Dopad na oversell/reorder</th><th>Smer</th><th>Velikost</th><th>Priorita</th></tr>
+<tr><td>Sales Pattern (24M)</td><td>Declining 28.3% vs Dead 7.8%</td><td>Rust</td><td class="bad">+20.5pp</td><td>1 - Primarni</td></tr>
+<tr><td>Store Strength</td><td>Strong 44% vs Weak 26% reorder</td><td>Rust</td><td class="bad">+18pp</td><td>1 - Primarni</td></tr>
+<tr><td>Brand-Store Fit</td><td>Strong+Strong 45.3% vs Weak+Weak 29.3%</td><td>Rust</td><td class="bad">+16pp</td><td>2 - Sekundarni</td></tr>
+<tr><td>Product Concentration</td><td>100+ stores 42.9% vs &lt;=20 stores 17%</td><td>Rust</td><td class="bad">+25.9pp</td><td>2 - Sekundarni</td></tr>
+<tr><td>Monthly Cadence</td><td>16M: 81% vs 0M: 8.3%</td><td>Rust</td><td class="bad">+72.7pp</td><td>1 - Primarni</td></tr>
+<tr><td>SkuClass Delisting</td><td>Delisted 13.2% vs Active 42.7%</td><td>Pokles</td><td class="good">-29.5pp</td><td>1 - Override</td></tr>
+<tr><td>Promo Share (1-20%)</td><td>34.4% vs 14.2% (no promo)</td><td>Rust</td><td class="bad">+20.2pp</td><td>3 - Modifier</td></tr>
+<tr><td>Xmas Seasonality</td><td>20-60% share: 25-27% vs 16%</td><td>Rust</td><td class="warn">+9-11pp</td><td>3 - Modifier</td></tr>
+<tr><td>Redist. Loop</td><td>8.5% SKU re-redistributed, 72% zero-sellers</td><td>Signal</td><td class="warn">Indikator</td><td>3 - Monitoring</td></tr>
+</table>
+
+<div class="insight">
+<b>Hlavni 3 faktory pro pravidla:</b> (1) Prodejni vzor 24M, (2) Sila prodejny, (3) Mesicni kadence.
+Tyto tri faktory vysvetluji vetsinu variability v oversell rates.
+Viz <a href="consolidated_decision_tree.html">Report 2: Decision Tree</a> pro konkretni pravidla.
+</div>
+</div>
+
+<p><i>Generovano: 2026-03-22 03:46 | CalculationId=233 | EntityListId=3</i></p>
+</body>
+</html>
