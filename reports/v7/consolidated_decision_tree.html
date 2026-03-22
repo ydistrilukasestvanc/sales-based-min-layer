@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v7 Decision Tree: MinLayer Rules 0-4 (Synteza v5+v6)</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v7-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html" class="active">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a><span style="float:right; color:#7f8c8d; font-size:11px;">v7 Synthesis (v5+v6) | ML 0-4 | Orderable min=1 | Bidirectional target</span></div>
+
+<h1>Decision Tree v7: MinLayer Rules 0-4 <span class="v7-badge">Synteza v5+v6</span></h1>
+<p><b>CalculationId=233</b> | Date: 2025-07-13 | Generated: 2026-03-22 16:39</p>
+<p>Pravidla vychazi z <a href="consolidated_findings.html">Report 1</a>.
+Strom ma <b>4 smery</b>: source up, source down, target up (growth), target down (reduction).
+<b>v7: Velocity segmenty z v6, validovane modifikatory z v5, bidirectional target, ML 0-4.</b></p>
+
+<div class="insight" style="background: #fff3cd; border-left: 6px solid #f39c12; padding: 15px;">
+<b>v7 validace: 5/8 modifikatoru potvrzeno.</b><br>
+Potvrzeny: Seasonal, Sold After >=80%, LastSaleGap <=90d, Delisting, RedistRatio (castecne).<br>
+Zamitnuty: ProductConc <10%, PhantomStock, Loop 4+.
+Bidirectional target: growth pockets (11+ Strong ML=4) i reduction pockets (0 Weak ML=1).
+</div>
+
+<div class="insight-new">
+<b>v7 ORDERABLE CONSTRAINT:</b> A-O (9) a Z-O (11) objednatelne SKU maji vzdy <b>minimum ML=1</b>.
+TrueDead a PartialDead+Weak/Mid by bez constraintu byly ML=0, ale jsou orderable, proto ML=1.
+</div>
+
+<!-- ========== 4-DIRECTION OVERVIEW ========== -->
+<div class="section">
+<h2>1. 4-Direction Framework (bidirectional)</h2>
+<img src="fig_dtree_03.png">
+
+<table>
+<tr><th>Direction</th><th>When</th><th>Action</th><th>Reason</th></tr>
+<tr class="dir-up"><td><b>SOURCE UP</b></td><td>Reorder total >40% + Sold After >70%</td><td>Ponechat vice na source</td><td>Produkty se aktivne prodavaji, v7 validovane modifikatory</td></tr>
+<tr class="dir-down"><td><b>SOURCE DOWN</b></td><td>Reorder total <30% + Sold After <50%</td><td>ML=1 (orderable min)</td><td>TrueDead/PartialDead - neprodavaji se, nizky reorder</td></tr>
+<tr class="dir-down"><td><b>TARGET UP (Growth)</b></td><td>All-sold >70%, 11+ sales</td><td>Poslat vice na target (ML=3-4)</td><td>v5 bidirectional: growth pockets pro nejlepsi targety</td></tr>
+<tr class="dir-up"><td><b>TARGET DOWN (Reduction)</b></td><td>Nothing-sold >60%, 0 sales</td><td>ML=1 (minimum)</td><td>v5 bidirectional: reduction pockets pro nejhorsi targety</td></tr>
+</table>
+
+<div class="insight-new">
+<b>v7 zlepseni oproti v5/v6:</b> v5 mel bidirectional target ale bez velocity segmentu.
+v6 mel velocity segmenty ale bez bidirectional target. v7 kombinuje oba pristupy.
+</div>
+</div>
+
+<!-- ========== SOURCE RULES ========== -->
+<div class="section">
+<h2>2. Source pravidla (Velocity Segment x Store)</h2>
+
+<h3>2.1 Lookup: Velocity Segment x Store (6x3 = 18 segmentu)</h3>
+<img src="fig_dtree_01.png">
+<table>
+<tr><th>Segment</th><th>Store</th><th>Oversell Total %</th><th>Reorder Total SKU %</th>
+<th>Sold After %</th><th>ML</th><th>Rec</th><th>Dir</th></tr>
+<tr class="dir-down"><td>TrueDead</td><td>Weak</td><td>4.3%</td><td>23.7%</td><td>32.6%</td><td><b>1 (ord min)</b></td><td>CAN LOWER</td><td>DOWN</td></tr>
+<tr class="dir-down"><td>TrueDead</td><td>Mid</td><td>6.1%</td><td>29.0%</td><td>37.2%</td><td><b>1 (ord min)</b></td><td>CAN LOWER</td><td>DOWN</td></tr>
+<tr class=""><td>TrueDead</td><td>Strong</td><td>8.0%</td><td>31.5%</td><td>40.8%</td><td><b>1 (ord min)</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>PartialDead</td><td>Weak</td><td>9.9%</td><td>36.8%</td><td>48.8%</td><td><b>1 (ord min)</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>PartialDead</td><td>Mid</td><td>14.1%</td><td>41.7%</td><td>57.8%</td><td><b>1 (ord min)</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>PartialDead</td><td>Strong</td><td>17.0%</td><td>40.8%</td><td>62.2%</td><td><b>2</b></td><td>OK</td><td>OK</td></tr>
+<tr class="dir-up"><td>BriefNoSale</td><td>Weak</td><td>27.9%</td><td>52.1%</td><td>70.8%</td><td><b>2</b></td><td>MUST RAISE</td><td>UP</td></tr>
+<tr class="dir-up"><td>BriefNoSale</td><td>Mid</td><td>27.9%</td><td>52.1%</td><td>70.8%</td><td><b>2</b></td><td>MUST RAISE</td><td>UP</td></tr>
+<tr class="dir-up"><td>BriefNoSale</td><td>Strong</td><td>27.9%</td><td>52.1%</td><td>70.8%</td><td><b>2</b></td><td>MUST RAISE</td><td>UP</td></tr>
+<tr class=""><td>SlowPartial</td><td>Weak</td><td>8.8%</td><td>32.8%</td><td>71.1%</td><td><b>2</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>SlowPartial</td><td>Mid</td><td>11.7%</td><td>39.3%</td><td>72.6%</td><td><b>2</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>SlowPartial</td><td>Strong</td><td>15.4%</td><td>46.1%</td><td>84.2%</td><td><b>3</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>SlowFull</td><td>Weak</td><td>10.2%</td><td>40.6%</td><td>54.9%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
+<tr class=""><td>SlowFull</td><td>Mid</td><td>14.6%</td><td>48.3%</td><td>62.8%</td><td><b>2</b></td><td>OK</td><td>OK</td></tr>
+<tr class="dir-up"><td>SlowFull</td><td>Strong</td><td>18.3%</td><td>51.4%</td><td>72.6%</td><td><b>2</b></td><td>MUST RAISE</td><td>UP</td></tr>
+<tr class="dir-up"><td>ActiveSeller</td><td>Weak</td><td>22.1%</td><td>52.8%</td><td>90.3%</td><td><b>3</b></td><td>MUST RAISE</td><td>UP</td></tr>
+<tr class="dir-up"><td>ActiveSeller</td><td>Mid</td><td>20.9%</td><td>59.8%</td><td>89.0%</td><td><b>4</b></td><td>MUST RAISE</td><td>UP</td></tr>
+<tr class="dir-up"><td>ActiveSeller</td><td>Strong</td><td>21.9%</td><td>58.3%</td><td>96.0%</td><td><b>4</b></td><td>MUST RAISE</td><td>UP</td></tr>
+
+</table>
+
+<div class="insight">
+<b>v7 source lookup:</b> Stejny jako v6 (velocity segmenty) + v7 validovane modifikatory.
+TrueDead: ML=1 (orderable min). ActiveSeller+Mid/Strong: ML=4.
+</div>
+
+<h3>2.2 Business Rules (Overrides)</h3>
+<table>
+<tr><th>Rule</th><th>Condition</th><th>ML</th><th>Reason</th></tr>
+<tr style="background:#fff3cd"><td><b>Active orderable</b></td><td>SkuClass = A-O (9)</td><td><b>MIN = 1</b></td><td>Aktivni zbozi MUSI zustat (min 1 ks)</td></tr>
+<tr style="background:#fff3cd"><td><b>Z orderable</b></td><td>SkuClass = Z-O (11)</td><td><b>MIN = 1</b></td><td>Z zbozi stale objednatelne</td></tr>
+<tr><td>Delisted</td><td>SkuClass = D(3), L(4), R(5)</td><td>= 0</td><td>Delisted = bezpecne vzit vse (v5 POTVRZEN)</td></tr>
+</table>
+
+<h3>2.3 Source Modifikatory (v7 validated) <span class="new-badge">v7</span></h3>
+<table>
+<tr><th>Modifier</th><th>Condition</th><th>Adjustment</th><th>Evidence + v7 Status</th></tr>
+<tr class="dir-up"><td>Seasonality</td><td>>=20% NovDec</td><td>+1 ML</td><td>v5 POTVRZEN: OS 2x, RO 1.5x</td></tr>
+<tr class="dir-up"><td>Sold After %</td><td>>80% sold_after</td><td>+1 ML</td><td>NOVY v7: ActiveSeller 93.8% - nejsilnejsi prediktor</td></tr>
+<tr class="dir-up"><td>LastSaleGap</td><td><=90d</td><td>+1 ML</td><td>v5 POTVRZEN: sold_after 85-90%</td></tr>
+<tr class=""><td>Stock coverage</td><td><90 days in stock</td><td>BriefNoSale rules</td><td>BriefNoSale segment (48 SKU)</td></tr>
+<tr class="dir-down"><td>Delisting</td><td>SkuClass->D/L</td><td>ML=0</td><td>v5 POTVRZEN: override</td></tr>
+
+</table>
+
+<img src="fig_dtree_05.png">
+
+<div class="insight-new">
+<b>v7 modifikatory (SOURCE):</b> 3 potvrzene +1 modifikatory (Seasonal, Sold After, LastSaleGap).
+Maximalni impact: base 2 + 3 modifikatory = 5, cap na 4. Delisting override = ML=0.
+DROPPED: ProductConc <10%, PhantomStock, Loop 4+ (nedostatek dat).
+</div>
+</div>
+
+<!-- ========== SOLD AFTER AS PREDICTOR ========== -->
+<div class="section">
+<h2>3. "Sold After %" jako prediktor (v7 validovano) <span class="v7-badge">v7</span></h2>
+<img src="fig_dtree_04.png">
+
+<div class="insight-new">
+<b>Klicovy prediktor (v7 validovano):</b> "Sold After %" silne koreluje s reorderem.
+ActiveSeller: 93.8% sold_after, 58.3% reorder -> ML=3-4.
+TrueDead: 36.9% sold_after, 28.2% reorder -> ML=1.
+<b>Sold After >=80% je novy modifier validovany v v7.</b>
+</div>
+</div>
+
+<!-- ========== TARGET RULES ========== -->
+<div class="section">
+<h2>4. Target pravidla (bidirectional, ML 0-4) <span class="new-badge">v7 bidirectional</span></h2>
+
+<h3>4.1 Lookup: SalesBucket x Store (s growth/reduction pockets)</h3>
+<img src="fig_dtree_02.png">
+<table>
+<tr><th>Sales Bucket</th><th>Store</th><th>All-sold Total %</th><th>Nothing-sold 4M %</th><th>ML</th><th>Direction</th></tr>
+<tr class="dir-up"><td>0</td><td>Weak</td><td>31.4%</td><td>73.7%</td><td><b>1</b></td><td>REDUCE</td></tr>
+<tr class="dir-up"><td>0</td><td>Mid</td><td>37.7%</td><td>73.7%</td><td><b>1</b></td><td>REDUCE</td></tr>
+<tr class="dir-up"><td>0</td><td>Strong</td><td>51.6%</td><td>61.1%</td><td><b>1</b></td><td>REDUCE</td></tr>
+<tr class="dir-up"><td>1-2</td><td>Weak</td><td>38.0%</td><td>65.5%</td><td><b>1</b></td><td>REDUCE</td></tr>
+<tr class="dir-up"><td>1-2</td><td>Mid</td><td>40.9%</td><td>62.0%</td><td><b>1</b></td><td>REDUCE</td></tr>
+<tr class=""><td>1-2</td><td>Strong</td><td>47.0%</td><td>58.0%</td><td><b>2</b></td><td>OK</td></tr>
+<tr class=""><td>3-5</td><td>Weak</td><td>54.4%</td><td>45.1%</td><td><b>1</b></td><td>OK</td></tr>
+<tr class=""><td>3-5</td><td>Mid</td><td>54.6%</td><td>45.5%</td><td><b>2</b></td><td>OK</td></tr>
+<tr class=""><td>3-5</td><td>Strong</td><td>61.0%</td><td>40.8%</td><td><b>3</b></td><td>OK</td></tr>
+<tr class="dir-down"><td>6-10</td><td>Weak</td><td>74.3%</td><td>28.1%</td><td><b>2</b></td><td>GROWTH</td></tr>
+<tr class="dir-down"><td>6-10</td><td>Mid</td><td>76.2%</td><td>26.8%</td><td><b>3</b></td><td>GROWTH</td></tr>
+<tr class="dir-down"><td>6-10</td><td>Strong</td><td>78.8%</td><td>22.3%</td><td><b>3</b></td><td>GROWTH</td></tr>
+<tr class="dir-down"><td>11+</td><td>Weak</td><td>84.9%</td><td>12.3%</td><td><b>2</b></td><td>GROWTH</td></tr>
+<tr class="dir-down"><td>11+</td><td>Mid</td><td>87.9%</td><td>11.9%</td><td><b>3</b></td><td>GROWTH</td></tr>
+<tr class="dir-down"><td>11+</td><td>Strong</td><td>89.5%</td><td>10.8%</td><td><b>4</b></td><td>GROWTH</td></tr>
+
+</table>
+
+<div class="insight-new">
+<b>v7 bidirectional target (z v5):</b><br>
+- <b>GROWTH pockets:</b> 11+ Strong (ML=4, all-sold 89.5%), 6-10 Mid/Strong (ML=3, all-sold 76-79%)<br>
+- <b>REDUCTION pockets:</b> 0 Weak/Mid (ML=1, nothing-sold 73.7%), 1-2 Weak (ML=1, nothing-sold 65.5%)<br>
+v6 mel max ML=3, v7 pridava ML=4 pro nejlepsi targety (z v5 bidirectional pristupu).
+</div>
+
+<h3>4.2 Target modifikatory (v7 validated)</h3>
+<table>
+<tr><th>Modifier</th><th>Condition</th><th>Adjustment</th><th>Evidence + v7 Status</th></tr>
+<tr class="dir-up"><td>Brand-store mismatch</td><td>BrandWeak+StoreWeak</td><td>-1 ML</td><td>POTVRZEN: nothing-sold 54.9%</td></tr>
+<tr class="dir-up"><td>Stock coverage</td><td>0 days (new) target</td><td>-1 ML</td><td>nothing-sold 52.0%, uncertain</td></tr>
+<tr class="dir-up"><td>Delisting</td><td>SkuClass->D/L</td><td>ML=0</td><td>v5 POTVRZEN: override</td></tr>
+<tr class="dir-down"><td>All-sold trend</td><td>>=70% stores</td><td>+1 ML</td><td>POTVRZEN: high sell-through signal</td></tr>
+
+</table>
+</div>
+
+<!-- ========== PSEUDOCODE ========== -->
+<div class="section">
+<h2>5. Pseudocode (v7)</h2>
+
+<h3>5.1 Source MinLayer</h3>
+<pre>
+FUNCTION CalculateSourceMinLayer_v7(sku, store):
+    -- 1. Delisting override [v5 POTVRZEN]
+    IF sku.SkuClass IN (3, 4, 5):   -- D, L, R
+        RETURN 0
+
+    -- 2. Calculate Velocity [v6 base]
+    velocity = (sku.Sales_12M / sku.DaysInStock_12M) * 30
+    segment = ClassifyVelocitySegment(velocity, sku.DaysInStock_12M)
+
+    -- 3. Base ML from Segment x Store lookup [v6 base]
+    strength = ClassifyStoreStrength(store.Decile)
+    base = SOURCE_LOOKUP[segment][strength]
+
+    -- 4. ORDERABLE CONSTRAINT
+    IF sku.SkuClass IN (9, 11):       -- A-O or Z-O
+        base = MAX(base, 1)           -- NEVER ML=0
+
+    -- 5. Validated modifiers [v7: 3 confirmed + 1 partial]
+    IF sku.NovDecShare >= 0.20: base += 1         -- v5 POTVRZEN: seasonal
+    IF sku.SoldAfterPct > 80: base += 1           -- v7 NOVY: strong predictor
+    IF sku.LastSaleGapDays <= 90: base += 1       -- v5 POTVRZEN: recent activity
+
+    -- DROPPED in v7: ProductConc, PhantomStock, Loop4+
+
+    RETURN CLAMP(base, 0, 4)
+</pre>
+
+<h3>5.2 Target MinLayer</h3>
+<pre>
+FUNCTION CalculateTargetMinLayer_v7(sku, store):
+    -- 1. Delisting override [v5 POTVRZEN]
+    IF sku.SkuClass IN (3, 4, 5):
+        RETURN 0
+
+    -- 2. Base ML from Sales x Store lookup [v6 base + v5 bidirectional]
+    bucket = ClassifySalesBucket(sku, store)
+    strength = ClassifyStoreStrength(store.Decile)
+    base = TARGET_LOOKUP[bucket][strength]
+    -- NOTE: TARGET_LOOKUP now includes ML=4 for 11+ Strong (v5 bidirectional)
+
+    -- 3. Validated modifiers [v7]
+    IF BrandStoreFit(sku, store) == 'BrandWeak+StoreWeak': base -= 1
+    IF store.StockCoverageDays == 0: base -= 1    -- new product penalty
+    IF sku.AllSoldPct >= 70: base += 1            -- growth pocket signal
+    IF sku.SkuClass IN (3, 4, 5): base = 0       -- delisted
+
+    RETURN CLAMP(base, 0, 4)
+</pre>
+</div>
+
+<p><i>Generated: 2026-03-22 16:39 | CalculationId=233 | v7 Synteza (v5+v6) | ML 0-4 | Orderable min=1 | Bidirectional target</i></p>
+</body>
+</html>

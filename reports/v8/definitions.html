@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Definitions v7 — Kompletni algoritmicky popis</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v7-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+
+/* TOC styles */
+.toc { background: white; padding: 20px 30px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.toc h2 { margin-top: 0; border-left: 4px solid #3498db; padding-left: 12px; }
+.toc ul { list-style: none; padding-left: 0; }
+.toc > ul > li { margin: 6px 0; }
+.toc > ul > li > a { font-weight: bold; color: #2c3e50; text-decoration: none; font-size: 14px; }
+.toc > ul > li > a:hover { color: #3498db; }
+.toc > ul > li > ul { padding-left: 24px; margin-top: 4px; }
+.toc > ul > li > ul > li { margin: 3px 0; }
+.toc > ul > li > ul > li > a { color: #555; text-decoration: none; font-size: 13px; }
+.toc > ul > li > ul > li > a:hover { color: #3498db; }
+.toc-letter { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; background: #3498db; color: white; border-radius: 4px; font-size: 12px; font-weight: bold; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<div class="nav">
+    <a href="consolidated_findings.html">Report 1: Findings</a>
+    <a href="consolidated_decision_tree.html">Report 2: Decision Tree</a>
+    <a href="consolidated_backtest.html">Report 3: Backtest</a>
+    <a href="definitions.html" class="active">Report 4: Definitions</a>
+    <span style="float:right; color:#7f8c8d; font-size:11px;">v7 Synthesis (v5+v6) | ML 0-4 | Orderable min=1 | Bidirectional target</span>
+</div>
+
+<h1>Definitions v7 &mdash; Kompletn&iacute; algoritmick&yacute; popis</h1>
+<p style="color: #7f8c8d;"><strong>Kalkulace:</strong> 233 (Douglas DE) &nbsp;|&nbsp; <strong>ApplicationDate:</strong> 2025-07-13</p>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+    <h2>Obsah</h2>
+    <ul>
+        <li><span class="toc-letter">A</span><a href="#sec-a">Vstupn&eacute; parametry</a></li>
+        <li><span class="toc-letter">B</span><a href="#sec-b">Source metriky</a>
+            <ul>
+                <li><a href="#sec-b1">B1. Oversell</a></li>
+                <li><a href="#sec-b2">B2. Reorder</a></li>
+                <li><a href="#sec-b3">B3. TotalQtyRedistributed</a></li>
+                <li><a href="#sec-b4">B4. Sales_Post</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">C</span><a href="#sec-c">Target metriky</a>
+            <ul>
+                <li><a href="#sec-c1">C1. Sell-Through (ST)</a></li>
+                <li><a href="#sec-c2">C2. Sell-Through-1pc (ST1)</a></li>
+                <li><a href="#sec-c3">C3. Nothing-Sold</a></li>
+                <li><a href="#sec-c4">C4. All-Sold</a></li>
+                <li><a href="#sec-c5">C5. TotalQtyReceived</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">D</span><a href="#sec-d">Stock Availability</a>
+            <ul>
+                <li><a href="#sec-d1">D1. DaysInStock</a></li>
+                <li><a href="#sec-d2">D2. Velocity</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">E</span><a href="#sec-e">Source klasifikace</a>
+            <ul>
+                <li><a href="#sec-e1">E1. Pattern (v5)</a></li>
+                <li><a href="#sec-e2">E2. Velocity Segment (v6/v7)</a></li>
+                <li><a href="#sec-e3">E3. SoldAfter</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">F</span><a href="#sec-f">Store klasifikace</a>
+            <ul>
+                <li><a href="#sec-f1">F1. StoreStrength</a></li>
+                <li><a href="#sec-f2">F2. BrandQuintile</a></li>
+                <li><a href="#sec-f3">F3. BrandStoreFit</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">G</span><a href="#sec-g">Source modifik&aacute;tory</a>
+            <ul>
+                <li><a href="#sec-g1">G1. LastSaleGap</a></li>
+                <li><a href="#sec-g2">G2. Seasonal (Xmas)</a></li>
+                <li><a href="#sec-g3">G3. RedistRatio</a></li>
+                <li><a href="#sec-g4">G4. Delisting</a></li>
+                <li><a href="#sec-g5">G5. Loop</a></li>
+                <li><a href="#sec-g6">G6. PhantomStock</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">H</span><a href="#sec-h">Target modifik&aacute;tory</a>
+            <ul>
+                <li><a href="#sec-h1">H1. AllSold / ST1 high</a></li>
+                <li><a href="#sec-h2">H2. Growth pocket</a></li>
+                <li><a href="#sec-h3">H3. Strong absorber</a></li>
+                <li><a href="#sec-h4">H4. Nothing-sold / low ST</a></li>
+                <li><a href="#sec-h5">H5. BrandStoreMismatch</a></li>
+                <li><a href="#sec-h6">H6. Delisting</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">I</span><a href="#sec-i">Cross-product sign&aacute;ly</a>
+            <ul>
+                <li><a href="#sec-i1">I1. ProductVolatilityScore</a></li>
+                <li><a href="#sec-i2">I2. ProductConcentrationShare</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">J</span><a href="#sec-j">Target Stock Coverage</a>
+            <ul>
+                <li><a href="#sec-j1">J1. TargetStockCoverage</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">K</span><a href="#sec-k">P&aacute;rov&aacute; anal&yacute;za</a>
+            <ul>
+                <li><a href="#sec-k1">K1. PairOutcome</a></li>
+            </ul>
+        </li>
+        <li><span class="toc-letter">L</span><a href="#sec-l">Flow Matrix</a></li>
+        <li><span class="toc-letter">M</span><a href="#sec-m">Clamp pravidla</a></li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- A. VSTUPNE PARAMETRY -->
+<!-- ============================================================ -->
+<div class="section" id="sec-a">
+    <h2>A. Vstupn&eacute; parametry</h2>
+    <p>Z&aacute;kladn&iacute; konfigurace kalkulace a periody pou&zcaron;it&eacute; v cel&eacute;m algoritmu.</p>
+    <table>
+        <thead>
+            <tr><th>Parametr</th><th>Hodnota</th><th>Popis</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>ApplicationDate</code></td><td>2025-07-13</td><td>Z tabulky Calculation</td></tr>
+            <tr><td><code>Period_4M</code></td><td>[2025-07-13, 2025-11-13)</td><td>4 m&ecaron;s&iacute;ce po redistribuci</td></tr>
+            <tr><td><code>Period_Total</code></td><td>[2025-07-13, today)</td><td>Cel&eacute; obdob&iacute; po redistribuci (~9M)</td></tr>
+            <tr><td><code>Period_6M_Before</code></td><td>[2025-01-13, 2025-07-13)</td><td>6 m&ecaron;s&iacute;c&uring; p&rcaron;ed redistribuc&iacute;</td></tr>
+            <tr><td><code>Period_12M_Before</code></td><td>[2024-07-13, 2025-07-13)</td><td>12 m&ecaron;s&iacute;c&uring; p&rcaron;ed redistribuc&iacute;</td></tr>
+            <tr><td><code>Period_24M_Before</code></td><td>[2023-07-13, 2025-07-13)</td><td>24 m&ecaron;s&iacute;c&uring; p&rcaron;ed redistribuc&iacute;</td></tr>
+            <tr><td><code>EntityListId</code></td><td>3</td><td>Kl&iacute;&ccaron; v JSON MinLayerLists</td></tr>
+            <tr><td><code>Ecomm_Exclude</code></td><td>WarehouseId = 300</td><td>Vylou&ccaron;en&iacute; e-commerce skladu</td></tr>
+            <tr><td><code>ML_Range</code></td><td>[0, 4]</td><td>Rozsah MinLayer hodnot</td></tr>
+            <tr><td><code>Orderable_SkuClassId</code></td><td>{9 (A-O), 11 (Z-O)}</td><td>Objednateln&eacute; SKU t&rcaron;&iacute;dy</td></tr>
+            <tr><td><code>Delisted_SkuClassId</code></td><td>{3 (D), 4 (L)}</td><td>Vylistovan&eacute; SKU t&rcaron;&iacute;dy</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ============================================================ -->
+<!-- B. SOURCE METRIKY -->
+<!-- ============================================================ -->
+<div class="section" id="sec-b">
+    <h2>B. Source metriky</h2>
+
+    <h3 id="sec-b1">B1. Oversell <span class="v7-badge">PRIM&Aacute;RN&Iacute;</span></h3>
+    <p>Prodalo se v&iacute;ce, ne&zcaron; co z&uring;stalo na source. Hodnota je o&rcaron;&iacute;znut&aacute; (cap) na redistribuovan&eacute; mno&zcaron;stv&iacute;.</p>
+<pre>
+RemainingAfterRedist = SourceAvailableSupply - TotalQtyRedistributed
+Oversell_Qty         = LEAST(GREATEST(Sales_Post - RemainingAfterRedist, 0), TotalQtyRedistributed)
+Oversell_SKU         = 1 ak Oversell_Qty &gt; 0
+</pre>
+
+    <h3 id="sec-b2">B2. Reorder</h3>
+    <p>Inbound po redistribuci, o&rcaron;&iacute;znut&yacute; na redistribuovan&eacute; mno&zcaron;stv&iacute;. Nad tento cap by se objednalo i bez redistribuce.</p>
+<pre>
+Raw_Inbound  = SUM(Inbound.Quantity) za obdobi po ApplicationDate
+Reorder_Qty  = LEAST(Raw_Inbound, TotalQtyRedistributed)
+Reorder_SKU  = 1 ak Reorder_Qty &gt; 0
+</pre>
+
+    <h3 id="sec-b3">B3. TotalQtyRedistributed <small>(per source SKU)</small></h3>
+<pre>
+TotalQtyRedistributed = SUM(SkuRedistributionExpanded.Quantity)
+                        WHERE SourceSkuId = X AND CalculationId = 233
+</pre>
+
+    <h3 id="sec-b4">B4. Sales_Post <small>(per SKU, per obdob&iacute;)</small></h3>
+<pre>
+Sales_Post = SUM(SaleTransaction.Quantity) WHERE SkuId = X AND Date IN period
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<!-- C. TARGET METRIKY -->
+<!-- ============================================================ -->
+<div class="section" id="sec-c">
+    <h2>C. Target metriky</h2>
+
+    <h3 id="sec-c1">C1. Sell-Through (ST)</h3>
+<pre>
+Base = TargetAvailableSupply + TotalQtyReceived
+Sold = SUM(SaleTransaction.Quantity) za obdobi
+ST   = LEAST(Sold, Base) / Base &times; 100
+</pre>
+
+    <h3 id="sec-c2">C2. Sell-Through-1pc (ST1)</h3>
+    <p>Varianta ST, kter&aacute; d&aacute;v&aacute; 100&nbsp;% kdy&zcaron; zb&yacute;v&aacute; p&rcaron;esn&ecaron; 1 ks.</p>
+<pre>
+Ak Sold &gt;= Base:  ST1 = ST = 100%
+Ak Sold &lt; Base AND Base &gt; 1:  ST1 = LEAST(Sold, Base - 1) / (Base - 1) &times; 100
+Ak Base &lt;= 1:  ST1 = NULL
+</pre>
+
+    <h3 id="sec-c3">C3. Nothing-Sold</h3>
+<pre>
+NothingSold = 1 ak SUM(Sales_Post) = 0
+</pre>
+
+    <h3 id="sec-c4">C4. All-Sold</h3>
+<pre>
+AllSold = 1 ak SUM(Sales_Post) &gt;= Base
+</pre>
+
+    <h3 id="sec-c5">C5. TotalQtyReceived <small>(per target SKU)</small></h3>
+<pre>
+TotalQtyReceived = SUM(SkuRedistributionExpanded.Quantity)
+                   WHERE TargetSkuId = X AND CalculationId = 233
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<!-- D. STOCK AVAILABILITY -->
+<!-- ============================================================ -->
+<div class="section" id="sec-d">
+    <h2>D. Stock Availability</h2>
+
+    <h3 id="sec-d1">D1. DaysInStock <small>(per SKU, per obdob&iacute;)</small></h3>
+    <p>Po&ccaron;&iacute;taj&iacute; se <code>DaysInStock_6M</code>, <code>DaysInStock_12M</code>, <code>DaysInStock_24M</code>.</p>
+<pre>
+Pro ka&zcaron;d&yacute; z&aacute;znam v SkuAvailableSupply:
+    Ak AvailableSupply &gt; 0:
+        clip_start = MAX(record.DateFrom, period_start)
+        clip_end   = MIN(COALESCE(record.DateTo, period_end), period_end)
+        days       = DATEDIFF(DAY, clip_start, clip_end)
+    Else: days = 0
+
+DaysInStock = SUM(days) pres vsechny zaznamy v obdobi
+</pre>
+
+    <h3 id="sec-d2">D2. Velocity <small>(m&ecaron;s&iacute;&ccaron;n&iacute; prodejn&iacute; rychlost normalizovan&aacute; na dostupnost)</small></h3>
+<pre>
+Velocity_12M = CASE
+    WHEN DaysInStock_12M &gt; 0: Sales_12M / DaysInStock_12M &times; 30
+    ELSE: NULL
+END
+</pre>
+    <div class="insight">
+        <strong>Interpretace:</strong> Kolik kus&uring; se prod&aacute; za 30 dn&iacute;, kdy&zcaron; je produkt na sklad&ecaron;. Eliminuje zkreslen&iacute; kr&aacute;tk&yacute;m stockem.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- E. SOURCE KLASIFIKACE -->
+<!-- ============================================================ -->
+<div class="section" id="sec-e">
+    <h2>E. Source klasifikace</h2>
+
+    <h3 id="sec-e1">E1. Pattern <small>(v5 p&rcaron;&iacute;stup &mdash; raw prodeje za 4 pololet&iacute;)</small></h3>
+<pre>
+H1 = SUM(Sales) za [2023-07-13, 2024-01-13)
+H2 = SUM(Sales) za [2024-01-13, 2024-07-13)
+H3 = SUM(Sales) za [2024-07-13, 2025-01-13)
+H4 = SUM(Sales) za [2025-01-13, 2025-07-13)
+
+ActiveMonths_24M = COUNT(DISTINCT year-month s alespon 1 prodejem) za 24M
+</pre>
+
+    <table>
+        <thead>
+            <tr><th>Podm&iacute;nka</th><th>Pattern</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>ActiveMonths_24M = 0</code></td><td><strong>Dead</strong></td></tr>
+            <tr><td><code>H3 + H4 = 0 AND H1 + H2 &gt; 0</code></td><td><strong>Dying</strong></td></tr>
+            <tr><td><code>ActiveMonths_24M &lt;= 4</code></td><td><strong>Sporadic</strong></td></tr>
+            <tr><td><code>H4 &lt; H3 &times; 0.5 AND H3 &lt; H2 &times; 0.5</code></td><td><strong>Declining</strong></td></tr>
+            <tr><td><code>ActiveMonths_24M &gt;= 12</code></td><td><strong>Consistent</strong></td></tr>
+            <tr><td>Else</td><td><strong>Sporadic</strong></td></tr>
+        </tbody>
+    </table>
+
+    <div class="insight-bad">
+        <strong>Probl&eacute;m:</strong> Nebere v &uacute;vahu DaysInStock. SKU s 0 prodeji ale jen 2 m&ecaron;s&iacute;ci stocku = &quot;Dead&quot; i kdy&zcaron; je to nov&yacute; produkt.
+    </div>
+
+    <h3 id="sec-e2">E2. Velocity Segment <span class="v7-badge">v6/v7</span></h3>
+    <p>Normalizovan&aacute; klasifikace zalo&zcaron;en&aacute; na stock availability. Nahrazuje Pattern z v5.</p>
+
+    <table>
+        <thead>
+            <tr><th>Podm&iacute;nka</th><th>Segment</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>DaysInStock_12M = 0</code></td><td><strong>NoStock</strong></td></tr>
+            <tr><td><code>Sales_12M = 0 AND DaysInStock_12M &gt;= 270</code></td><td><strong>TrueDead</strong></td></tr>
+            <tr><td><code>Sales_12M = 0 AND DaysInStock_12M &gt;= 90</code></td><td><strong>PartialDead</strong></td></tr>
+            <tr><td><code>Sales_12M = 0 AND DaysInStock_12M &lt; 90</code></td><td><strong>BriefNoSale</strong></td></tr>
+            <tr><td><code>Velocity_12M &gt;= 0.5</code></td><td><strong>ActiveSeller</strong></td></tr>
+            <tr><td><code>DaysInStock_12M &gt;= 270</code></td><td><strong>SlowFull</strong></td></tr>
+            <tr><td><code>DaysInStock_12M &gt;= 90</code></td><td><strong>SlowPartial</strong></td></tr>
+            <tr><td>Else</td><td><strong>SlowBrief</strong></td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="sec-e3">E3. SoldAfter <small>(post-redistribu&ccaron;n&iacute; prediktor)</small></h3>
+<pre>
+SoldAfter  = 1 ak SUM(SaleTransaction.Quantity) &gt; 0 za obdobi po ApplicationDate
+SoldAfter% = per segment AVG(SoldAfter) &times; 100
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<!-- F. STORE KLASIFIKACE -->
+<!-- ============================================================ -->
+<div class="section" id="sec-f">
+    <h2>F. Store klasifikace</h2>
+
+    <h3 id="sec-f1">F1. StoreStrength <small>(celkov&aacute; s&iacute;la prodejny)</small></h3>
+<pre>
+Revenue_6M = SUM(SaleTransaction.Quantity &times; SaleTransaction.SalePrice)
+             za [2025-01-13, 2025-07-13)
+             pro vsechny SKU daneho WarehouseId (excl ecomm)
+
+StoreDecile = NTILE(10) OVER (ORDER BY Revenue_6M)
+</pre>
+
+    <table>
+        <thead>
+            <tr><th>Decile</th><th>StoreStrength</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>1&ndash;3</td><td><strong>Weak</strong></td></tr>
+            <tr><td>4&ndash;7</td><td><strong>Mid</strong></td></tr>
+            <tr><td>8&ndash;10</td><td><strong>Strong</strong></td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="sec-f2">F2. BrandQuintile <small>(s&iacute;la prodejny v dan&eacute;m brandu)</small></h3>
+<pre>
+BrandRevenue_6M = SUM(Quantity &times; SalePrice) za 6M pred
+                  filtrovane na SKU daneho BrandId + WarehouseId
+
+BrandQuintile = NTILE(5) OVER (PARTITION BY BrandId ORDER BY BrandRevenue_6M)
+</pre>
+
+    <h3 id="sec-f3">F3. BrandStoreFit <small>(kombinace celkov&eacute; s&iacute;ly a brand s&iacute;ly)</small></h3>
+
+    <table>
+        <thead>
+            <tr><th>BrandQuintile</th><th>BrandFit</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>&lt;= 2</td><td><strong>BrandWeak</strong></td></tr>
+            <tr><td>= 3</td><td><strong>BrandMid</strong></td></tr>
+            <tr><td>&gt;= 4</td><td><strong>BrandStrong</strong></td></tr>
+        </tbody>
+    </table>
+
+    <div class="insight-good">
+        <strong>Pou&zcaron;it&iacute;:</strong> Kombinace StoreStrength &times; BrandFit &rarr; 3&times;3 matice. Siln&yacute; prediktor target sell-through (~12pp rozd&iacute;l mezi BrandWeak a BrandStrong p&rcaron;i stejn&eacute; StoreStrength).
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- G. SOURCE MODIFIKATORY -->
+<!-- ============================================================ -->
+<div class="section" id="sec-g">
+    <h2>G. Source modifik&aacute;tory</h2>
+
+    <h3 id="sec-g1">G1. LastSaleGap</h3>
+<pre>
+LastSaleDate    = MAX(SaleTransaction.Date) WHERE SkuId = X AND Date &lt; ApplicationDate
+LastSaleGapDays = DATEDIFF(DAY, LastSaleDate, ApplicationDate)
+Ak zadny prodej: LastSaleGapDays = NULL
+</pre>
+    <div class="insight-good">
+        <strong>Modifier:</strong> LastSaleGapDays &le; 90 &rarr; source ML <strong>+1</strong> (sold after 85&ndash;90&nbsp;%).
+    </div>
+
+    <h3 id="sec-g2">G2. Seasonal (Xmas flag)</h3>
+<pre>
+Sales_NovDec = SUM(Quantity) WHERE MONTH(Date) IN (11, 12) AND Date IN Period_12M_Before
+Sales_12M    = SUM(Quantity) WHERE Date IN Period_12M_Before
+XmasLift     = Sales_NovDec / Sales_12M &times; 100
+
+SeasonalFlag = 1 ak XmasLift &gt;= 20
+</pre>
+    <div class="insight-good">
+        <strong>Modifier:</strong> SeasonalFlag = 1 &rarr; source ML <strong>+1</strong> (OS 2&times;, RO 1.5&times; oproti non-seasonal).
+    </div>
+
+    <h3 id="sec-g3">G3. RedistRatio</h3>
+<pre>
+RedistRatio = TotalQtyRedistributed / SourceAvailableSupply
+</pre>
+    <p>Jak&yacute; % z&aacute;soby odv&aacute;&zcaron;&iacute;me.</p>
+    <div class="insight">
+        <strong>Modifier:</strong> RedistRatio &ge; 0.75 &rarr; source ML <strong>+1</strong> (slab&yacute;, ale safeguard).
+    </div>
+
+    <h3 id="sec-g4">G4. Delisting <small>(SkuClass transition)</small></h3>
+<pre>
+CalcSkuClassId    = SkuAttributeValue.SkuClassId WHERE AttributeValueId = 134 (calc date)
+CurrentSkuClassId = SkuAttributeValue.SkuClassId WHERE AttributeValueId = 385 (current)
+
+IsDelisted = 1 ak CurrentSkuClassId IN (3, 4) AND CalcSkuClassId NOT IN (3, 4)
+</pre>
+    <div class="insight-bad">
+        <strong>Modifier:</strong> IsDelisted = 1 &rarr; ML = <strong>0</strong> (OVERRIDE, jedin&aacute; cesta k ML=0 i pro orderable).
+    </div>
+
+    <h3 id="sec-g5">G5. Loop <small>(redistribu&ccaron;n&iacute; smy&ccaron;ka)</small></h3>
+<pre>
+LoopCount = COUNT(*) z Outbound WHERE OutboundTypeId IN (2, 5)
+            AND Date IN Period_24M_Before AND SkuId = X
+</pre>
+    <p><code>OutboundTypeId</code> 2 = STORE TRANSFER, 5 = Y-STORE TRANSFER.</p>
+    <div class="insight">
+        <strong>Pozn&aacute;mka v7:</strong> Na datech CalculationId=233 jen 7 SKU s loop 4+ &rarr; statisticky nev&yacute;znamn&eacute;. <strong>NEPOU&Zcaron;&Iacute;V&Aacute; SE</strong> jako modifier.
+    </div>
+
+    <h3 id="sec-g6">G6. PhantomStock</h3>
+<pre>
+PhantomFlag = 1 ak:
+    Sales_6M = 0 nebo 1  AND
+    Oversell_Total &gt; 0  AND
+    DaysInStock_6M &gt;= 90  AND
+    ProductHealthy = 1 (stejny product prodava na &gt;=50% ostatnich prodejen)
+</pre>
+    <div class="insight">
+        <strong>Pozn&aacute;mka v7:</strong> Se spr&aacute;vn&yacute;m oversell vzorcem jen 1 SKU spl&ncaron;uje krit&eacute;ria &rarr; <strong>NEPOU&Zcaron;&Iacute;V&Aacute; SE</strong>.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- H. TARGET MODIFIKATORY -->
+<!-- ============================================================ -->
+<div class="section" id="sec-h">
+    <h2>H. Target modifik&aacute;tory</h2>
+
+    <h3 id="sec-h1">H1. AllSold / ST1 high</h3>
+<pre>
+Modifier +1 ak: AllSold_4M = 1 OR ST1_4M &gt;= 85%
+</pre>
+
+    <h3 id="sec-h2">H2. Growth pocket</h3>
+<pre>
+Modifier +1 ak: StoreStrength = 'Strong' AND Sales_12M IN [3, 10] AND ST_4M &gt;= 45%
+</pre>
+
+    <h3 id="sec-h3">H3. Strong absorber</h3>
+<pre>
+Modifier +1 ak: StoreStrength IN ('Mid', 'Strong') AND Sales_12M &gt;= 6 AND ST_4M &gt;= 55%
+</pre>
+
+    <h3 id="sec-h4">H4. Nothing-sold / low ST</h3>
+<pre>
+Modifier -1 ak: NothingSold_4M = 1 OR ST_4M &lt; 20%
+</pre>
+
+    <h3 id="sec-h5">H5. BrandStoreMismatch</h3>
+<pre>
+Modifier -1 ak: BrandFit = 'BrandWeak' AND ST_4M &lt; 35%
+</pre>
+    <div class="insight-new">
+        <strong>Pozn&aacute;mka v7:</strong> BrandStoreFit m&aacute; ~12pp dopad na ST a je konzistentn&iacute;. V budouc&iacute;ch verz&iacute;ch zv&aacute;&zcaron;it jako t&rcaron;et&iacute; dimenzi target lookup tabulky (SalesBucket &times; Store &times; BrandFit) nam&iacute;sto jednoduch&eacute;ho modifieru.
+    </div>
+
+    <h3 id="sec-h6">H6. Delisting</h3>
+<pre>
+Modifier &rarr; ML = 0 ak IsDelisted = 1 (viz G4)
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<!-- I. CROSS-PRODUCT SIGNALY -->
+<!-- ============================================================ -->
+<div class="section" id="sec-i">
+    <h2>I. Cross-product sign&aacute;ly</h2>
+
+    <h3 id="sec-i1">I1. ProductVolatilityScore</h3>
+<pre>
+Pro kazdy ProductId:
+    MonthlySalesPerStore = prodeje per warehouse per mesic za 12M
+    AvgSales  = AVG(MonthlySalesPerStore)
+    StdDev    = STDEV(MonthlySalesPerStore)
+    CV        = StdDev / AvgSales  (Coefficient of Variation)
+</pre>
+
+    <table>
+        <thead>
+            <tr><th>CV rozsah</th><th>Bucket</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>&lt; 1</td><td><strong>Low</strong></td></tr>
+            <tr><td>1 &ndash; 2</td><td><strong>Med</strong></td></tr>
+            <tr><td>2 &ndash; 3</td><td><strong>High</strong></td></tr>
+            <tr><td>3+</td><td><strong>VHigh</strong></td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="sec-i2">I2. ProductConcentrationShare</h3>
+<pre>
+StoresWithSales_12M = COUNT(DISTINCT WarehouseId) kde SUM(Sales_12M) &gt; 0
+TotalStoresWithSku  = COUNT(DISTINCT WarehouseId) kde SKU existuje
+ConcentrationShare  = StoresWithSales_12M / TotalStoresWithSku &times; 100
+</pre>
+    <div class="insight">
+        Na kolika prodejn&aacute;ch se produkt prod&aacute;v&aacute;. <strong>Pozn&aacute;mka v7:</strong> &Zcaron;&aacute;dn&yacute; jasn&yacute; gradient v oversell/reorder &rarr; nepou&zcaron;&iacute;v&aacute; se jako modifier.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- J. TARGET STOCK COVERAGE -->
+<!-- ============================================================ -->
+<div class="section" id="sec-j">
+    <h2>J. Target Stock Coverage</h2>
+
+    <h3 id="sec-j1">J1. TargetStockCoverage</h3>
+<pre>
+DaysInStock_6M_Target = (viz D1, ale pro TargetSkuId a Period_6M_Before)
+</pre>
+
+    <table>
+        <thead>
+            <tr><th>Dn&iacute; na sklad&ecaron;</th><th>Bucket</th><th>V&yacute;znam</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>0 dn&iacute;</td><td><strong>New</strong></td><td>Nikdy nebyl na t&eacute;to prodejn&ecaron;</td></tr>
+            <tr><td>1&ndash;89 dn&iacute;</td><td><strong>Brief</strong></td><td>Kr&aacute;tce na sklad&ecaron;</td></tr>
+            <tr><td>90&ndash;149 dn&iacute;</td><td><strong>Partial</strong></td><td>&Ccaron;&aacute;ste&ccaron;n&aacute; dostupnost</td></tr>
+            <tr><td>150+ dn&iacute;</td><td><strong>Established</strong></td><td>Etablovan&yacute; produkt</td></tr>
+        </tbody>
+    </table>
+
+    <div class="insight-good">
+        <strong>Zji&scaron;t&ecaron;n&iacute; v7:</strong> Brief/New target m&aacute; lep&scaron;&iacute; ST (80&nbsp;% vs 67&nbsp;% u SalesBucket 3&ndash;5). Redistribuce na &quot;fresh&quot; target je efektivn&ecaron;j&scaron;&iacute;.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- K. PAROVA ANALYZA -->
+<!-- ============================================================ -->
+<div class="section" id="sec-k">
+    <h2>K. P&aacute;rov&aacute; anal&yacute;za</h2>
+
+    <h3 id="sec-k1">K1. PairOutcome</h3>
+
+    <table>
+        <thead>
+            <tr><th>Oversell</th><th>ST</th><th>Outcome</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>Oversell_Total = 0</code></td><td><code>ST_Total &ge; 50%</code></td><td class="good">Win-Win</td></tr>
+            <tr><td><code>Oversell_Total = 0</code></td><td><code>ST_Total &lt; 50%</code></td><td class="warn">Win-Lose</td></tr>
+            <tr><td><code>Oversell_Total &gt; 0</code></td><td><code>ST_Total &ge; 50%</code></td><td class="warn">Lose-Win</td></tr>
+            <tr><td><code>Oversell_Total &gt; 0</code></td><td><code>ST_Total &lt; 50%</code></td><td class="bad">Lose-Lose</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ============================================================ -->
+<!-- L. FLOW MATRIX -->
+<!-- ============================================================ -->
+<div class="section" id="sec-l">
+    <h2>L. Flow Matrix</h2>
+<pre>
+Pro kazdy redistribucni par:
+    SourceStrength = StoreStrength(SourceWarehouseId)
+    TargetStrength = StoreStrength(TargetWarehouseId)
+
+Matice: COUNT(pairs) GROUP BY SourceStrength, TargetStrength
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<!-- M. CLAMP PRAVIDLA -->
+<!-- ============================================================ -->
+<div class="section" id="sec-m">
+    <h2>M. Clamp pravidla</h2>
+    <p>Fin&aacute;ln&iacute; logika pro stanoven&iacute; MinLayer hodnoty:</p>
+<pre>
+Final_ML = CLAMP(Base_ML + SUM(modifiers), 0, 4)
+
+Ak IsOrderable = 1 (SkuClassId IN (9, 11)):
+    Final_ML = MAX(Final_ML, 1)    -- NIKDY pod 1
+
+Ak IsDelisted = 1:
+    Final_ML = 0                   -- OVERRIDE vseho
+</pre>
+
+    <div class="insight-bad">
+        <strong>D&uring;le&zcaron;it&eacute;:</strong> Delisting m&aacute; absolutn&iacute; prioritu &mdash; p&rcaron;ep&iacute;&scaron;e i orderable minimum.
+    </div>
+
+    <div class="insight-good">
+        <strong>Orderable safeguard:</strong> Objednateln&eacute; SKU (SkuClassId 9 nebo 11) nikdy neklesnou pod ML = 1, pokud nejsou vylistovan&eacute;.
+    </div>
+</div>
+
+<p style="text-align: center; color: #aaa; margin-top: 40px; font-size: 12px;">
+    Definitions v7 &mdash; Kompletn&iacute; algoritmick&yacute; popis v&scaron;ech metrik a klasifikac&iacute; | Generov&aacute;no pro CalculationId 233 (Douglas DE)
+</p>
+
+</body>
+</html>

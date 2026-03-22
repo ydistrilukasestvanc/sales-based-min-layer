@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v4 Backtest: Impact of Proposed Rules (ML 0-4, Reorder-optimized)</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v4-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html" class="active">Report 3: Backtest</a><span style="float:right; color:#7f8c8d; font-size:11px;">v4 ML 0-4 | Orderable min=1 | Reorder focus</span></div>
+
+<h1>Backtest v4: Impact of Proposed Rules (ML 0-4) <span class="v4-badge">Reorder-optimized</span></h1>
+<p><b>CalculationId=233</b> | Date: 2025-07-13 | Generated: 2026-03-22 15:28</p>
+<p>Dopad pravidel z <a href="consolidated_decision_tree.html">Report 2</a>.
+v4: ML rozsah 0-4, orderable minimum ML=1. <b>Optimalizovano na redukci reorderu.</b></p>
+
+<div class="insight" style="background: #fff3cd; border-left: 6px solid #f39c12; padding: 15px;">
+<b>Oversell v cili (3.0%). Reorder je hlavni problem (37.6%).</b><br>
+S opravenym vzorcem oversell je oversell minimalny (3.0% qty). Hlavni metrikou pro optimalizaci je <b>reorder</b>:
+37.6% SKU (13,841) musi byt znovu objednano, coz je 16,615 kusu (34.1% objemu).
+</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="section">
+<h2>1. Backtest Overview</h2>
+<div style="text-align: center;">
+<div class="metric"><div class="v">42,404</div><div class="l">Redistribution pairs</div></div>
+<div class="metric"><div class="v">48,754</div><div class="l">Total redistributed pcs</div></div>
+<div class="metric"><div class="v" style="color:#27ae60">3.0%</div><div class="l">Oversell 4M qty (V CILI)</div></div>
+<div class="metric"><div class="v" style="color:#e74c3c">37.6%</div><div class="l">Reorder Total SKU (PROBLEM)</div></div>
+</div>
+
+<div class="insight-good">
+<b>Oversell je v cili:</b> Pouze 1,317 SKU (3.6%) ma oversell v 4M periode,
+celkem 1,464 kusu (3.0%). Toto je akceptovatelne.
+</div>
+
+<div class="insight-bad">
+<b>Reorder je hlavni problem:</b> 13,841 SKU (37.6%) musi byt znovu objednano v total periode.
+To je 16,615 kusu (34.1% objemu). Rozhodovaci strom cili na redukci tohoto cisla.
+</div>
+
+<img src="fig_backtest_02.png">
+
+<h3>Detailni metriky</h3>
+<table>
+<tr><th>Metric</th><th>4M</th><th>Total</th></tr>
+<tr><td>Oversell SKU</td><td class="good">1,317 (3.6%)</td><td>4,718 (12.8%)</td></tr>
+<tr><td>Oversell qty</td><td class="good">1,464 (3.0%)</td><td>5,578 (11.4%)</td></tr>
+<tr><td>Reorder SKU</td><td class="bad">7,087 (19.3%)</td><td class="bad">13,841 (37.6%)</td></tr>
+<tr><td>Reorder qty</td><td class="bad">7,980 (16.4%)</td><td class="bad">16,615 (34.1%)</td></tr>
+</table>
+</div>
+
+<!-- ========== SOURCE BACKTEST ========== -->
+<div class="section">
+<h2>2. Source Backtest: ML Direction Impact</h2>
+<img src="fig_backtest_01.png">
+
+<table>
+<tr><th>Direction</th><th>SKU</th><th>Reorder Total qty</th><th>Reorder Total SKU %</th><th>Description</th></tr>
+<tr class="dir-up"><td><b>ML UP</b></td><td>15,435</td><td>9,038</td>
+<td class="bad">47.3%</td>
+<td>SKU s vysokym reorderem - ML zvyseno aby se snizil objem redistribuce</td></tr>
+<tr class="dir-down"><td><b>ML DOWN</b></td><td>310</td><td>99</td>
+<td class="good">10.0%</td>
+<td>Pouze non-orderable SKU (nizky reorder, bezpecne snizit)</td></tr>
+<tr><td>NO CHANGE</td><td>21,025</td><td>7,478</td>
+<td>31.0%</td><td>Existujici ML vyhovuje</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>ML UP skupina ma 47.3% reorder total</b> (vs 31.0% u NO CHANGE a 10.0% u ML DOWN).
+Zvyseni ML pro tech 15,435 SKU by melo snizit objem redistribuce a tim i objem reorderu.
+</div>
+</div>
+
+<!-- ========== SEGMENT DETAIL ========== -->
+<div class="section">
+<h2>3. Source: Reorder per Segment s navrzenymi ML</h2>
+<img src="fig_backtest_03.png">
+
+<table>
+<tr><th>Segment</th><th>Reorder Total SKU %</th><th>Proposed ML</th><th>Reason</th></tr>
+<tr class="dir-up"><td>Consistent+Mid</td><td class="bad">78.4%</td><td><b>ML=4</b></td><td>Nejvyssi reorder - maximalni ochrana</td></tr>
+<tr class="dir-up"><td>Declining+Mid</td><td class="bad">76.6%</td><td><b>ML=3</b></td><td>Velmi vysoky reorder</td></tr>
+<tr class="dir-up"><td>Declining+Strong</td><td class="bad">73.8%</td><td><b>ML=4</b></td><td>Velmi vysoky reorder + silna predajna</td></tr>
+<tr class="dir-up"><td>Consistent+Strong</td><td class="bad">70.3%</td><td><b>ML=4</b></td><td>Vysoky reorder + silna predajna</td></tr>
+<tr class="dir-up"><td>Consistent+Weak</td><td class="bad">67.7%</td><td><b>ML=3</b></td><td>Vysoky reorder</td></tr>
+<tr class="dir-up"><td>Declining+Weak</td><td class="bad">65.1%</td><td><b>ML=3</b></td><td>Vysoky reorder</td></tr>
+<tr class="dir-up"><td>Sporadic+Strong</td><td class="bad">50.4%</td><td><b>ML=3</b></td><td>Nad 40% threshold</td></tr>
+<tr><td>Sporadic+Mid</td><td class="warn">46.8%</td><td>ML=2</td><td>Stredni riziko</td></tr>
+<tr><td>Sporadic+Weak</td><td class="warn">39.3%</td><td>ML=2</td><td>Pod 40% ale nad 30%</td></tr>
+<tr><td>Dying+Strong</td><td class="warn">37.0%</td><td>ML=2</td><td>Stredni riziko</td></tr>
+<tr><td>Dying+Mid</td><td class="warn">35.2%</td><td>ML=1</td><td>Orderable minimum</td></tr>
+<tr><td>Dead+Strong</td><td>31.4%</td><td>ML=1</td><td>Orderable minimum</td></tr>
+<tr class="dir-down"><td>Dying+Weak</td><td>29.7%</td><td>ML=1</td><td>Orderable minimum, nizky reorder</td></tr>
+<tr class="dir-down"><td>Dead+Mid</td><td>29.5%</td><td>ML=1</td><td>Orderable minimum, nizky reorder</td></tr>
+<tr class="dir-down"><td>Dead+Weak</td><td>24.4%</td><td>ML=1</td><td>Orderable minimum, nejnizsi reorder</td></tr>
+</table>
+</div>
+
+<!-- ========== TARGET BACKTEST ========== -->
+<div class="section">
+<h2>4. Target Backtest</h2>
+
+<img src="fig_backtest_04.png">
+
+<div class="insight">
+<b>Target pravidla zustavaji stejne jako pred korekci.</b> ML=3 pro 11+ sales (all-sold 76-81%),
+ML=2 pro 3-10 sales (vyrovnany pristup), ML=1 pro 0-2 sales + slabe predajny.
+</div>
+</div>
+
+<!-- ========== RECOMMENDATIONS ========== -->
+<div class="section">
+<h2>5. Doporuceni</h2>
+
+<table>
+<tr><th>#</th><th>Doporuceni</th><th>Ocekavany dopad</th><th>Priorita</th></tr>
+<tr><td>1</td><td><b>Implementovat ML 0-4 rozsah s orderable min=1, reorder-optimized tree</b></td>
+<td>Snizi reorder u ML UP skupiny (47.3% -> target pod 35%)</td><td class="bad">KRITICKA</td></tr>
+<tr><td>2</td><td>Source Pattern x Store lookup (15 segmentu, reorder-driven)</td>
+<td>ML=3-4 pro Consistent/Declining (reorder 65-78%)</td><td class="bad">KRITICKA</td></tr>
+<tr><td>3</td><td>Target Sales Bucket x Store lookup (15 segmentu)</td>
+<td>ML=3 pro 11+ sales, ML=1 pro 0 sales + Weak</td><td class="bad">KRITICKA</td></tr>
+<tr><td>4</td><td>Seasonality modifier (+1 pro >=20% NovDec)</td>
+<td>Ochrani sezonni produkty (reorder 52.2% vs 33.9%)</td><td class="warn">VYSOKA</td></tr>
+<tr><td>5</td><td>Redist loop modifier (+1 pro 2+ transfers)</td>
+<td>Zabrazi cyklickemu presouvani (reorder roste s poctem transferu)</td><td class="warn">VYSOKA</td></tr>
+<tr><td>6</td><td>Low volatility modifier (+1 pro CV&lt;1)</td>
+<td>Ochrani stabilne prodavane produkty (reorder 45.2%)</td><td>STREDNI</td></tr>
+<tr><td>7</td><td>Brand-store mismatch modifier (-1 pro Weak+Weak)</td>
+<td>Snizi posilani na slabe kombinace</td><td>STREDNI</td></tr>
+</table>
+
+<div class="insight-new">
+<b>Celkovy dopad v4 (opraveny):</b><br>
+- Oversell: <b>V CILI</b> - 3.0% qty (1,464 pcs) v 4M, 11.4% v total<br>
+- Reorder: <b>HLAVNI PROBLEM</b> - 37.6% SKU (13,841), 34.1% qty (16,615 pcs) v total<br>
+- ML UP: 15,435 SKU (47.3% reorder) - navysenim ML snizime objem redistribuce a tim reorder<br>
+- ML DOWN: 310 SKU (10.0% reorder) - bezpecne snizit ML pro non-orderable<br>
+- Strom optimalizovan pro redukci reorderu, ne oversell (ktery je jiz v cili)
+</div>
+</div>
+
+<p><i>Generated: 2026-03-22 15:28 | CalculationId=233 | v4 ML 0-4 | Orderable min=1 | Reorder-optimized</i></p>
+</body>
+</html>

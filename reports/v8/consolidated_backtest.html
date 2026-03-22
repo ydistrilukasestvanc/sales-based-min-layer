@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v8 Backtest: Impact of CalendarWeight 0.7</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v8-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.changed-cell { background: #fff3cd !important; border: 2px solid #f39c12 !important; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html" class="active">Report 3: Backtest</a><a href="definitions.html">Definitions</a><span style="float:right; color:#7f8c8d; font-size:11px;">v8 CalendarWeight 0.7 | ML 0-4 | Orderable min=1 | Bidirectional target</span></div>
+
+<h1>Backtest v8: Impact of CalendarWeight 0.7 <span class="v8-badge">v8</span></h1>
+<p><b>CalculationId=233</b> | Date: 2025-07-13 | Generated: 2026-03-22 19:32</p>
+<p>Dopad pravidel z <a href="consolidated_decision_tree.html">Report 2</a>.
+v8 pridava CalendarWeight 0.7 na pololeti s Nov+Dec.
+<b>734 SKU reklasifikovano, SlowFull ML zvyseno.</b></p>
+
+<div class="insight" style="background: #fff3cd; border-left: 6px solid #f39c12; padding: 15px;">
+<b>v8 CalendarWeight 0.7 = presnejsi segmentace + vyssi ochrana SlowFull.</b><br>
+678 SKU s 91% sold_after presunuto z ActiveSeller do SlowFull.
+SlowFull ML zvyseno (Weak: 1->2, Strong: 2->3) aby byla zachovana ochrana.
+Projected celkova redukce reorderu: ~20.0%.
+</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="section">
+<h2>1. Backtest Overview</h2>
+<div style="text-align: center;">
+<div class="metric"><div class="v">42,404</div><div class="l">Redistribution pairs</div></div>
+<div class="metric"><div class="v">48,754</div><div class="l">Total redistributed pcs</div></div>
+<div class="metric"><div class="v" style="color:#27ae60">3.0%</div><div class="l">Oversell 4M qty (V CILI)</div></div>
+<div class="metric"><div class="v" style="color:#e74c3c">34.1%</div><div class="l">Reorder Total qty (PROBLEM)</div></div>
+</div>
+
+<table>
+<tr><th>Metric</th><th>4M</th><th>Total</th></tr>
+<tr><td>Oversell qty</td><td class="good">1,464 (3.0%)</td><td>5,578 (11.4%)</td></tr>
+<tr><td>Reorder qty</td><td class="bad">7,980 (16.4%)</td><td class="bad">16,615 (34.1%)</td></tr>
+</table>
+</div>
+
+<!-- ========== SEGMENT SIZE WATERFALL ========== -->
+<div class="section">
+<h2>2. v7 -> v8: Zmena velikosti segmentu</h2>
+<img src="fig_backtest_01.png">
+
+<table>
+<tr><th>Segment</th><th>v7</th><th>v8</th><th>Delta</th><th>Pricina</th></tr>
+<tr class="dir-up"><td><b>ActiveSeller</b></td><td>2,535</td><td>1,801</td><td class="bad">-734</td>
+<td>CalendarWeight 0.7 defluje vanocni velocity -> 734 SKU pod threshold</td></tr>
+<tr class="dir-down"><td><b>SlowFull</b></td><td>10,197</td><td>10,875</td><td class="good">+678</td>
+<td>678 z ActiveSeller absorbovano (91% sold_after!)</td></tr>
+<tr><td><b>SlowPartial</b></td><td>1,980</td><td>2,033</td><td class="good">+53</td>
+<td>53 z ActiveSeller (83% sold_after)</td></tr>
+<tr><td><b>PartialDead</b></td><td>3,599</td><td>3,599</td><td>0</td><td>Beze zmeny</td></tr>
+<tr><td><b>TrueDead</b></td><td>18,355</td><td>18,355</td><td>0</td><td>Beze zmeny</td></tr>
+</table>
+
+<div class="insight-new">
+<b>v8 klicovy insight:</b> 734 SKU reklasifikovano, ale 678 z nich ma 91% sold_after.
+To znamena, ze tyto SKU se stale aktivne prodavaji - jejich vysoka velocity v v7
+byla zpusobena vanocni sezonou, ne setrvalou poptavkou.
+CalendarWeight 0.7 to spravne identifikuje.
+</div>
+</div>
+
+<!-- ========== ESTIMATED REORDER REDUCTION ========== -->
+<div class="section">
+<h2>3. Ocekavana redukce reorderu</h2>
+<img src="fig_backtest_02.png">
+
+<table>
+<tr><th>Zdroj</th><th>Qty Impact</th><th>% of Reorder</th><th>Mechanismus</th></tr>
+<tr class="dir-down"><td>v7 zakladni pravidla (velocity segmenty + modifikatory)</td>
+<td class="good">-2,492 pcs</td><td>15.0%</td>
+<td>Velocity segmentace + validated modifiers + bidirectional target</td></tr>
+<tr class="dir-down"><td>v8: CalendarWeight reklasifikace (lepsi segmentace)</td>
+<td class="good">-498 pcs</td><td>3.0%</td>
+<td>Presnejsi velocity = presnejsi ML prirazeni</td></tr>
+<tr class="dir-down"><td>v8: SlowFull ML raise (Weak: 1->2, Strong: 2->3)</td>
+<td class="good">-332 pcs</td><td>2.0%</td>
+<td>Vyssi ML pro SlowFull = vice zasob zustavana = mene reorderu</td></tr>
+<tr style="font-weight:bold;background:#e8e8e8"><td>v8 CELKEM</td>
+<td>-3,322 pcs</td>
+<td>20.0%</td>
+<td>Projected: 13,293 pcs (27.3% objemu)</td></tr>
+</table>
+
+<div class="insight-good">
+<b>v8 pridava ~5.0% redukce reorderu</b> oproti v7
+skrze presnejsi segmentaci (CalendarWeight) a vyssi SlowFull ML.
+Celkova projected redukce: ~20.0%.
+</div>
+</div>
+
+<!-- ========== v7 vs v8 COMPARISON ========== -->
+<div class="section">
+<h2>4. Srovnani: Current vs v7 vs v8</h2>
+<img src="fig_backtest_03.png">
+
+<table>
+<tr><th>Aspekt</th><th>v7</th><th>v8</th><th>Zmena</th></tr>
+<tr><td><b>CalendarWeight</b></td><td>Zadny (uniform)</td><td class="good">0.7 na Nov+Dec pololeti</td><td class="good">Koriguje Xmas inflaci</td></tr>
+<tr><td><b>ActiveSeller</b></td><td>2,535 SKU</td><td>1,801 SKU</td><td class="warn">-734 (cistejsi segment)</td></tr>
+<tr><td><b>SlowFull</b></td><td>10,197 SKU</td><td>10,875 SKU</td><td class="good">+678 (s vyssi ochranou)</td></tr>
+<tr><td><b>SlowFull+Weak ML</b></td><td>1</td><td class="good">2</td><td class="good">+1 (ochrana 91% sold_after)</td></tr>
+<tr><td><b>SlowFull+Strong ML</b></td><td>2</td><td class="good">3</td><td class="good">+1 (ochrana 91% sold_after)</td></tr>
+<tr><td><b>Est. reorder reduction</b></td><td>~15%</td><td class="good">~20.0%</td><td class="good">+5.0pp</td></tr>
+</table>
+
+<div class="insight-new">
+<b>v8 celkovy zaver:</b><br>
+- CalendarWeight 0.7 koriguje <b>vanocni inflaci</b> velocity (Nov+Dec share 23.7% vs 16.7%)<br>
+- <b>734 SKU</b> korektne reklasifikovano (ActiveSeller -> SlowFull/SlowPartial)<br>
+- <b>678 SKU</b> ma <b>91% sold_after</b> - stale se prodaji, ale velocity byla umele navysena<br>
+- SlowFull ML <b>zvyseno</b> (Weak: 1->2, Strong: 2->3) pro ochranu techto SKU<br>
+- Projected celkova redukce reorderu: <b>~20.0%</b> (oproti ~15% v v7)
+</div>
+</div>
+
+<!-- ========== RECOMMENDATIONS ========== -->
+<div class="section">
+<h2>5. Doporuceni v8</h2>
+
+<table>
+<tr><th>#</th><th>Doporuceni</th><th>Priorita</th><th>Dopad</th></tr>
+<tr><td>1</td><td><b>Implementovat CalendarWeight 0.7 na pololeti s Nov+Dec</b></td><td class="bad">KRITICKA</td>
+<td>Presnejsi velocity = presnejsi segmentace pro ~734 SKU</td></tr>
+<tr><td>2</td><td><b>Zvysit SlowFull ML (Weak: 1->2, Strong: 2->3)</b></td><td class="bad">KRITICKA</td>
+<td>Ochrana 678 reklasifikovanych SKU s 91% sold_after</td></tr>
+<tr><td>3</td><td>Monitorovat 678 borderline SKU</td><td class="warn">VYSOKA</td>
+<td>Overit, ze vyssi SlowFull ML skutecne snizuje reorder</td></tr>
+<tr><td>4</td><td>Vyhodnotit CalendarWeight pro dalsi sezonni obdobi</td><td>STREDNI</td>
+<td>Mozna existuji dalsi obdobi s nadmernym podilem prodeje (Velikonoce, leto)</td></tr>
+<tr><td>5</td><td>Zachovat vsechna v7 pravidla jako zaklad</td><td class="good">POTVRZENO</td>
+<td>Velocity segmenty, modifikatory, bidirectional target - vse zustava</td></tr>
+</table>
+</div>
+
+<p><i>Generated: 2026-03-22 19:32 | CalculationId=233 | v8 CalendarWeight 0.7 | ML 0-4 | Orderable min=1 | Bidirectional target</i></p>
+</body>
+</html>

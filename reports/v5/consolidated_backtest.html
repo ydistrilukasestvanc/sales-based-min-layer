@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Backtest v5</title>
+<style>
+:root {--bg:#f5f1e8;--panel:#fffaf2;--ink:#1f2421;--muted:#5f665f;--line:#d8cfbf;--accent:#9f4f2f;--accent2:#2c6e62;}
+body {margin:0;font-family:Georgia,"Times New Roman",serif;background:radial-gradient(circle at top left,#fff7ea,var(--bg) 55%);color:var(--ink);}
+.wrap {max-width:1180px;margin:0 auto;padding:28px 20px 40px;}
+nav {display:flex;gap:14px;margin-bottom:22px;font-size:15px;}
+nav a {color:var(--accent);text-decoration:none;}
+header {background:linear-gradient(135deg,rgba(159,79,47,.12),rgba(44,110,98,.08));border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:22px;}
+h1 {font-size:38px;line-height:1.05;letter-spacing:-.02em;margin:0 0 12px;}
+h2,h3 {margin:0 0 12px;} p,li {line-height:1.55;color:var(--muted);font-size:16px;}
+section {background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 18px 20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(40,32,18,.04);}
+.grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px;}
+table {width:100%;border-collapse:collapse;font-size:14px;background:white;}
+th,td {padding:9px 10px;border-bottom:1px solid #eee7db;text-align:left;}
+th {background:#f2e9da;color:#443b34;}
+img {width:100%;border-radius:12px;border:1px solid var(--line);background:white;}
+.callout {padding:12px 14px;border-left:4px solid var(--accent2);background:rgba(44,110,98,.08);margin:8px 0 0;}
+</style>
+</head>
+<body><div class="wrap"><nav><a href="consolidated_findings.html">Findings</a><a href="consolidated_decision_tree.html">Decision tree</a><a href="consolidated_backtest.html">Backtest</a></nav><header><h1>Backtest v5</h1><p>Backtest v5 je objemovy odhad po SKU podle zmeny ML levelu proti aktualnimu EntityList ML. Cte se obousmerne: kde ubrat i kde pridat, s temer neutralnim target netto dopadem.</p></header><section><h2>Source a target dopad</h2><div class="grid"><div><table><thead><tr><th>Smer</th><th>SKU</th><th>Qty</th><th>OS Tot</th><th>RO Tot</th><th>Odhad qty change</th></tr></thead><tbody><tr><td>UP</td><td>11833</td><td>16812</td><td>2955</td><td>7616</td><td>-13537</td></tr><tr><td>DOWN</td><td>6030</td><td>8909</td><td>470</td><td>1114</td><td>6387</td></tr><tr><td>SAME</td><td>18907</td><td>23033</td><td>2153</td><td>7885</td><td>0</td></tr></tbody></table><p class="callout">Net source dopad: -8 594 ks, ale zaroven odemyka nove source growth pockets.</p></div><div><table><thead><tr><th>Smer</th><th>SKU</th><th>Qty</th><th>Avg ST 4M</th><th>Nothing-sold 4M</th><th>All-sold 4M</th><th>Odhad qty change</th></tr></thead><tbody><tr><td>UP</td><td>12146</td><td>13611</td><td>80.3</td><td>0.1</td><td>59.9</td><td>12345</td></tr><tr><td>DOWN</td><td>21142</td><td>25350</td><td>22.0</td><td>71.7</td><td>16.1</td><td>-23299</td></tr><tr><td>SAME</td><td>8343</td><td>9793</td><td>53.2</td><td>28.5</td><td>35.4</td><td>0</td></tr></tbody></table><p class="callout">Net target dopad: -416 ks, tedy skoro neutralni target strana s velkym UP i DOWN ramenem.</p></div></div></section><section><h2>Top segmenty</h2><div class="grid"><div><img src="fig_backtest_01.png" alt="top down"></div><div><img src="fig_backtest_02.png" alt="up and map"></div></div></section><section><h2>Sensitivity</h2><div class="grid"><div><table><thead><tr><th>Scenar</th><th>Odhad qty change</th></tr></thead><tbody><tr><td>Source -1</td><td>932</td></tr><tr><td>Source Base</td><td>-7150</td></tr><tr><td>Source +1</td><td>-27659</td></tr><tr><td>Target -1</td><td>-27236</td></tr><tr><td>Target Base</td><td>-10954</td></tr><tr><td>Target +1</td><td>11706</td></tr></tbody></table></div><div><img src="fig_backtest_03.png" alt="sensitivity"></div></div><p class="callout">Base v5 je stredni varianta. Plosny posun o jeden level na kterekoli strane uz vede k mnohem agresivnejsimu objemovemu zasahu.</p></section></div></body></html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v8 Consolidated Findings: SalesBased MinLayers - CalendarWeight 0.7</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v8-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.changed-cell { background: #fff3cd !important; border: 2px solid #f39c12 !important; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html" class="active">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a><a href="definitions.html">Definitions</a><span style="float:right; color:#7f8c8d; font-size:11px;">v8 CalendarWeight 0.7 | ML 0-4 | Orderable min=1 | Bidirectional target</span></div>
+
+<h1>Consolidated Findings v8: SalesBased MinLayers (CalendarWeight 0.7) <span class="v8-badge">v8</span></h1>
+<p><b>CalculationId=233</b> | ApplicationDate: 2025-07-13 | Generated: 2026-03-22 19:32</p>
+<p><b>v8 = CalendarWeight 0.7</b> na pololeti obsahujici Nov+Dec.
+Nov+Dec maji 23.7% podil prodeje vs ocekavanych 16.7% (Xmas lift 1.42x).
+Vaha 0.7 koriguje tuto inflaci.
+<b>734 ActiveSeller reklasifikovano na SlowFull/SlowPartial. SlowFull ML zvyseno.</b></p>
+
+<div class="insight" style="background: #fff3cd; border-left: 6px solid #f39c12; padding: 15px;">
+<b>Oversell v cili (3.0%). Reorder je hlavni problem (34.1% qty).</b><br>
+Oversell 4M je pouze 3.0% (1,464 qty).
+Reorder: 16,615 kusu (34.1% objemu).
+<b>v8 inovace:</b> CalendarWeight 0.7 spravne identifikuje 734 SKU, ktere byly nadsazene vanocni sezonou.
+</div>
+
+<div class="insight-new">
+<b>v8 KLICOVY PRISPEVEK:</b> CalendarWeight 0.7 na pololeti s Nov+Dec koriguje
+vanocni inflaci velocity. 678 SKU presunuto z ActiveSeller do SlowFull -
+tyto SKU maji 91% sold_after (stale se prodaji!), ale jejich velocity byla umele navysena Vanoci.
+SlowFull ML zvyseno (Weak: 1->2, Strong: 2->3) aby tato SKU byla chranena.
+</div>
+
+<!-- ========== 1. OVERVIEW ========== -->
+<div class="section">
+<h2>1. Overview</h2>
+<div style="text-align: center;">
+<div class="metric"><div class="v">42,404</div><div class="l">Redistribution pairs</div></div>
+<div class="metric"><div class="v">48,754</div><div class="l">Total redistributed pcs</div></div>
+<div class="metric"><div class="v">23.7%</div><div class="l">Nov+Dec sales share</div></div>
+<div class="metric"><div class="v">0.7</div><div class="l">CalendarWeight</div></div>
+</div>
+
+<h3>Source: Celkove metriky - 4M a total</h3>
+<table>
+<tr><th>Metric</th><th>4 months</th><th>Total (~9M)</th></tr>
+<tr><td><b>Oversell (qty)</b></td><td class="good">1,464 qty (3.0%)</td><td>5,578 qty (11.4%)</td></tr>
+<tr><td><b>Reorder (qty)</b></td><td class="bad">7,980 qty (16.4%)</td><td class="bad">16,615 qty (34.1%)</td></tr>
+</table>
+
+<h3>1.1 CalendarWeight parametry</h3>
+<table>
+<tr><th>Parameter</th><th>Value</th><th>Popis</th></tr>
+<tr><td>Nov+Dec share (actual)</td><td class="bad">23.7%</td><td>Skutecny podil Nov+Dec na celkovych prodejich</td></tr>
+<tr><td>Expected share (uniform)</td><td>16.7%</td><td>Ocekavany podil pri rovnomernem rozlozeni (2/12)</td></tr>
+<tr><td>Xmas lift</td><td class="bad">1.42x</td><td>Nasobek: actual / expected</td></tr>
+<tr><td>CalendarWeight</td><td class="warn">0.7</td><td>Vaha aplikovana na pololeti s Nov+Dec</td></tr>
+<tr><td>Reklasifikovano</td><td class="warn">734 SKU</td><td>ActiveSeller -> SlowFull (678), SlowPartial (53), SlowBrief (3)</td></tr>
+</table>
+
+<div class="insight">
+<b>v8 zaver:</b> Nov+Dec share 23.7% je o 7.0 pp vyssi nez ocekavano.
+CalendarWeight 0.7 snizuje vahu tohoto obdobi o 30%, coz korektniji odrazi celorocni velocity.
+</div>
+</div>
+
+<!-- ========== 2. CALENDARWEIGHT IMPACT ========== -->
+<div class="section">
+<h2>2. CalendarWeight 0.7: Dopad na segmentaci <span class="new-badge">KEY v8</span></h2>
+<p><b>CalendarWeight 0.7</b> snizuje vahu pololeti obsahujiciho Nov+Dec.
+Vysledek: 734 SKU, ktere mel v7 v ActiveSeller (diky vanocni inflaci velocity),
+se po korekci posunuji do nizsich segmentu.</p>
+
+<img src="fig_findings_01.png">
+
+<h3>2.1 Zmena velikosti segmentu (v7 vs v8)</h3>
+<img src="fig_findings_02.png">
+<table>
+<tr><th>Segment</th><th>v7 (SKU)</th><th>v8 (SKU)</th><th>Delta</th></tr>
+<tr><td><b>ActiveSeller</b></td><td>2,535</td><td>1,801</td><td class="bad">-734</td></tr>
+<tr><td><b>SlowFull</b></td><td>10,197</td><td>10,875</td><td class="good">+678</td></tr>
+<tr><td><b>SlowPartial</b></td><td>1,980</td><td>2,033</td><td class="good">+53</td></tr>
+<tr><td><b>PartialDead</b></td><td>3,599</td><td>3,599</td><td class="">0</td></tr>
+<tr><td><b>TrueDead</b></td><td>18,355</td><td>18,355</td><td class="">0</td></tr>
+
+</table>
+
+<h3>2.2 Detail reklasifikovanych SKU</h3>
+<table>
+<tr><th>Puvodni segment</th><th>Novy segment</th><th>SKU</th><th>OS Tot %</th><th>RO Tot %</th><th>Sold After %</th><th>Velocity pred</th><th>Velocity po</th></tr>
+<tr><td>ActiveSeller</td><td>SlowFull</td><td>678</td><td>23.5%</td><td>52.4%</td><td class="good">91.0%</td><td>0.559</td><td>0.428</td></tr>
+<tr><td>ActiveSeller</td><td>SlowPartial</td><td>53</td><td>23.6%</td><td>30.3%</td><td class="good">83.0%</td><td>0.569</td><td>0.435</td></tr>
+<tr><td>ActiveSeller</td><td>SlowBrief</td><td>3</td><td>0.0%</td><td>25.0%</td><td class="bad">33.3%</td><td>0.527</td><td>0.369</td></tr>
+
+</table>
+
+<div class="insight-bad">
+<b>678 SKU (ActiveSeller -> SlowFull):</b> OS 23.5%, RO 52.4%, <b>Sold After 91%!</b><br>
+Tyto SKU maji vyssi velocity pred korekci (0.559) nez po (0.428).
+Po korekci spadaji pod ActiveSeller threshold, ale stale se prodaji s 91% uspecnosti.
+<b>Proto v8 zvysuje SlowFull ML (Weak: 1->2, Strong: 2->3).</b>
+</div>
+
+<h3>2.3 Profil 678 reklasifikovanych SKU</h3>
+<img src="fig_findings_03.png">
+
+<h3>2.4 Dopad na Pattern (pro referenci)</h3>
+<table>
+<tr><th>Puvodni Pattern</th><th>Novy Pattern</th><th>SKU</th></tr>
+<tr><td>Sporadic</td><td>Declining</td><td>342</td></tr>
+<tr><td>Consistent</td><td>Declining</td><td>63</td></tr>
+<tr><td>Declining</td><td>Consistent</td><td>6</td></tr>
+<tr><td>Declining</td><td>Sporadic</td><td>2</td></tr>
+
+</table>
+<p>Beze zmeny:</p>
+<table>
+<tr><th>Pattern</th><th>SKU</th></tr>
+<tr><td>Dead</td><td>15,453</td></tr>
+<tr><td>Sporadic</td><td>13,303</td></tr>
+<tr><td>Dying</td><td>6,599</td></tr>
+<tr><td>Consistent</td><td>646</td></tr>
+<tr><td>Declining</td><td>356</td></tr>
+
+</table>
+</div>
+
+<!-- ========== 3. SEGMENT x STORE ========== -->
+<div class="section">
+<h2>3. v8 Segment x Store Detail (15 segmentu)</h2>
+<img src="fig_findings_04.png">
+<table>
+<tr><th>Segment</th><th>Store</th><th>SKU</th><th>Oversell Total %</th>
+<th>Reorder Total SKU %</th><th>Sold After %</th><th>Redist qty</th></tr>
+<tr><td>TrueDead</td><td>Weak</td><td>5,227</td><td class="good">4.3%</td><td class="good">23.7%</td><td class="bad">32.6%</td><td>6,238</td></tr>
+<tr><td>TrueDead</td><td>Mid</td><td>8,206</td><td class="good">6.1%</td><td class="good">29.0%</td><td class="bad">37.2%</td><td>10,026</td></tr>
+<tr><td>TrueDead</td><td>Strong</td><td>4,922</td><td class="good">8.0%</td><td class="good">31.5%</td><td class="bad">40.8%</td><td>5,996</td></tr>
+<tr><td>PartialDead</td><td>Weak</td><td>939</td><td class="good">9.9%</td><td class="warn">36.8%</td><td class="bad">48.8%</td><td>1,124</td></tr>
+<tr><td>PartialDead</td><td>Mid</td><td>1,599</td><td class="warn">14.1%</td><td class="warn">41.7%</td><td class="warn">57.8%</td><td>2,056</td></tr>
+<tr><td>PartialDead</td><td>Strong</td><td>1,061</td><td class="bad">17.0%</td><td class="warn">40.8%</td><td class="warn">62.2%</td><td>1,484</td></tr>
+<tr><td>SlowPartial</td><td>Weak</td><td>422</td><td class="good">9.1%</td><td class="good">33.2%</td><td class="good">71.6%</td><td>627</td></tr>
+<tr><td>SlowPartial</td><td>Mid</td><td>792</td><td class="warn">12.1%</td><td class="warn">39.5%</td><td class="good">72.6%</td><td>1,175</td></tr>
+<tr><td>SlowPartial</td><td>Strong</td><td>819</td><td class="bad">15.6%</td><td class="warn">45.2%</td><td class="good">84.2%</td><td>1,322</td></tr>
+<tr><td>SlowFull</td><td>Weak</td><td>2,127</td><td class="warn">10.3%</td><td class="warn">40.7%</td><td class="warn">55.9%</td><td>2,715</td></tr>
+<tr><td>SlowFull</td><td>Mid</td><td>4,687</td><td class="bad">15.2%</td><td class="warn">49.2%</td><td class="warn">63.8%</td><td>6,267</td></tr>
+<tr><td>SlowFull</td><td>Strong</td><td>4,061</td><td class="bad">18.9%</td><td class="bad">52.5%</td><td class="good">74.6%</td><td>5,610</td></tr>
+<tr><td>ActiveSeller</td><td>Weak</td><td>100</td><td class="bad">27.2%</td><td class="bad">59.0%</td><td class="good">91.0%</td><td>195</td></tr>
+<tr><td>ActiveSeller</td><td>Mid</td><td>425</td><td class="bad">18.8%</td><td class="bad">56.7%</td><td class="good">91.5%</td><td>990</td></tr>
+<tr><td>ActiveSeller</td><td>Strong</td><td>1,276</td><td class="bad">21.5%</td><td class="bad">58.1%</td><td class="good">96.8%</td><td>2,792</td></tr>
+
+<tr style="font-weight:bold;background:#e8e8e8"><td colspan="2">TOTAL</td><td>36,663</td>
+<td colspan="3">-</td><td>48,617</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>MUST RAISE ML (reorder_tot_sku >50%):</b> ActiveSeller+Weak (59.0%), ActiveSeller+Mid (56.7%),
+ActiveSeller+Strong (58.1%), SlowFull+Strong (52.5%).
+</div>
+</div>
+
+<!-- ========== 4. STORE DECILES ========== -->
+<div class="section">
+<h2>4. Source + Target: Sila predajni (decily)</h2>
+<img src="fig_findings_05.png">
+<table>
+<tr><th>Metric</th><th>D1 (Weak)</th><th>D10 (Strong)</th><th>Trend</th></tr>
+<tr><td>Source Oversell 4M</td><td class="good">1.9%</td><td class="good">4.5%</td><td>Oversell je v cili ve vsech decilech</td></tr>
+<tr><td>Source Reorder Total</td><td class="warn">24.0%</td><td class="bad">38.6%</td><td>Silne predajny = vyssi reorder riziko</td></tr>
+<tr><td>Target All-Sold Total</td><td class="warn">48.3%</td><td class="good">70.1%</td><td>Silne predajny prodaji vse</td></tr>
+<tr><td>Target Nothing-Sold</td><td class="bad">32.1%</td><td class="good">13.7%</td><td>Slabe predajny = vice zaseklych zbozi</td></tr>
+</table>
+</div>
+
+<!-- ========== 5. TARGET SELL-THROUGH ========== -->
+<div class="section">
+<h2>5. Target: Sell-through analyza <span class="v8-badge">v8</span></h2>
+
+<h3>5.1 Store Strength x Sales Bucket</h3>
+<img src="fig_findings_06.png">
+<table>
+<tr><th>SalesBucket</th><th>Store</th><th>SKU</th><th>ST 4M %</th><th>ST Total %</th>
+<th>Nothing-sold %</th><th>All-sold Total %</th></tr>
+<tr><td>0</td><td>Weak</td><td>137</td><td>23.1%</td><td>34.7%</td><td class="bad">73.7%</td><td class="bad">31.4%</td></tr>
+<tr><td>0</td><td>Mid</td><td>334</td><td>23.4%</td><td>41.5%</td><td class="bad">73.7%</td><td class="bad">37.7%</td></tr>
+<tr><td>0</td><td>Strong</td><td>252</td><td>36.4%</td><td>53.6%</td><td class="bad">61.1%</td><td class="warn">51.6%</td></tr>
+<tr><td>1-2</td><td>Weak</td><td>1,966</td><td>26.3%</td><td>47.2%</td><td class="bad">65.5%</td><td class="bad">38.0%</td></tr>
+<tr><td>1-2</td><td>Mid</td><td>4,493</td><td>28.6%</td><td>51.2%</td><td class="bad">62.0%</td><td class="bad">40.9%</td></tr>
+<tr><td>1-2</td><td>Strong</td><td>3,622</td><td>32.1%</td><td>56.4%</td><td class="bad">58.0%</td><td class="bad">47.0%</td></tr>
+<tr><td>3-5</td><td>Weak</td><td>2,601</td><td>41.5%</td><td>65.8%</td><td class="warn">45.1%</td><td class="warn">54.4%</td></tr>
+<tr><td>3-5</td><td>Mid</td><td>7,765</td><td>40.8%</td><td>66.0%</td><td class="warn">45.5%</td><td class="warn">54.6%</td></tr>
+<tr><td>3-5</td><td>Strong</td><td>9,017</td><td>45.3%</td><td>71.7%</td><td class="warn">40.8%</td><td class="warn">61.0%</td></tr>
+<tr><td>6-10</td><td>Weak</td><td>886</td><td>58.6%</td><td>82.2%</td><td class="good">28.1%</td><td class="good">74.3%</td></tr>
+<tr><td>6-10</td><td>Mid</td><td>3,347</td><td>59.3%</td><td>84.3%</td><td class="good">26.8%</td><td class="good">76.2%</td></tr>
+<tr><td>6-10</td><td>Strong</td><td>4,859</td><td>63.1%</td><td>86.2%</td><td class="good">22.3%</td><td class="good">78.8%</td></tr>
+<tr><td>11+</td><td>Weak</td><td>179</td><td>73.8%</td><td>92.0%</td><td class="good">12.3%</td><td class="good">84.9%</td></tr>
+<tr><td>11+</td><td>Mid</td><td>815</td><td>72.7%</td><td>93.4%</td><td class="good">11.9%</td><td class="good">87.9%</td></tr>
+<tr><td>11+</td><td>Strong</td><td>1,358</td><td>77.0%</td><td>93.9%</td><td class="good">10.8%</td><td class="good">89.5%</td></tr>
+
+</table>
+
+<div class="insight-good">
+<b>11+ sales bucket = vyborny target:</b> 84.9-89.5% all-sold, nothing-sold jen 10.8-12.3%.
+Growth pocket = 11+ Strong (ML=4), reduction pocket = 0 Weak (ML=1).
+</div>
+
+<h3>5.2 Brand-Store Fit</h3>
+<table>
+<tr><th>Store</th><th>BrandFit</th><th>SKU</th><th>All-sold Total %</th><th>Nothing-sold %</th></tr>
+<tr><td>Weak</td><td>BrandWeak</td><td>2,448</td><td class="bad">55.3%</td><td class="bad">54.9%</td></tr>
+<tr><td>Weak</td><td>BrandMid</td><td>1,152</td><td class="warn">63.7%</td><td class="warn">49.3%</td></tr>
+<tr><td>Weak</td><td>BrandStrong</td><td>2,169</td><td class="warn">68.4%</td><td class="warn">42.4%</td></tr>
+<tr><td>Mid</td><td>BrandWeak</td><td>3,623</td><td class="bad">59.1%</td><td class="bad">53.2%</td></tr>
+<tr><td>Mid</td><td>BrandMid</td><td>3,744</td><td class="warn">64.3%</td><td class="warn">47.6%</td></tr>
+<tr><td>Mid</td><td>BrandStrong</td><td>9,387</td><td class="warn">70.0%</td><td class="warn">41.1%</td></tr>
+<tr><td>Strong</td><td>BrandWeak</td><td>1,746</td><td class="warn">63.9%</td><td class="warn">47.3%</td></tr>
+<tr><td>Strong</td><td>BrandMid</td><td>2,590</td><td class="warn">69.5%</td><td class="warn">42.2%</td></tr>
+<tr><td>Strong</td><td>BrandStrong</td><td>14,772</td><td class="good">75.8%</td><td class="good">35.4%</td></tr>
+
+</table>
+</div>
+
+<!-- ========== 6. PAIR ANALYSIS + FLOW ========== -->
+<div class="section">
+<h2>6. Parova analyza + Flow matrix</h2>
+<img src="fig_findings_07.png">
+
+<h3>6.1 Pair Analysis</h3>
+<table>
+<tr><th>Outcome</th><th>Count</th><th>Share</th></tr>
+<tr><td class="good">Win-Win</td><td>28,179</td><td>66.5%</td></tr>
+<tr><td class="warn">Win-Lose</td><td>8,565</td><td>20.2%</td></tr>
+<tr><td class="bad">Lose-Win</td><td>4,794</td><td>11.3%</td></tr>
+<tr><td class="bad">Lose-Lose</td><td>866</td><td>2.0%</td></tr>
+
+</table>
+<div class="insight-good">
+<b>Win-Win = 66.5%</b> (28,179 paru). Lose-Lose = jen 2.0%.
+</div>
+
+<h3>6.2 Flow Matrix</h3>
+<table>
+<tr><th>Source Store</th><th>Target Store</th><th>Pairs</th><th>% of Total</th></tr>
+<tr><td>Weak</td><td>Weak</td><td>1,179</td><td>2.8%</td></tr>
+<tr><td>Weak</td><td>Mid</td><td>4,149</td><td>9.8%</td></tr>
+<tr><td>Weak</td><td>Strong</td><td>4,611</td><td>10.9%</td></tr>
+<tr><td>Mid</td><td>Weak</td><td>2,391</td><td>5.6%</td></tr>
+<tr><td>Mid</td><td>Mid</td><td>7,279</td><td>17.2%</td></tr>
+<tr><td>Mid</td><td>Strong</td><td>8,304</td><td>19.6%</td></tr>
+<tr><td>Strong</td><td>Weak</td><td>2,302</td><td>5.4%</td></tr>
+<tr><td>Strong</td><td>Mid</td><td>5,643</td><td>13.3%</td></tr>
+<tr><td>Strong</td><td>Strong</td><td>6,546</td><td>15.4%</td></tr>
+
+</table>
+<div class="insight">
+<b>Nejvic paru: Mid->Strong (19.6%)</b> a Mid->Mid (17.2%).
+</div>
+</div>
+
+<!-- ========== 7. SOLD AFTER BY SEGMENT ========== -->
+<div class="section">
+<h2>7. Sold After % by Segment (v8 adjusted)</h2>
+<img src="fig_findings_08.png">
+
+<div class="insight-new">
+<b>v8 zaver:</b> Po CalendarWeight korekci zustava ActiveSeller s nejvyssim sold_after a reorderem.
+SlowFull nyni obsahuje dalsi 678 SKU s 91% sold_after - proto zvyseni ML.
+Gradient sold_after -> reorder zustava konzistentni i po korekci.
+</div>
+</div>
+
+<!-- ========== 8. SUMMARY TABLE ========== -->
+<div class="section">
+<h2>8. Souhrnna tabulka v8</h2>
+
+<table>
+<tr><th>Factor</th><th>v7 status</th><th>v8 zmena</th><th>Impact</th></tr>
+<tr><td>CalendarWeight 0.7</td><td>Novy</td><td class="warn">NOVA INOVACE</td><td class="warn">734 SKU reklasifikovano, presnejsi velocity</td></tr>
+<tr><td>ActiveSeller</td><td>2,535 SKU</td><td class="bad">1,801 SKU (-734)</td><td>Mensi, ale cistejsi segment</td></tr>
+<tr><td>SlowFull</td><td>10,197 SKU</td><td class="good">10,875 SKU (+678)</td><td>Vetsi segment s novym ML</td></tr>
+<tr><td>SlowFull ML (Weak)</td><td>ML=1</td><td class="warn">ML=2 (+1)</td><td>Ochrana 678 reklasifikovanych SKU (91% sold_after)</td></tr>
+<tr><td>SlowFull ML (Strong)</td><td>ML=2</td><td class="warn">ML=3 (+1)</td><td>Ochrana 678 reklasifikovanych SKU</td></tr>
+<tr><td>Target ML</td><td>Beze zmeny</td><td>Beze zmeny</td><td>Target pravidla zustala stejna</td></tr>
+</table>
+</div>
+
+<!-- ========== 9. BRANDFIT GRADUATION ========== -->
+<div class="section">
+<h2>9. BrandFit Graduation by SalesBucket <span class="new-badge">NEW</span></h2>
+
+<div class="insight">
+<b>BrandFit je nejsilnejsi pri nizkem SalesBucket (0-2): delta +18-40pp ST. Pri 6+ je irelevantni.</b>
+</div>
+
+<img src="fig_findings_09.png">
+
+<h3>9.1 BrandFit Delta Summary</h3>
+<table>
+<tr><th>Sales Bucket</th><th>Delta ST (BrandStrong - BrandWeak)</th><th>Modifier BrandWeak</th><th>Modifier BrandStrong</th></tr>
+<tr><td><b>0 (no sales)</b></td><td>+18 to +40pp</td><td class="bad">-1</td><td class="good">+1</td></tr>
+<tr><td><b>1-2</b></td><td>+9 to +10pp</td><td class="bad">-1</td><td class="good">+1</td></tr>
+<tr><td><b>3-5</b></td><td>+7 to +9pp</td><td class="bad">-1</td><td class="">0</td></tr>
+<tr><td><b>6-10</b></td><td>+2 to +3pp</td><td class="">0</td><td class="">0</td></tr>
+<tr><td><b>11+</b></td><td><2pp</td><td class="">0</td><td class="">0</td></tr>
+
+</table>
+
+<h3>9.2 Graduated Modifier Summary</h3>
+<table>
+<tr><th>SalesBucket</th><th>BrandWeak modifier</th><th>BrandStrong modifier</th><th>Vysvetleni</th></tr>
+<tr class="dir-up"><td><b>0 (no sales)</b></td><td class="bad">-1</td><td class="good">+1</td><td>Obrovska delta (+18-40pp ST) - BrandFit je rozhodujici</td></tr>
+<tr class="dir-up"><td><b>1-2</b></td><td class="bad">-1</td><td class="good">+1</td><td>Velka delta (+9-10pp ST) - BrandFit stale velmi dulezity</td></tr>
+<tr><td><b>3-5</b></td><td class="bad">-1</td><td>0</td><td>Stredni delta (+7-9pp ST) - BrandWeak penalizace, BrandStrong uz ne</td></tr>
+<tr><td><b>6-10</b></td><td>0</td><td>0</td><td>Mala delta (+2-3pp ST) - BrandFit irelevantni</td></tr>
+<tr><td><b>11+</b></td><td>0</td><td>0</td><td>Minimalni delta (&lt;2pp ST) - BrandFit irelevantni</td></tr>
+</table>
+
+<div class="insight-new">
+<b>Zaver:</b> BrandFit modifier by mel byt <b>graduovany dle SalesBucket</b>, nikoliv plochý.
+Pri 0-2 sales je BrandFit silny prediktor uspesnosti (+18-40pp ST delta).
+Pri 6+ sales uz vlastni prodejni historie dominuje a BrandFit nema vliv.
+</div>
+</div>
+
+<p><i>Generated: 2026-03-22 19:32 | CalculationId=233 | v8 CalendarWeight 0.7 | ML 0-4 | Orderable min=1 | Bidirectional target</i></p>
+</body>
+</html>

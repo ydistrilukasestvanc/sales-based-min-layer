@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v6 Backtest: Impact of Velocity-Normalized Rules (ML 0-4)</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v6-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html" class="active">Report 3: Backtest</a><span style="float:right; color:#7f8c8d; font-size:11px;">v6 Velocity-normalized | ML 0-4 | Orderable min=1 | Reorder focus</span></div>
+
+<h1>Backtest v6: Impact of Velocity-Normalized Rules <span class="v6-badge">v6</span></h1>
+<p><b>CalculationId=233</b> | Date: 2025-07-13 | Generated: 2026-03-22 16:03</p>
+<p>Dopad pravidel z <a href="consolidated_decision_tree.html">Report 2</a>.
+v6: Velocity-normalized segmenty, "Sold After %" prediktor. <b>Cil: snizit reorder o 10-15%.</b></p>
+
+<div class="insight" style="background: #fff3cd; border-left: 6px solid #f39c12; padding: 15px;">
+<b>Oversell v cili (3.0%). Reorder je hlavni problem (34.1% qty).</b><br>
+Velocity normalizace umoznuje presnejsi rozdeleni SKU do segmentu, cimz se snizi reorder
+u segmentu ktere byly driv spatne klasifikovany (napr. Sporadic -> ActiveSeller s 93.8% sold_after).
+</div>
+
+<!-- ========== OVERVIEW ========== -->
+<div class="section">
+<h2>1. Backtest Overview</h2>
+<div style="text-align: center;">
+<div class="metric"><div class="v">42,404</div><div class="l">Redistribution pairs</div></div>
+<div class="metric"><div class="v">48,754</div><div class="l">Total redistributed pcs</div></div>
+<div class="metric"><div class="v" style="color:#27ae60">3.0%</div><div class="l">Oversell 4M qty (V CILI)</div></div>
+<div class="metric"><div class="v" style="color:#e74c3c">34.1%</div><div class="l">Reorder Total qty (PROBLEM)</div></div>
+</div>
+
+<div class="insight-good">
+<b>Oversell je v cili:</b> Pouze 1,317 SKU (3.6%) ma oversell v 4M,
+celkem 1,464 kusu (3.0%).
+</div>
+
+<div class="insight-bad">
+<b>Reorder je hlavni problem:</b> 13,841 SKU (37.6%) musi byt znovu objednano.
+To je 16,615 kusu (34.1% objemu). Cil: snizit o 10-15%.
+</div>
+
+<img src="fig_backtest_02.png">
+
+<h3>Detailni metriky</h3>
+<table>
+<tr><th>Metric</th><th>4M</th><th>Total</th></tr>
+<tr><td>Oversell SKU</td><td class="good">1,317 (3.6%)</td><td>4,718 (12.8%)</td></tr>
+<tr><td>Oversell qty</td><td class="good">1,464 (3.0%)</td><td>5,578 (11.4%)</td></tr>
+<tr><td>Reorder SKU</td><td class="bad">7,087 (19.3%)</td><td class="bad">13,841 (37.6%)</td></tr>
+<tr><td>Reorder qty</td><td class="bad">7,980 (16.4%)</td><td class="bad">16,615 (34.1%)</td></tr>
+</table>
+</div>
+
+<!-- ========== SOURCE BACKTEST ========== -->
+<div class="section">
+<h2>2. Source Backtest: ML Direction Impact</h2>
+<img src="fig_backtest_04.png">
+
+<table>
+<tr><th>Direction</th><th>SKU</th><th>Reorder Total SKU %</th><th>Description</th></tr>
+<tr class="dir-up"><td><b>ML UP</b></td><td>13,524</td>
+<td class="bad">50.2%</td>
+<td>ActiveSeller + SlowFull + SlowPartial+Strong: vysoka prodejni aktivita = vyssi ML</td></tr>
+<tr class="dir-down"><td><b>ML DOWN</b></td><td>380</td>
+<td class="good">8.5%</td>
+<td>Non-orderable TrueDead: bezpecne pro ML=0</td></tr>
+<tr><td>NO CHANGE</td><td>22,866</td>
+<td>28.5%</td><td>TrueDead orderable + PartialDead: existujici ML vyhovuje</td></tr>
+</table>
+
+<div class="insight-new">
+<b>Klicovy rozdil v6:</b> Driv "Sporadic" (14,033 SKU) mel jednotny ML=2-3. Ted je rozdelen:
+SlowFull (10,197) = ML=1-2, SlowPartial (1,980) = ML=2-3, ActiveSeller (1,856 z Sporadic) = ML=3-4.
+Presnejsi ML = mensi reorder.
+</div>
+</div>
+
+<!-- ========== SEGMENT DETAIL ========== -->
+<div class="section">
+<h2>3. Source: Reorder per Segment s navrzenymi ML <span class="new-badge">NEW v6</span></h2>
+<img src="fig_backtest_01.png">
+
+<table>
+<tr><th>Segment</th><th>Reorder Total SKU %</th><th>Sold After %</th><th>Proposed ML range</th><th>Reason</th></tr>
+<tr class="dir-up"><td><b>ActiveSeller</b></td><td class="bad">52.8-59.8%</td><td class="good">89-96%</td><td>ML=3-4</td>
+<td>Vysoky sold_after + vysoky reorder = maximalni ochrana</td></tr>
+<tr class="dir-up"><td><b>SlowFull</b></td><td class="bad">40.6-51.4%</td><td class="warn">54.9-72.6%</td><td>ML=1-2</td>
+<td>Stredni riziko, velky objem (10,197 SKU)</td></tr>
+<tr><td><b>SlowPartial</b></td><td class="warn">32.8-46.1%</td><td class="good">71.1-84.2%</td><td>ML=2-3</td>
+<td>Vyssi sold_after nez SlowFull, mene SKU</td></tr>
+<tr><td><b>PartialDead</b></td><td class="warn">36.8-41.7%</td><td class="warn">48.8-62.2%</td><td>ML=1-2</td>
+<td>Kratsi doba na sklade, stredni riziko</td></tr>
+<tr class="dir-down"><td><b>TrueDead</b></td><td>23.7-31.5%</td><td class="bad">32.6-40.8%</td><td>ML=1</td>
+<td>Nizky sold_after + nizky reorder = orderable minimum</td></tr>
+<tr><td><b>BriefNoSale</b></td><td class="bad">52.1%</td><td class="good">70.8%</td><td>ML=2</td>
+<td>Maly vzorek (48 SKU), konzervativni pristup</td></tr>
+</table>
+</div>
+
+<!-- ========== VOLUME WATERFALL ========== -->
+<div class="section">
+<h2>4. Volume Waterfall: Ocekavana redukce reorderu</h2>
+<img src="fig_backtest_03.png">
+
+<table>
+<tr><th>Source</th><th>Qty Impact</th><th>% of Reorder</th><th>Mechanism</th></tr>
+<tr class="dir-down"><td>ML UP (ActiveSeller/SlowFull/SlowPartial)</td>
+<td class="good">-996 pcs</td><td>6.0%</td>
+<td>Vyssi ML = mene redistribuce = mene reorderu</td></tr>
+<tr class="dir-down"><td>Segment Reclassification (v6 split)</td>
+<td class="good">-664 pcs</td><td>4.0%</td>
+<td>Presnejsi segmentace = presnejsi ML</td></tr>
+<tr class="dir-down"><td>Target Modifiers (stock coverage)</td>
+<td class="good">-332 pcs</td><td>2.0%</td>
+<td>Lepsi targeting = mensi plytkvani</td></tr>
+<tr style="font-weight:bold;background:#e8e8e8"><td>CELKEM</td>
+<td>-1,992 pcs</td>
+<td>12.0%</td>
+<td>Projected: 14,623 pcs (30.0% objemu)</td></tr>
+</table>
+</div>
+
+<!-- ========== RECOMMENDATIONS ========== -->
+<div class="section">
+<h2>5. Doporuceni</h2>
+
+<table>
+<tr><th>#</th><th>Doporuceni</th><th>Ocekavany dopad</th><th>Priorita</th></tr>
+<tr><td>1</td><td><b>Implementovat velocity-normalized segmentaci misto stareho Pattern</b></td>
+<td>Presnejsi ML pro 14,033 byvalych "Sporadic" SKU</td><td class="bad">KRITICKA</td></tr>
+<tr><td>2</td><td>Source Velocity Segment x Store lookup (18 segmentu)</td>
+<td>ActiveSeller ML=3-4, TrueDead ML=1, presnejsi nez 5-pattern model</td><td class="bad">KRITICKA</td></tr>
+<tr><td>3</td><td>Pouzit "Sold After %" jako modifier (+1 ML pro &gt;80%)</td>
+<td>Zachyti produkty ktere se po redistribuci skutecne prodaji</td><td class="bad">KRITICKA</td></tr>
+<tr><td>4</td><td>Target: stock coverage modifier (-1 pro 0-day products)</td>
+<td>Snizi posilani na nove, neoverne pozice</td><td class="warn">VYSOKA</td></tr>
+<tr><td>5</td><td>Seasonality modifier (+1 pro &ge;20% NovDec)</td>
+<td>Ochrani sezonni produkty (reorder 52.2%)</td><td class="warn">VYSOKA</td></tr>
+<tr><td>6</td><td>Brand-store mismatch modifier (-1 pro Weak+Weak)</td>
+<td>Snizi posilani na slabe kombinace (nothing-sold 54.9%)</td><td>STREDNI</td></tr>
+<tr><td>7</td><td>Monitorovat BriefNoSale segment (&lt;90d, 48 SKU)</td>
+<td>Maly vzorek - sberat data pro lepsi rozhodovani</td><td>NIZKA</td></tr>
+</table>
+
+<div class="insight-new">
+<b>Celkovy dopad v6:</b><br>
+- Oversell: <b>V CILI</b> - 3.0% qty (1,464 pcs) v 4M<br>
+- Reorder: <b>HLAVNI PROBLEM</b> - 34.1% qty (16,615 pcs) v total<br>
+- Projected reduction: <b>~12.0%</b> redukce reorderu<br>
+- Projected new reorder: <b>14,623 pcs (30.0%)</b><br>
+- Velocity normalizace = presnejsi segmentace = presnejsi ML = mensi reorder<br>
+- "Sold After %" = novy silny prediktor ktery stary model nemel
+</div>
+</div>
+
+<p><i>Generated: 2026-03-22 16:03 | CalculationId=233 | v6 Velocity-normalized | ML 0-4 | Orderable min=1 | Reorder focus</i></p>
+</body>
+</html>

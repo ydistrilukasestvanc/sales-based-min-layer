@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Decision tree v5</title>
+<style>
+:root {--bg:#f5f1e8;--panel:#fffaf2;--ink:#1f2421;--muted:#5f665f;--line:#d8cfbf;--accent:#9f4f2f;--accent2:#2c6e62;}
+body {margin:0;font-family:Georgia,"Times New Roman",serif;background:radial-gradient(circle at top left,#fff7ea,var(--bg) 55%);color:var(--ink);}
+.wrap {max-width:1180px;margin:0 auto;padding:28px 20px 40px;}
+nav {display:flex;gap:14px;margin-bottom:22px;font-size:15px;}
+nav a {color:var(--accent);text-decoration:none;}
+header {background:linear-gradient(135deg,rgba(159,79,47,.12),rgba(44,110,98,.08));border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:22px;}
+h1 {font-size:38px;line-height:1.05;letter-spacing:-.02em;margin:0 0 12px;}
+h2,h3 {margin:0 0 12px;} p,li {line-height:1.55;color:var(--muted);font-size:16px;}
+section {background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 18px 20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(40,32,18,.04);}
+.grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px;}
+table {width:100%;border-collapse:collapse;font-size:14px;background:white;}
+th,td {padding:9px 10px;border-bottom:1px solid #eee7db;text-align:left;}
+th {background:#f2e9da;color:#443b34;}
+img {width:100%;border-radius:12px;border:1px solid var(--line);background:white;}
+.callout {padding:12px 14px;border-left:4px solid var(--accent2);background:rgba(44,110,98,.08);margin:8px 0 0;}
+</style>
+</head>
+<body><div class="wrap"><nav><a href="consolidated_findings.html">Findings</a><a href="consolidated_decision_tree.html">Decision tree</a><a href="consolidated_backtest.html">Backtest</a></nav><header><h1>Decision tree v5</h1><p>Decision tree v5 pouziva samostatny source a target lookup, pak modifikatory a nakonec tvrde clamp podminky. Cilem je realokovat objem mezi reduction pockets a growth pockets.</p></header><section><h2>Base lookup</h2><div class="grid"><div><h3>Source</h3><table><thead><tr><th>Pattern</th><th>Weak</th><th>Mid</th><th>Strong</th></tr></thead><tbody><tr><td>Dead</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Dying</td><td>1</td><td>1</td><td>2</td></tr><tr><td>Sporadic</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Consistent</td><td>2</td><td>3</td><td>4</td></tr><tr><td>Declining</td><td>2</td><td>2</td><td>3</td></tr></tbody></table><img src="fig_dtree_01.png" alt="source lookup"></div><div><h3>Target</h3><table><thead><tr><th>SalesBucket</th><th>Weak</th><th>Mid</th><th>Strong</th></tr></thead><tbody><tr><td>0</td><td>1</td><td>1</td><td>1</td></tr><tr><td>1-2</td><td>1</td><td>1</td><td>2</td></tr><tr><td>3-5</td><td>1</td><td>2</td><td>2</td></tr><tr><td>6-10</td><td>2</td><td>2</td><td>3</td></tr><tr><td>11+</td><td>2</td><td>3</td><td>3</td></tr></tbody></table><img src="fig_dtree_02.png" alt="target lookup"></div></div></section><section><h2>Modifikatory</h2><div class="grid"><div><table><thead><tr><th>Modifikator</th><th>Podminka</th><th>Uprava</th></tr></thead><tbody><tr><td>LastSaleGap short</td><td>LastSaleGapDays &lt;= 30</td><td>+1</td></tr><tr><td>RedistributionRatio high</td><td>RedistributionRatio &gt;= 0.75</td><td>+1</td></tr><tr><td>Seasonal</td><td>XmasLift &gt;= 20%</td><td>+1</td></tr><tr><td>Product concentration low</td><td>ProductConcentrationShare &lt; 10%</td><td>+1</td></tr><tr><td>Phantom stock</td><td>PhantomStockFlag = 1</td><td>-1</td></tr><tr><td>Deep inactivity</td><td>LastSaleGapDays &gt;= 365 a SalesQty12MPre = 0</td><td>-1</td></tr><tr><td>Became delisted</td><td>SkuClass -&gt; D/L</td><td>ML=0</td></tr></tbody></table></div><div><table><thead><tr><th>Modifikator</th><th>Podminka</th><th>Uprava</th></tr></thead><tbody><tr><td>All-sold / ST-1pc high</td><td>AllSold4M = 1 nebo ST1_4M &gt;= 90%</td><td>+1</td></tr><tr><td>Nothing-sold / very low ST</td><td>NothingSold4M = 1 nebo ST4M &lt; 25%</td><td>-1</td></tr><tr><td>Brand-store mismatch</td><td>BrandStoreMismatch = 1</td><td>-1</td></tr><tr><td>Very low concentration</td><td>ProductConcentrationShare &lt; 10%</td><td>-1</td></tr><tr><td>Became delisted</td><td>SkuClass -&gt; D/L</td><td>ML=0</td></tr></tbody></table></div></div><p class="callout">Lookup urcuje zaklad. Realny ProposedML ve v5 vznikne az po modifikatorech a clamp pravidlech 0-4.</p></section><section><h2>Smery zasahu</h2><img src="fig_dtree_03.png" alt="directions"><ul><li><strong>Source UP</strong> miri hlavne na Sporadic/Strong, Sporadic/Mid a Declining/Strong.</li><li><strong>Source DOWN</strong> zustava omezeny na nizkorizikove a neaktivni skupiny.</li><li><strong>Target DOWN</strong> je zamerne sirsi, protoze tam lezi nejvetsi objem Win-Lose redistribuci.</li><li><strong>Target UP</strong> se drzi jen u segmentu s vysokym ST nebo ST-1pc.</li></ul></section></div></body></html>

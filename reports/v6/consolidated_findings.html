@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v6 Consolidated Findings: SalesBased MinLayers - Velocity-Normalized</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v6-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html" class="active">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a><span style="float:right; color:#7f8c8d; font-size:11px;">v6 Velocity-normalized | ML 0-4 | Orderable min=1 | Reorder focus</span></div>
+
+<h1>Consolidated Findings v6: SalesBased MinLayers (Velocity-Normalized) <span class="v6-badge">v6</span></h1>
+<p><b>CalculationId=233</b> | ApplicationDate: 2025-07-13 | Generated: 2026-03-22 16:03</p>
+<p><b>v6 KEY INNOVATION:</b> <b>Velocity-normalized sales</b> = Sales_12M / DaysInStock_12M x 30 (mesicni rate).
+Nahradi stary Pattern (Dead/Dying/Sporadic/Consistent/Declining) presnejsimi segmenty
+ktere zohlednuji jak prodejni aktivitu, tak dostupnost zasob.
+<b>"Sold after redistribution %"</b> je silny prediktor uspechu.</p>
+
+<div class="insight" style="background: #fff3cd; border-left: 6px solid #f39c12; padding: 15px;">
+<b>Oversell v cili (3.0%). Reorder je hlavni problem (34.1% qty).</b><br>
+Oversell 4M je pouze 3.0% (1,317 SKU, 1,464 qty). Reorder: 13,841 SKU (37.6%), 16,615 kusu (34.1% objemu).
+Velocity normalizace odhaluje skryte segmenty: 50% je TrueDead (36.9% sold_after) vs 6.9% ActiveSeller (93.8% sold_after).
+</div>
+
+<div class="insight-new">
+<b>v6 ZMENA:</b> Velocity = Sales_12M / DaysInStock_12M x 30. Produkty s nulovym prodejem ale kracejsi dobou na sklade
+(napr. &lt;90 dni) jsou oddeleny od TrueDead do BriefNoSale. Sporadic je rozdelen na SlowFull, SlowPartial a ActiveSeller
+podle skutecne prodejni rychlosti normalizovane na dostupnost.
+</div>
+
+<!-- ========== 1. OVERVIEW ========== -->
+<div class="section">
+<h2>1. Overview</h2>
+<div style="text-align: center;">
+<div class="metric"><div class="v">42,404</div><div class="l">Redistribution pairs</div></div>
+<div class="metric"><div class="v">48,754</div><div class="l">Total redistributed pcs</div></div>
+<div class="metric"><div class="v">36,770</div><div class="l">Source SKU</div></div>
+<div class="metric"><div class="v">41,631</div><div class="l">Target SKU</div></div>
+</div>
+
+<h3>Source: Celkove metriky - 4M a total</h3>
+<table>
+<tr><th>Metric</th><th>4 months</th><th>Total (~9M)</th></tr>
+<tr><td><b>Total redistributed</b></td><td>48,754 pcs</td><td>48,754 pcs</td></tr>
+<tr><td><b>Oversell (SKU)</b></td><td class="good">1,317 SKU (3.6%)</td><td>4,718 SKU (12.8%)</td></tr>
+<tr><td><b>Oversell (qty)</b></td><td class="good">1,464 qty (3.0%)</td><td>5,578 qty (11.4%)</td></tr>
+<tr><td><b>Reorder (SKU)</b></td><td class="bad">7,087 SKU (19.3%)</td><td class="bad">13,841 SKU (37.6%)</td></tr>
+<tr><td><b>Reorder (qty)</b></td><td class="bad">7,980 qty (16.4%)</td><td class="bad">16,615 qty (34.1%)</td></tr>
+</table>
+
+<div class="insight">
+<b>Oversell v cili (3.0%). Reorder je hlavni problem (37.6% SKU, 34.1% qty).</b>
+Cil je snizit reorder o 10-15%.
+</div>
+</div>
+
+<!-- ========== 2. VELOCITY SEGMENTS ========== -->
+<div class="section">
+<h2>2. Velocity-Normalized Segmentace <span class="new-badge">NEW v6</span></h2>
+<p><b>Velocity</b> = Sales_12M / DaysInStock_12M x 30 (mesicni rate normalizovana na dostupnost).
+Odhaluje skryte segmenty, ktere stary Pattern nevidel.</p>
+
+<img src="fig_findings_01.png">
+<table>
+<tr><th>Segment</th><th>SKU</th><th>Podil</th><th>Redist qty</th><th>Oversell Total %</th>
+<th>Reorder Total SKU %</th><th>Sold After %</th><th>Avg Days in Stock</th></tr>
+<tr><td><b>TrueDead</b></td><td>18,355</td><td>50.0%</td><td>22,260</td><td>6.1%</td><td class="good">28.2%</td><td class="bad">36.9%</td><td>358d</td></tr>
+<tr><td><b>SlowFull</b></td><td>10,197</td><td>27.8%</td><td>13,511</td><td>15.1%</td><td class="warn">47.9%</td><td class="warn">64.7%</td><td>347d</td></tr>
+<tr><td><b>PartialDead</b></td><td>3,599</td><td>9.8%</td><td>4,664</td><td>14.0%</td><td class="warn">40.2%</td><td class="warn">56.8%</td><td>172d</td></tr>
+<tr><td><b>ActiveSeller</b></td><td>2,535</td><td>6.9%</td><td>5,151</td><td>21.6%</td><td class="bad">58.3%</td><td class="good">93.8%</td><td>293d</td></tr>
+<tr><td><b>SlowPartial</b></td><td>1,980</td><td>5.4%</td><td>3,035</td><td>12.7%</td><td class="warn">40.7%</td><td class="good">76.9%</td><td>188d</td></tr>
+<tr><td><b>BriefNoSale</b></td><td>48</td><td>0.1%</td><td>61</td><td>27.9%</td><td class="bad">52.1%</td><td class="good">70.8%</td><td>60d</td></tr>
+
+</table>
+
+<div class="insight-new">
+<b>Klicovy insight:</b> "Sold After %" je silny prediktor. ActiveSeller ma 93.8% sold_after
+ale take 58.3% reorder - tyto produkty se rychle prodaji a potrebuji doplneni.
+TrueDead ma jen 36.9% sold_after a 28.2% reorder - nizke riziko.
+</div>
+
+<h3>2.1 Segment x Store Detail (15 segmentu)</h3>
+<img src="fig_findings_02.png">
+<table>
+<tr><th>Segment</th><th>Store</th><th>SKU</th><th>Oversell Total %</th>
+<th>Reorder Total SKU %</th><th>Sold After %</th><th>Redist qty</th></tr>
+<tr><td>TrueDead</td><td>Weak</td><td>5,227</td><td class="good">4.3%</td><td class="good">23.7%</td><td class="bad">32.6%</td><td>6,238</td></tr>
+<tr><td>TrueDead</td><td>Mid</td><td>8,206</td><td class="good">6.1%</td><td class="good">29.0%</td><td class="bad">37.2%</td><td>10,026</td></tr>
+<tr><td>TrueDead</td><td>Strong</td><td>4,922</td><td class="good">8.0%</td><td class="good">31.5%</td><td class="bad">40.8%</td><td>5,996</td></tr>
+<tr><td>PartialDead</td><td>Weak</td><td>939</td><td class="good">9.9%</td><td class="warn">36.8%</td><td class="bad">48.8%</td><td>1,124</td></tr>
+<tr><td>PartialDead</td><td>Mid</td><td>1,599</td><td class="warn">14.1%</td><td class="warn">41.7%</td><td class="warn">57.8%</td><td>2,056</td></tr>
+<tr><td>PartialDead</td><td>Strong</td><td>1,061</td><td class="bad">17.0%</td><td class="warn">40.8%</td><td class="warn">62.2%</td><td>1,484</td></tr>
+<tr><td>SlowPartial</td><td>Weak</td><td>415</td><td class="good">8.8%</td><td class="good">32.8%</td><td class="good">71.1%</td><td>617</td></tr>
+<tr><td>SlowPartial</td><td>Mid</td><td>773</td><td class="warn">11.7%</td><td class="warn">39.3%</td><td class="good">72.6%</td><td>1,151</td></tr>
+<tr><td>SlowPartial</td><td>Strong</td><td>792</td><td class="bad">15.4%</td><td class="warn">46.1%</td><td class="good">84.2%</td><td>1,267</td></tr>
+<tr><td>SlowFull</td><td>Weak</td><td>2,060</td><td class="warn">10.2%</td><td class="warn">40.6%</td><td class="warn">54.9%</td><td>2,614</td></tr>
+<tr><td>SlowFull</td><td>Mid</td><td>4,468</td><td class="warn">14.6%</td><td class="warn">48.3%</td><td class="warn">62.8%</td><td>5,927</td></tr>
+<tr><td>SlowFull</td><td>Strong</td><td>3,669</td><td class="bad">18.3%</td><td class="bad">51.4%</td><td class="good">72.6%</td><td>4,970</td></tr>
+<tr><td>ActiveSeller</td><td>Weak</td><td>176</td><td class="bad">22.1%</td><td class="bad">52.8%</td><td class="good">90.3%</td><td>308</td></tr>
+<tr><td>ActiveSeller</td><td>Mid</td><td>664</td><td class="bad">20.9%</td><td class="bad">59.8%</td><td class="good">89.0%</td><td>1,356</td></tr>
+<tr><td>ActiveSeller</td><td>Strong</td><td>1,695</td><td class="bad">21.9%</td><td class="bad">58.3%</td><td class="good">96.0%</td><td>3,487</td></tr>
+
+<tr style="font-weight:bold;background:#e8e8e8"><td colspan="2">TOTAL</td><td>36,666</td>
+<td colspan="3">-</td><td>48,621</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>MUST RAISE ML (reorder_tot_sku &gt;50%):</b> ActiveSeller+Weak (52.8%), ActiveSeller+Mid (59.8%),
+ActiveSeller+Strong (58.3%), SlowFull+Strong (51.4%), BriefNoSale (52.1%).
+</div>
+<div class="insight-good">
+<b>LOW RISK segmenty:</b> TrueDead+Weak (23.7% reorder, 32.6% sold_after) - bezpecne pro ML=1.
+</div>
+</div>
+
+<!-- ========== 3. RECLASSIFICATION ========== -->
+<div class="section">
+<h2>3. Reklasifikace: Stary Pattern -> Novy Segment <span class="new-badge">NEW v6</span></h2>
+<img src="fig_findings_06.png">
+<table>
+<tr><th>Stary Pattern</th><th>Novy Segment</th><th>SKU</th></tr>
+<tr><td>Dead</td><td>TrueDead</td><td>15,367</td></tr>
+<tr><td>Dead</td><td>PartialDead</td><td>36</td></tr>
+<tr><td>Dying</td><td>TrueDead</td><td>6,587</td></tr>
+<tr><td>Dying</td><td>PartialDead</td><td>12</td></tr>
+<tr><td>Sporadic</td><td>SlowFull</td><td>10,197</td></tr>
+<tr><td>Sporadic</td><td>SlowPartial</td><td>1,980</td></tr>
+<tr><td>Sporadic</td><td>ActiveSeller</td><td>1,856</td></tr>
+<tr><td>Consistent</td><td>ActiveSeller</td><td>644</td></tr>
+<tr><td>Consistent</td><td>SlowFull</td><td>65</td></tr>
+<tr><td>Declining</td><td>ActiveSeller</td><td>35</td></tr>
+<tr><td>Declining</td><td>SlowFull</td><td>329</td></tr>
+
+</table>
+
+<div class="insight-new">
+<b>Klicove zmeny:</b><br>
+- <b>Dead (15,403)</b> -> prevazne TrueDead (15,367) + 36 PartialDead (mely kratkou dobu na sklade)<br>
+- <b>Dying (6,599)</b> -> prevazne TrueDead (6,587) + 12 PartialDead<br>
+- <b>Sporadic (14,033)</b> -> rozdeleno na SlowFull (10,197), SlowPartial (1,980), ActiveSeller (1,856)<br>
+- <b>Consistent (709)</b> -> prevazne ActiveSeller (644) + 65 SlowFull (nizka velocity ale konzistentni)<br>
+- <b>Declining (364)</b> -> SlowFull (329) + ActiveSeller (35)
+</div>
+</div>
+
+<!-- ========== 4. STOCK COVERAGE EFFECT ========== -->
+<div class="section">
+<h2>4. Stock Coverage Effect na "NoSale" Group <span class="new-badge">NEW v6</span></h2>
+<p>Produkty bez prodeje v 12M maji ruzne chovani podle doby na sklade. Velocity normalizace
+toto odhaluje - kratka doba na sklade neznamena "dead" ale "nedostatecna data".</p>
+
+<img src="fig_findings_07.png">
+<table>
+<tr><th>Stock Coverage</th><th>SKU</th><th>Redist qty</th><th>Oversell Total %</th>
+<th>Reorder Total SKU %</th><th>Sold After %</th></tr>
+<tr><td><90d</td><td>48</td><td>61</td><td>27.9%</td><td class="bad">52.1%</td><td class="good">70.8%</td></tr>
+<tr><td>90-180d</td><td>3,038</td><td>3,829</td><td>14.6%</td><td class="warn">41.0%</td><td class="warn">57.2%</td></tr>
+<tr><td>180-270d</td><td>561</td><td>835</td><td>11.1%</td><td class="warn">35.5%</td><td class="warn">54.2%</td></tr>
+<tr><td>270d+</td><td>18,355</td><td>22,260</td><td>6.1%</td><td class="good">28.2%</td><td class="bad">36.9%</td></tr>
+
+</table>
+
+<div class="insight-new">
+<b>&lt;90 dnu na sklade</b> (BriefNoSale, 48 SKU): 70.8% sold_after, 52.1% reorder - premalo dat,
+ale prekvapivy uspechu. 270d+ (TrueDead, 18,355 SKU): jen 36.9% sold_after, 28.2% reorder.
+Kratsi doba na sklade = lepsi vysledek redistribuce.
+</div>
+</div>
+
+<!-- ========== 5. STORE DECILES ========== -->
+<div class="section">
+<h2>5. Source + Target: Sila predajni (decily)</h2>
+<img src="fig_findings_03.png">
+<table>
+<tr><th>Metric</th><th>D1 (Weak)</th><th>D10 (Strong)</th><th>Trend</th></tr>
+<tr><td>Source Oversell 4M</td><td class="good">1.9%</td><td class="good">4.5%</td><td>Oversell je v cili ve vsech decilech</td></tr>
+<tr><td>Source Reorder Total</td><td class="warn">24.0%</td><td class="bad">38.6%</td><td>Silne predajne = vyssi reorder riziko</td></tr>
+<tr><td>Target All-Sold Total</td><td class="warn">48.3%</td><td class="good">70.1%</td><td>Silne predajne prodaji vse</td></tr>
+<tr><td>Target Nothing-Sold</td><td class="bad">32.1%</td><td class="good">13.7%</td><td>Slabe predajny = vice zaseklych zbozi</td></tr>
+</table>
+</div>
+
+<!-- ========== 6. TARGET SELL-THROUGH ========== -->
+<div class="section">
+<h2>6. Target: Sell-through analyza (15 segmentu)</h2>
+
+<h3>6.1 Store Strength x Sales Bucket</h3>
+<img src="fig_findings_04.png">
+<table>
+<tr><th>SalesBucket</th><th>Store</th><th>SKU</th><th>ST 4M %</th><th>ST Total %</th>
+<th>Nothing-sold 4M %</th><th>All-sold Total %</th></tr>
+<tr><td>0</td><td>Weak</td><td>137</td><td>23.1%</td><td>34.7%</td><td class="bad">73.7%</td><td class="bad">31.4%</td></tr>
+<tr><td>0</td><td>Mid</td><td>334</td><td>23.4%</td><td>41.5%</td><td class="bad">73.7%</td><td class="bad">37.7%</td></tr>
+<tr><td>0</td><td>Strong</td><td>252</td><td>36.4%</td><td>53.6%</td><td class="bad">61.1%</td><td class="warn">51.6%</td></tr>
+<tr><td>1-2</td><td>Weak</td><td>1,966</td><td>26.3%</td><td>47.2%</td><td class="bad">65.5%</td><td class="bad">38.0%</td></tr>
+<tr><td>1-2</td><td>Mid</td><td>4,493</td><td>28.6%</td><td>51.2%</td><td class="bad">62.0%</td><td class="bad">40.9%</td></tr>
+<tr><td>1-2</td><td>Strong</td><td>3,622</td><td>32.1%</td><td>56.4%</td><td class="bad">58.0%</td><td class="bad">47.0%</td></tr>
+<tr><td>3-5</td><td>Weak</td><td>2,601</td><td>41.5%</td><td>65.8%</td><td class="warn">45.1%</td><td class="warn">54.4%</td></tr>
+<tr><td>3-5</td><td>Mid</td><td>7,765</td><td>40.8%</td><td>66.0%</td><td class="warn">45.5%</td><td class="warn">54.6%</td></tr>
+<tr><td>3-5</td><td>Strong</td><td>9,017</td><td>45.3%</td><td>71.7%</td><td class="warn">40.8%</td><td class="warn">61.0%</td></tr>
+<tr><td>6-10</td><td>Weak</td><td>886</td><td>58.6%</td><td>82.2%</td><td class="good">28.1%</td><td class="good">74.3%</td></tr>
+<tr><td>6-10</td><td>Mid</td><td>3,347</td><td>59.3%</td><td>84.3%</td><td class="good">26.8%</td><td class="good">76.2%</td></tr>
+<tr><td>6-10</td><td>Strong</td><td>4,859</td><td>63.1%</td><td>86.2%</td><td class="good">22.3%</td><td class="good">78.8%</td></tr>
+<tr><td>11+</td><td>Weak</td><td>179</td><td>73.8%</td><td>92.0%</td><td class="good">12.3%</td><td class="good">84.9%</td></tr>
+<tr><td>11+</td><td>Mid</td><td>815</td><td>72.7%</td><td>93.4%</td><td class="good">11.9%</td><td class="good">87.9%</td></tr>
+<tr><td>11+</td><td>Strong</td><td>1,358</td><td>77.0%</td><td>93.9%</td><td class="good">10.8%</td><td class="good">89.5%</td></tr>
+
+</table>
+
+<div class="insight-good">
+<b>11+ sales bucket = vyborny target:</b> 84.9-89.5% all-sold, nothing-sold jen 10.8-12.3%.
+</div>
+
+<h3>6.2 Brand-Store Fit + Stock Coverage <span class="new-badge">NEW v6</span></h3>
+<img src="fig_findings_05.png">
+<table>
+<tr><th>Store</th><th>BrandFit</th><th>SKU</th><th>ST Total %</th><th>Nothing-sold 4M %</th></tr>
+<tr><td>Weak</td><td>BrandWeak</td><td>2,448</td><td class="bad">55.3%</td><td class="bad">54.9%</td></tr>
+<tr><td>Weak</td><td>BrandMid</td><td>1,152</td><td class="warn">63.7%</td><td class="warn">49.3%</td></tr>
+<tr><td>Weak</td><td>BrandStrong</td><td>2,169</td><td class="warn">68.4%</td><td class="warn">42.4%</td></tr>
+<tr><td>Mid</td><td>BrandWeak</td><td>3,623</td><td class="bad">59.1%</td><td class="bad">53.2%</td></tr>
+<tr><td>Mid</td><td>BrandMid</td><td>3,744</td><td class="warn">64.3%</td><td class="warn">47.6%</td></tr>
+<tr><td>Mid</td><td>BrandStrong</td><td>9,387</td><td class="warn">70.0%</td><td class="warn">41.1%</td></tr>
+<tr><td>Strong</td><td>BrandWeak</td><td>1,746</td><td class="warn">63.9%</td><td class="warn">47.3%</td></tr>
+<tr><td>Strong</td><td>BrandMid</td><td>2,590</td><td class="warn">69.5%</td><td class="warn">42.2%</td></tr>
+<tr><td>Strong</td><td>BrandStrong</td><td>14,772</td><td class="good">75.8%</td><td class="good">35.4%</td></tr>
+
+</table>
+
+<h3>6.3 Target Stock Coverage Effect <span class="new-badge">NEW v6</span></h3>
+<table>
+<tr><th>Stock Coverage</th><th>SKU</th><th>ST Total %</th><th>Nothing-sold 4M %</th><th>All-sold Total %</th></tr>
+<tr><td>0 days (new)</td><td>1,699</td><td>67.2%</td><td class="bad">52.0%</td><td class="warn">67.0%</td></tr>
+<tr><td>1-89 days</td><td>2,370</td><td>74.2%</td><td class="warn">38.8%</td><td class="good">70.2%</td></tr>
+<tr><td>90-149 days</td><td>9,376</td><td>74.7%</td><td class="warn">35.5%</td><td class="warn">65.6%</td></tr>
+<tr><td>150+ days (est.)</td><td>28,186</td><td>67.1%</td><td class="warn">44.0%</td><td class="bad">56.4%</td></tr>
+
+</table>
+
+<div class="insight-new">
+<b>Nove produkty (0 dnu) maji nejvyssi nothing-sold (52.0%)</b> ale prekvapive dobry ST total (67.2%).
+Nejlepsi vysledky: 1-89 dnu (ST 74.2%, all-sold 70.2%). 150+ dnu paradoxne horsi (ST 67.1%) -
+etablovane produkty ktere uz se neprodavaji.
+</div>
+</div>
+
+<!-- ========== 7. PAIR ANALYSIS + SEASONALITY ========== -->
+<div class="section">
+<h2>7. Parova analyza + Sezonnost</h2>
+<img src="fig_findings_08.png">
+
+<h3>7.1 Pair Analysis</h3>
+<table>
+<tr><th>Outcome</th><th>Description</th><th>Count</th><th>Share</th></tr>
+<tr><td class="good">Win-Win</td><td>No oversell + good ST</td><td>28,179</td><td>66.5%</td></tr>
+<tr><td class="warn">Win-Lose</td><td>No oversell + bad ST</td><td>8,565</td><td>20.2%</td></tr>
+<tr><td class="bad">Lose-Win</td><td>Oversell + good ST</td><td>4,794</td><td>11.3%</td></tr>
+<tr><td class="bad">Lose-Lose</td><td>Oversell + bad ST</td><td>866</td><td>2.0%</td></tr>
+
+</table>
+<div class="insight-good">
+<b>Win-Win = 66.5%</b> (28,179 paru bez oversell a s dobrym ST).
+Lose-Lose = jen 2.0% (866 paru).
+</div>
+
+<h3>7.2 Sezonnost</h3>
+<table>
+<tr><th>Category</th><th>SKU</th><th>Oversell 4M %</th><th>Oversell Total %</th><th>Reorder Total SKU %</th></tr>
+<tr><td>Non-seasonal</td><td>29,298</td><td>2.3%</td><td>9.3%</td><td class="warn">33.9%</td></tr>
+<tr><td>Seasonal</td><td>7,472</td><td>5.3%</td><td>18.8%</td><td class="bad">52.2%</td></tr>
+
+</table>
+<div class="insight-bad">
+<b>Sezonni produkty: 52.2% reorder total SKU</b> vs 33.9% u non-seasonal.
+Sezonnost je silny modifier pro +1 ML na source.
+</div>
+</div>
+
+<!-- ========== 8. FLOW MATRIX ========== -->
+<div class="section">
+<h2>8. Flow Matrix: odkud kam</h2>
+<img src="fig_findings_09.png">
+<table>
+<tr><th>Source Store</th><th>Target Store</th><th>Pairs</th><th>% of Total</th></tr>
+<tr><td>Weak</td><td>Weak</td><td>1,179</td><td>2.8%</td></tr>
+<tr><td>Weak</td><td>Mid</td><td>4,149</td><td>9.8%</td></tr>
+<tr><td>Weak</td><td>Strong</td><td>4,611</td><td>10.9%</td></tr>
+<tr><td>Mid</td><td>Weak</td><td>2,391</td><td>5.6%</td></tr>
+<tr><td>Mid</td><td>Mid</td><td>7,279</td><td>17.2%</td></tr>
+<tr><td>Mid</td><td>Strong</td><td>8,304</td><td>19.6%</td></tr>
+<tr><td>Strong</td><td>Weak</td><td>2,302</td><td>5.4%</td></tr>
+<tr><td>Strong</td><td>Mid</td><td>5,643</td><td>13.3%</td></tr>
+<tr><td>Strong</td><td>Strong</td><td>6,546</td><td>15.4%</td></tr>
+
+</table>
+<div class="insight">
+<b>Nejvic paru: Mid->Strong (19.6%)</b> a Mid->Mid (17.2%).
+Distribuce preferuje posilani do silnych predajni.
+</div>
+</div>
+
+<!-- ========== 9. SUMMARY TABLE ========== -->
+<div class="section">
+<h2>9. Souhrnna tabulka vsech faktoru</h2>
+
+<table>
+<tr><th>Factor</th><th>Impact (reorder)</th><th>Impact (oversell)</th><th>Source ML</th><th>Target ML</th><th>Priority</th></tr>
+<tr><td>Velocity Segment: ActiveSeller</td><td class="bad">58.3% reorder SKU</td><td>21.6% oversell tot</td><td class="bad">UP (ML=3-4)</td><td>-</td><td>1</td></tr>
+<tr><td>Velocity Segment: TrueDead</td><td>28.2% reorder SKU</td><td class="good">6.1% oversell tot</td><td class="good">ML=1 (orderable min)</td><td>-</td><td>1</td></tr>
+<tr><td>Velocity Segment: SlowFull</td><td class="bad">47.9% reorder SKU</td><td>15.1% oversell tot</td><td class="warn">ML=1-2</td><td>-</td><td>1</td></tr>
+<tr><td>Sold After % &gt;80%</td><td class="bad">strong predictor</td><td>-</td><td class="bad">+1 ML</td><td>-</td><td>1</td></tr>
+<tr><td>Store Strength (D10)</td><td class="bad">38.6% reorder tot</td><td class="good">4.5% oversell 4M</td><td class="bad">UP for strong</td><td>-</td><td>1</td></tr>
+<tr><td>Target: 11+ sales bucket</td><td>-</td><td>-</td><td>-</td><td class="good">UP (ML=3)</td><td>1</td></tr>
+<tr><td>Target: 0 sales + Weak</td><td>-</td><td>-</td><td>-</td><td class="bad">DOWN (ML=1)</td><td>1</td></tr>
+<tr><td>Seasonality &ge;20% NovDec</td><td class="bad">52.2% reorder SKU</td><td>5.3% oversell 4M</td><td class="bad">+1 ML</td><td>-</td><td>2</td></tr>
+<tr><td>Stock Coverage &lt;90d</td><td class="warn">52.1% reorder (maly vzorek)</td><td>27.9% oversell</td><td class="warn">BriefNoSale rules</td><td>-</td><td>2</td></tr>
+<tr><td>Brand Weak+Weak</td><td>-</td><td>-</td><td>-</td><td class="bad">-1 ML</td><td>2</td></tr>
+<tr><td>All-sold &ge;70%</td><td>-</td><td>-</td><td>-</td><td class="good">+1 ML</td><td>2</td></tr>
+<tr><td>Delisting (D/L)</td><td class="good">low reorder</td><td class="good">low oversell</td><td class="good">= 0</td><td class="good">= 0</td><td>1</td></tr>
+</table>
+</div>
+
+<p><i>Generated: 2026-03-22 16:03 | CalculationId=233 | v6 Velocity-normalized | ML 0-4 | Orderable min=1 | Reorder focus</i></p>
+</body>
+</html>
