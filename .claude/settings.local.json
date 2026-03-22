@@ -20,7 +20,8 @@
       "Bash(ls /c/web/ydistri/sales-based-min-layers/reports/consolidated_*)",
       "Bash(ls *.py)",
       "Bash(cd:*)",
-      "Bash(PYTHONUTF8=1 python generate_consolidated_reports.py)"
+      "Bash(PYTHONUTF8=1 python generate_consolidated_reports.py)",
+      "Bash(ls reports/v2/*.py reports/v2/*.md)"
     ],
     "deny": []
   }
