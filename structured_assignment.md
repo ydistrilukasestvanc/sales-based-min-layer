@@ -5,6 +5,8 @@
 ### Všeobecné
 - **Všetky zistenia z konverzácie VŽDY zapisovať do tohto zadania.** Ak niečo zistím, okamžite to zapíšem sem – log musí byť kompletný pre rekonštrukciu.
 - **Výstupy = vždy 3 reporty:** 1) Findings (zistenia + korelácie), 2) Decision tree (pravidlá), 3) Backtest (dopad pravidiel s objemami, nie len SKU count).
+- **Reporty sú VERZOVANÉ** v podadresároch `reports/v1/`, `reports/v2/` atď. Každá iterácia generuje novú verziu. Staré verzie sa nemažú – slúžia na porovnanie.
+- **Overview tabuľka VŽDY obsahuje celkové metriky:** oversell (SKU + qty), reorder (SKU + qty), sell-through (qty) – všetko aj v quantity, nie len percentá.
 - **Business rule: A-O (9) a Z-O (11) minimum ML=1.** Len tieto triedy môžu byť target.
 
 ### Metriky – VŽDY uvádať OBE, NIKDY nemiešať

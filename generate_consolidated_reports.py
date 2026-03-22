@@ -19,38 +19,17 @@ import matplotlib.patches as mpatches
 import seaborn as sns
 from datetime import datetime
 
-REPORTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reports')
+VERSION = 'v2'
+REPORTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reports', VERSION)
 os.makedirs(REPORTS_DIR, exist_ok=True)
 sns.set_style("whitegrid")
 
-# ============================================================
-# DELETE OLD REPORTS (individual + previous consolidated)
-# ============================================================
-old_reports = [
-    'full_analysis_report.html',
-    'combined_segmentation_report.html',
-    'decision_tree_report.html',
-    'extended_analysis_report.html',
-    'calibrated_rules_report.html',
-    'consolidated_findings.html',
-    'consolidated_decision_tree.html',
-    'consolidated_backtest.html',
-]
+# Clean target directory
+for f in globmod.glob(os.path.join(REPORTS_DIR, '*')):
+    os.remove(f)
 
-for fname in old_reports:
-    fpath = os.path.join(REPORTS_DIR, fname)
-    if os.path.exists(fpath):
-        os.remove(fpath)
-        print("[DELETED] " + fname)
-
-# Delete old chart PNGs
-for png in globmod.glob(os.path.join(REPORTS_DIR, 'fig_*.png')):
-    os.remove(png)
-    print("[DELETED] " + os.path.basename(png))
-
-print("")
 print("=" * 60)
-print("Generating consolidated reports (v2 - full rewrite)...")
+print("Generating consolidated reports (%s)..." % VERSION)
 print("=" * 60)
 
 # ============================================================
@@ -551,25 +530,44 @@ html1 = f"""<!DOCTYPE html>
 <div class="metric"><div class="v">42,404</div><div class="l">Redistribution pairs</div></div>
 <div class="metric"><div class="v">36,770</div><div class="l">Source SKU</div></div>
 <div class="metric"><div class="v">41,631</div><div class="l">Target SKU</div></div>
-<div class="metric"><div class="v">48,754 pcs</div><div class="l">Total redistributed</div></div>
-<div class="metric"><div class="v">{total_oversell_qty:,} pcs</div><div class="l">Total oversell qty</div></div>
-<div class="metric"><div class="v">{total_tgt_sold:,} pcs</div><div class="l">Target sold qty</div></div>
+<div class="metric"><div class="v">48,754</div><div class="l">Total redistributed pcs</div></div>
 </div>
 
-<h3>Oversell rate targets</h3>
-<p>Target 4M oversell: <b>5-10%</b> | Target 9M total: <b>&lt;20%</b></p>
-<p>Goal is NOT zero reorder - that would be too defensive. Goal: controlled redistribution with acceptable oversell.</p>
+<h3>Source: Overall metrics (SKU + quantity)</h3>
+<table>
+<tr><th>Metric</th><th>SKU</th><th>% SKU</th><th>Quantity (pcs)</th><th>% of redistributed qty</th></tr>
+<tr><td style="text-align:left"><b>Total redistributed</b></td><td>36,770</td><td>100%</td><td>48,754</td><td>100%</td></tr>
+<tr><td style="text-align:left"><b>Reorder</b> (any inbound after redist)</td><td>13,841</td><td>37.6%</td><td>16,615</td><td>34.1%</td></tr>
+<tr><td style="text-align:left"><b>Oversell</b> (sales > remaining supply)</td><td>4,718</td><td>12.8%</td><td>5,578</td><td>11.4%</td></tr>
+<tr><td style="text-align:left"><b>Oversell 4M</b></td><td>1,317</td><td>3.6%</td><td>1,464</td><td>3.0%</td></tr>
+</table>
+
+<h3>Target: Overall metrics (SKU + quantity)</h3>
+<table>
+<tr><th>Metric</th><th>SKU</th><th>% SKU</th><th>Quantity (pcs)</th></tr>
+<tr><td style="text-align:left"><b>Total received</b></td><td>41,631</td><td>100%</td><td>48,754</td></tr>
+<tr><td style="text-align:left"><b>Total sold (post-redist)</b></td><td>-</td><td>-</td><td>99,269</td></tr>
+<tr><td style="text-align:left"><b>Remaining stock</b></td><td>-</td><td>-</td><td>24,268</td></tr>
+<tr><td style="text-align:left"><b>All sold (sell-through 100%+)</b></td><td class="good">24,862</td><td class="good">59.7%</td><td>-</td></tr>
+<tr><td style="text-align:left"><b>Nothing sold</b></td><td class="bad">8,872</td><td class="bad">21.3%</td><td>9,822 pcs received but unsold</td></tr>
+<tr><td style="text-align:left"><b>Overall sell-through</b></td><td>-</td><td>-</td><td>122.3% (targets sold more than received due to pre-existing stock)</td></tr>
+</table>
+
+<h3>Oversell rate vs target by MinLayer</h3>
+<p>Target 4M oversell: <b>5-10%</b> | Target 9M total: <b>&lt;20%</b>. Goal is NOT zero reorder.</p>
 
 <table>
-<tr><th>MinLayer</th><th>4M Oversell</th><th>9M Total Oversell</th><th>Status</th></tr>
-<tr><td>ML0</td><td class="good">1.1%</td><td class="good">2.3%</td><td class="good">ON TARGET</td></tr>
-<tr><td>ML1</td><td class="good">3.6%</td><td class="good">12.5%</td><td class="good">ON TARGET</td></tr>
-<tr><td>ML2</td><td class="warn">5.1%</td><td class="bad">22.2%</td><td class="bad">EXCEEDS total target</td></tr>
-<tr><td>ML3</td><td class="good">3.4%</td><td class="good">18.0%</td><td class="good">ON TARGET (tight)</td></tr>
+<tr><th>MinLayer</th><th>SKU</th><th>Reorder %</th><th>Reorder qty</th><th>Oversell 4M %</th><th>Oversell total %</th><th>Status</th></tr>
+<tr><td>ML0</td><td>1,709</td><td>6.3%</td><td>121</td><td class="good">1.1%</td><td class="good">2.3%</td><td class="good">ON TARGET</td></tr>
+<tr><td>ML1</td><td>31,965</td><td>38.0%</td><td>13,978</td><td class="good">3.6%</td><td class="good">12.5%</td><td class="good">ON TARGET</td></tr>
+<tr><td>ML2</td><td>2,680</td><td>52.3%</td><td>2,052</td><td class="warn">5.1%</td><td class="bad">22.2%</td><td class="bad">EXCEEDS total</td></tr>
+<tr><td>ML3</td><td>416</td><td>46.9%</td><td>464</td><td class="good">3.4%</td><td class="good">18.0%</td><td class="good">ON TARGET (tight)</td></tr>
 </table>
 
 <div class="insight-good">
-<b>Key takeaway:</b> ML0 and ML1 are already within target limits. ML3 is close to target. Only ML2 (22.2% total oversell) exceeds the 20% target. Optimization should focus primarily on the ML2 segment and specific high-oversell Pattern x Store combinations.
+<b>Key takeaway:</b> Oversell (sales-based) is much lower than reorder (inbound-based): 12.8% vs 37.6% of SKU.
+Reorder includes purchases unrelated to redistribution. Oversell is the true impact metric.
+ML0/ML1 are within target. Only ML2 (22.2% total oversell) exceeds the 20% target.
 </div>
 </div>
 

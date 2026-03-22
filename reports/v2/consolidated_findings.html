@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Consolidated Findings: SalesBased MinLayers - Calc 233</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html" class="active">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a></div>
+
+<h1>Consolidated Findings: SalesBased MinLayers - Calc 233</h1>
+<p><b>CalculationId=233</b> | EntityListId=3 | Calculation date: 2025-07-13 | Monitoring: to 2026-03-22 | Generated: 2026-03-22 10:23</p>
+
+<!-- ========== SECTION 1: OVERVIEW ========== -->
+<div class="section">
+<h2>1. Overview</h2>
+
+<div style="text-align: center;">
+<div class="metric"><div class="v">42,404</div><div class="l">Redistribution pairs</div></div>
+<div class="metric"><div class="v">36,770</div><div class="l">Source SKU</div></div>
+<div class="metric"><div class="v">41,631</div><div class="l">Target SKU</div></div>
+<div class="metric"><div class="v">48,754</div><div class="l">Total redistributed pcs</div></div>
+</div>
+
+<h3>Source: Overall metrics (SKU + quantity)</h3>
+<table>
+<tr><th>Metric</th><th>SKU</th><th>% SKU</th><th>Quantity (pcs)</th><th>% of redistributed qty</th></tr>
+<tr><td style="text-align:left"><b>Total redistributed</b></td><td>36,770</td><td>100%</td><td>48,754</td><td>100%</td></tr>
+<tr><td style="text-align:left"><b>Reorder</b> (any inbound after redist)</td><td>13,841</td><td>37.6%</td><td>16,615</td><td>34.1%</td></tr>
+<tr><td style="text-align:left"><b>Oversell</b> (sales > remaining supply)</td><td>4,718</td><td>12.8%</td><td>5,578</td><td>11.4%</td></tr>
+<tr><td style="text-align:left"><b>Oversell 4M</b></td><td>1,317</td><td>3.6%</td><td>1,464</td><td>3.0%</td></tr>
+</table>
+
+<h3>Target: Overall metrics (SKU + quantity)</h3>
+<table>
+<tr><th>Metric</th><th>SKU</th><th>% SKU</th><th>Quantity (pcs)</th></tr>
+<tr><td style="text-align:left"><b>Total received</b></td><td>41,631</td><td>100%</td><td>48,754</td></tr>
+<tr><td style="text-align:left"><b>Total sold (post-redist)</b></td><td>-</td><td>-</td><td>99,269</td></tr>
+<tr><td style="text-align:left"><b>Remaining stock</b></td><td>-</td><td>-</td><td>24,268</td></tr>
+<tr><td style="text-align:left"><b>All sold (sell-through 100%+)</b></td><td class="good">24,862</td><td class="good">59.7%</td><td>-</td></tr>
+<tr><td style="text-align:left"><b>Nothing sold</b></td><td class="bad">8,872</td><td class="bad">21.3%</td><td>9,822 pcs received but unsold</td></tr>
+<tr><td style="text-align:left"><b>Overall sell-through</b></td><td>-</td><td>-</td><td>122.3% (targets sold more than received due to pre-existing stock)</td></tr>
+</table>
+
+<h3>Oversell rate vs target by MinLayer</h3>
+<p>Target 4M oversell: <b>5-10%</b> | Target 9M total: <b>&lt;20%</b>. Goal is NOT zero reorder.</p>
+
+<table>
+<tr><th>MinLayer</th><th>SKU</th><th>Reorder %</th><th>Reorder qty</th><th>Oversell 4M %</th><th>Oversell total %</th><th>Status</th></tr>
+<tr><td>ML0</td><td>1,709</td><td>6.3%</td><td>121</td><td class="good">1.1%</td><td class="good">2.3%</td><td class="good">ON TARGET</td></tr>
+<tr><td>ML1</td><td>31,965</td><td>38.0%</td><td>13,978</td><td class="good">3.6%</td><td class="good">12.5%</td><td class="good">ON TARGET</td></tr>
+<tr><td>ML2</td><td>2,680</td><td>52.3%</td><td>2,052</td><td class="warn">5.1%</td><td class="bad">22.2%</td><td class="bad">EXCEEDS total</td></tr>
+<tr><td>ML3</td><td>416</td><td>46.9%</td><td>464</td><td class="good">3.4%</td><td class="good">18.0%</td><td class="good">ON TARGET (tight)</td></tr>
+</table>
+
+<div class="insight-good">
+<b>Key takeaway:</b> Oversell (sales-based) is much lower than reorder (inbound-based): 12.8% vs 37.6% of SKU.
+Reorder includes purchases unrelated to redistribution. Oversell is the true impact metric.
+ML0/ML1 are within target. Only ML2 (22.2% total oversell) exceeds the 20% target.
+</div>
+</div>
+
+<!-- ========== SECTION 2: SOURCE ANALYSIS - PATTERNS ========== -->
+<div class="section">
+<h2>2. Source: Sales Patterns (24M) - primary predictor</h2>
+
+<p>Analysis of 24-month sales history revealed 5 patterns that strongly predict oversell risk after redistribution.
+<b>Both reorder and oversell are shown side by side in every table</b> - they are different metrics and must not be mixed.</p>
+
+<h3>2.1 All 15 segments: Pattern x Store (BOTH reorder + oversell)</h3>
+<img src="fig_findings_01.png">
+
+<table>
+<tr><th>Pattern</th><th>Store</th><th>SKU</th>
+<th>Reorder %</th><th>Reorder qty</th>
+<th>Oversell %</th><th>Oversell qty</th>
+<th>Redist qty</th><th>Recommendation</th></tr>
+<tr><td>Dead</td><td>Weak</td><td>4,597</td><td class="">24.5%</td><td>1,225</td><td class="good">5.1%</td><td>251</td><td>5,461</td><td class="good">CAN LOWER ML</td></tr>
+<tr><td>Dead</td><td>Mid</td><td>6,967</td><td class="">29.5%</td><td>2,320</td><td class="good">7.8%</td><td>607</td><td>8,633</td><td class="good">CAN LOWER ML</td></tr>
+<tr><td>Dead</td><td>Strong</td><td>4,061</td><td class="">31.4%</td><td>1,481</td><td class="good">10.0%</td><td>486</td><td>5,143</td><td class="">OK</td></tr>
+<tr><td>Dying</td><td>Weak</td><td>1,594</td><td class="">29.7%</td><td>516</td><td class="good">8.1%</td><td>135</td><td>1,933</td><td class="good">CAN LOWER ML</td></tr>
+<tr><td>Dying</td><td>Mid</td><td>2,882</td><td class="">35.4%</td><td>1,110</td><td class="good">9.7%</td><td>302</td><td>3,505</td><td class="good">CAN LOWER ML</td></tr>
+<tr><td>Dying</td><td>Strong</td><td>1,951</td><td class="">37.1%</td><td>795</td><td class="good">12.6%</td><td>260</td><td>2,373</td><td class="">OK</td></tr>
+<tr><td>Sporadic</td><td>Weak</td><td>2,003</td><td class="">37.2%</td><td>871</td><td class="good">10.9%</td><td>252</td><td>2,606</td><td class="">OK</td></tr>
+<tr><td>Sporadic</td><td>Mid</td><td>4,176</td><td class="warn">44.1%</td><td>2,255</td><td class="warn">15.3%</td><td>777</td><td>5,783</td><td class="">OK</td></tr>
+<tr><td>Sporadic</td><td>Strong</td><td>3,712</td><td class="warn">47.8%</td><td>2,349</td><td class="bad">20.1%</td><td>929</td><td>5,705</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Consistent</td><td>Weak</td><td>431</td><td class="warn">46.4%</td><td>246</td><td class="good">13.2%</td><td>63</td><td>641</td><td class="">OK</td></tr>
+<tr><td>Consistent</td><td>Mid</td><td>1,164</td><td class="bad">56.0%</td><td>858</td><td class="bad">22.7%</td><td>316</td><td>1,877</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Consistent</td><td>Strong</td><td>1,693</td><td class="bad">56.5%</td><td>1,342</td><td class="bad">28.0%</td><td>608</td><td>2,898</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Declining</td><td>Weak</td><td>219</td><td class="bad">55.3%</td><td>150</td><td class="bad">25.1%</td><td>74</td><td>294</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Declining</td><td>Mid</td><td>569</td><td class="bad">64.7%</td><td>446</td><td class="bad">28.3%</td><td>190</td><td>781</td><td class="bad">MUST RAISE ML</td></tr>
+<tr><td>Declining</td><td>Strong</td><td>751</td><td class="bad">68.0%</td><td>651</td><td class="bad">35.4%</td><td>328</td><td>1,121</td><td class="bad">MUST RAISE ML</td></tr>
+
+<tr style="font-weight:bold; background:#e8e8e8;">
+<td colspan="2">TOTAL</td><td>36,770</td>
+<td>-</td><td>16,615</td>
+<td>-</td><td>5,578</td>
+<td>48,754</td><td>-</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>MUST RAISE ML (oversell &gt;20%):</b> Sporadic+Strong (20.1%), Consistent+Mid (22.7%), Consistent+Strong (28.0%),
+Declining+Weak (25.1%), Declining+Mid (28.3%), Declining+Strong (35.4%). These 6 segments need higher source MinLayer.
+</div>
+
+<div class="insight-good">
+<b>CAN LOWER ML (oversell &lt;10%):</b> Dead+Weak (5.1%), Dead+Mid (7.8%), Dying+Weak (8.1%), Dying+Mid (9.7%).
+These 4 segments are safe enough to be MORE aggressive (lower ML = take more stock). This means ML can go to 0
+for delisted items, while A-O/Z-O business rule enforces minimum 1.
+</div>
+
+<div class="insight">
+<b>Key insight:</b> Reorder is always higher than oversell (e.g., Dead+Weak: 24.5% reorder vs 5.1% oversell).
+Reorder includes ALL inbound (purchases, transfers) which may be unrelated to redistribution.
+Oversell is the TRUE metric - only counts sales that exceeded remaining stock.
+</div>
+</div>
+
+<!-- ========== SECTION 3: SOURCE - STORE STRENGTH ========== -->
+<div class="section">
+<h2>3. Source: Store Strength</h2>
+
+<img src="fig_findings_02.png">
+
+<p>Store strength (measured by sales decile) has linear impact on both sides of redistribution:</p>
+
+<table>
+<tr><th>Metric</th><th>Decile 1 (Weak)</th><th>Decile 10 (Strong)</th><th>Trend</th></tr>
+<tr><td>Source Reorder %</td><td>26%</td><td>44%</td><td>Linear growth: stronger stores = more reorders</td></tr>
+<tr><td>Source Oversell %</td><td>~8%</td><td>~25%</td><td>Strong stores sell more = higher oversell risk</td></tr>
+<tr><td>Target All-Sold (SUCCESS)</td><td class="good">48%</td><td class="good">70%</td><td>Stronger stores sell all redistributed goods</td></tr>
+<tr><td>Target Nothing-Sold (PROBLEM)</td><td class="bad">32%</td><td class="good">14%</td><td>Weaker stores = more "stuck" goods</td></tr>
+</table>
+
+<div class="insight">
+<b>Implication for ML:</b> Strong source stores need HIGHER ML (they will sell even after redistribution).
+Strong target stores need HIGHER ML too (they sell everything = need more stock to keep 1 remaining).
+Weak source stores can have LOWER ML (safe to take more). Weak target stores need LOWER ML (goods don't sell there).
+</div>
+</div>
+
+<!-- ========== SECTION 4: SOURCE - MONTHLY CADENCE ========== -->
+<div class="section">
+<h2>4. Source: Monthly Sales Cadence</h2>
+
+<table>
+<tr><th>Months with sales (24M)</th><th>SKU</th><th>Reorder %</th><th>Oversell %</th><th>Avg MinLayer</th><th>Note</th></tr>
+<tr><td>0M</td><td>15,384</td><td>28.5%</td><td>8.3%</td><td>0.94</td><td>No sales = low oversell, safe</td></tr>
+<tr><td>1M</td><td>8,022</td><td>35.5%</td><td>~12%</td><td>1.00</td><td>Single month of sales</td></tr>
+<tr><td>3M</td><td>2,635</td><td>47.8%</td><td>~18%</td><td>1.10</td><td>Sporadic sales</td></tr>
+<tr><td>6M</td><td>805</td><td>57.3%</td><td>~22%</td><td>1.20</td><td>Regular sales</td></tr>
+<tr><td>10M</td><td>258</td><td>67.1%</td><td>~28%</td><td>1.50</td><td>Frequent sales</td></tr>
+<tr><td>16M</td><td>58</td><td>81.0%</td><td>~35%</td><td>1.86</td><td>Near-constant sales</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>MinLayer grows TOO SLOWLY:</b> Product with 16 months of sales (out of 24M) has average ML only 1.86, but 81% reorder!
+Current heuristic does not adequately respond to sales frequency. Monthly cadence is captured in the Pattern classification.
+</div>
+</div>
+
+<!-- ========== SECTION 5: TARGET ANALYSIS (EQUALLY DETAILED) ========== -->
+<div class="section">
+<h2>5. Target Analysis: Sell-through Rate (primary target metric)</h2>
+
+<p><b>Sell-through = SalesTotal_Post / (TargetSupplyAtCalc + TotalQtyReceived).</b>
+This is the PRIMARY target metric - how much of total available stock was actually sold.</p>
+
+<h3>5.1 Sell-through Distribution</h3>
+<table>
+<tr><th>Bucket</th><th>SKU</th><th>Received qty</th><th>Sold qty</th><th>Remaining qty</th><th>Avg ML3</th></tr>
+<tr><td class="bad">Nothing sold (0%)</td><td>8,872</td><td>9,822</td><td>0</td><td>15,898</td><td>1.82</td></tr>
+<tr><td class="">Low (<30%)</td><td>35</td><td>101</td><td>39</td><td>128</td><td>2.17</td></tr>
+<tr><td class="">Medium (30-80%)</td><td>7,843</td><td>9,098</td><td>8,374</td><td>8,218</td><td>2.09</td></tr>
+<tr><td class="">High (80-99%)</td><td>19</td><td>120</td><td>167</td><td>24</td><td>3.00</td></tr>
+<tr><td class="good">All sold (100%+)</td><td>24,862</td><td>29,613</td><td>90,689</td><td>0</td><td>2.04</td></tr>
+
+</table>
+
+<div class="insight-good">
+<b>All sold (100%+) = SUCCESS:</b> 24,862 SKU (59.7%) sold EVERYTHING. This is NOT a problem - it's a signal to
+send MORE next time (increase target ML so that 1 piece remains after sales).
+</div>
+<div class="insight-bad">
+<b>Nothing sold (0%) = PROBLEM:</b> 8,872 SKU (21.3%) sold NOTHING. Wasted redistribution.
+Target ML should be LOWERED for these segments.
+</div>
+
+<h3>5.2 By Store Strength x Sales Bucket</h3>
+<img src="fig_findings_03.png">
+
+<table>
+<tr><th>Store</th><th>Sales</th><th>SKU</th><th>ST 4M</th><th>ST Total</th>
+<th>Nothing %</th><th>All-sold %</th><th>Received</th><th>Sold</th><th>Direction</th></tr>
+<tr><td>Weak</td><td>Zero</td><td>380</td><td>0.49</td><td>0.76</td><td class="bad">43.7%</td><td class="warn">53.7%</td><td>407</td><td>306</td><td><span class="bad">ML DOWN</span></td></tr>
+<tr><td>Weak</td><td>Low(1-2)</td><td>3,560</td><td>0.37</td><td>0.77</td><td class="bad">34.6%</td><td class="bad">44.4%</td><td>3,907</td><td>4,806</td><td><span class="bad">ML DOWN</span></td></tr>
+<tr><td>Weak</td><td>Med+(3+)</td><td>1,829</td><td>0.72</td><td>1.42</td><td class="good">12.6%</td><td class="good">67.2%</td><td>2,553</td><td>5,967</td><td><span class="good">ML UP</span></td></tr>
+<tr><td>Mid</td><td>Zero</td><td>982</td><td>0.50</td><td>0.85</td><td class="bad">39.3%</td><td class="warn">57.2%</td><td>1,057</td><td>880</td><td><span class="bad">ML DOWN</span></td></tr>
+<tr><td>Mid</td><td>Low(1-2)</td><td>9,787</td><td>0.42</td><td>0.88</td><td class="warn">28.8%</td><td class="bad">48.6%</td><td>10,712</td><td>15,053</td><td>OK</td></tr>
+<tr><td>Mid</td><td>Med+(3+)</td><td>5,985</td><td>0.76</td><td>1.57</td><td class="good">12.5%</td><td class="good">69.3%</td><td>8,116</td><td>20,953</td><td><span class="good">ML UP</span></td></tr>
+<tr><td>Strong</td><td>Zero</td><td>790</td><td>0.72</td><td>1.18</td><td class="bad">31.8%</td><td class="good">66.5%</td><td>820</td><td>950</td><td><span class="bad">ML DOWN</span></td></tr>
+<tr><td>Strong</td><td>Low(1-2)</td><td>10,419</td><td>0.51</td><td>1.09</td><td class="warn">22.3%</td><td class="warn">57.1%</td><td>11,415</td><td>20,075</td><td>OK</td></tr>
+<tr><td>Strong</td><td>Med+(3+)</td><td>7,899</td><td>0.89</td><td>1.83</td><td class="good">9.0%</td><td class="good">74.7%</td><td>9,767</td><td>30,279</td><td><span class="good">ML UP</span></td></tr>
+
+</table>
+
+<div class="insight">
+<b>Strong + Med+ stores:</b> sell-through 1.83 (total), 74.7% all-sold, only 9.0% nothing-sold. These are BEST targets. ML should be INCREASED.<br>
+<b>Weak + Zero stores:</b> sell-through 0.76, 43.7% nothing-sold. These are WORST targets. ML should be DECREASED.
+</div>
+
+<h3>5.3 By Brand-Store Fit</h3>
+<table>
+<tr><th>Fit</th><th>SKU</th><th>ST 4M</th><th>ST Total</th>
+<th>Nothing %</th><th>All-sold %</th><th>Received</th><th>Sold</th><th>Remaining</th></tr>
+<tr><td>Strong+Strong brand</td><td>17,756</td><td>0.69</td><td>1.43</td><td class="good">16.5%</td><td class="good">65.7%</td><td>20,410</td><td>48,618</td><td>8,647</td></tr>
+<tr><td>Weak+Strong brand</td><td>1,170</td><td>0.59</td><td>1.19</td><td class="warn">22.3%</td><td class="warn">58.4%</td><td>1,384</td><td>2,899</td><td>722</td></tr>
+<tr><td>Medium</td><td>18,655</td><td>0.54</td><td>1.12</td><td class="warn">23.8%</td><td class="warn">56.2%</td><td>22,109</td><td>40,766</td><td>11,901</td></tr>
+<tr><td>Strong+Weak brand</td><td>400</td><td>0.53</td><td>1.10</td><td class="bad">29.0%</td><td class="bad">50.3%</td><td>522</td><td>812</td><td>296</td></tr>
+<tr><td>Weak+Weak brand</td><td>3,650</td><td>0.45</td><td>0.90</td><td class="bad">30.7%</td><td class="bad">50.3%</td><td>4,329</td><td>6,174</td><td>2,702</td></tr>
+
+</table>
+
+<div class="insight">
+<b>Strong+Strong brand:</b> ST=1.43, 65.7% all-sold, only 16.5% nothing. BEST combination, ML can be higher.<br>
+<b>Weak+Weak brand:</b> ST=0.90, 50.3% all-sold, 30.7% nothing. WORST combination, ML should be lower.
+Difference: 15.4pp in all-sold, 14.2pp in nothing-sold!
+</div>
+
+<h3>5.4 By Price Band</h3>
+<table>
+<tr><th>Price</th><th>SKU</th><th>ST 4M</th><th>ST Total</th><th>Nothing %</th><th>All-sold %</th></tr>
+<tr><td><15 EUR</td><td>66</td><td>1.10</td><td>2.10</td><td class="good">1.5%</td><td class="good">80.3%</td></tr>
+<tr><td>15-30</td><td>1,202</td><td>0.75</td><td>1.44</td><td class="warn">16.1%</td><td class="good">64.0%</td></tr>
+<tr><td>30-60</td><td>18,247</td><td>0.54</td><td>1.10</td><td class="bad">25.1%</td><td class="warn">55.4%</td></tr>
+<tr><td>60+ EUR</td><td>22,116</td><td>0.64</td><td>1.32</td><td class="warn">18.5%</td><td class="good">63.0%</td></tr>
+
+</table>
+
+<h3>5.5 By Product Concentration</h3>
+<table>
+<tr><th>Concentration</th><th>SKU</th><th>ST 4M</th><th>ST Total</th><th>Nothing %</th><th>All-sold %</th></tr>
+<tr><td><=20 stores</td><td>1,144</td><td>0.46</td><td>0.89</td><td class="bad">38.6%</td><td class="bad">45.7%</td></tr>
+<tr><td>21-100 stores</td><td>9,476</td><td>0.49</td><td>0.98</td><td class="bad">31.5%</td><td class="bad">50.0%</td></tr>
+<tr><td>100+ stores</td><td>31,004</td><td>0.64</td><td>1.32</td><td class="good">17.5%</td><td class="good">63.2%</td></tr>
+
+</table>
+
+<img src="fig_findings_04.png">
+
+<div class="insight">
+<b>Product concentration matters:</b> Products on 100+ stores have 63.2% all-sold and only 17.5% nothing.
+Products on &lt;=20 stores: 45.7% all-sold, 38.6% nothing. Widely distributed products are safer targets.
+</div>
+</div>
+
+<!-- ========== SECTION 6: PAIR ANALYSIS ========== -->
+<div class="section">
+<h2>6. Pair Analysis (Source + Target combined)</h2>
+
+<table>
+<tr><th>Pair outcome</th><th>Description</th><th>Count</th><th>Share</th></tr>
+<tr><td class="good">BEST</td><td>Source OK (no reorder) + Target all sold</td><td>14,896</td><td>35.1%</td></tr>
+<tr><td class="good">IDEAL</td><td>Source OK + Target partially sold</td><td>4,923</td><td>11.6%</td></tr>
+<tr><td class="warn">SRC FAIL</td><td>Source reordered, but Target sold</td><td>13,530</td><td>31.9%</td></tr>
+<tr><td class="bad">WASTED</td><td>Source OK, but Target sold nothing</td><td>6,274</td><td>14.8%</td></tr>
+<tr><td class="bad">DOUBLE FAIL</td><td>Source reordered + Target sold nothing</td><td>2,781</td><td>6.6%</td></tr>
+</table>
+
+<div class="insight-good">
+<b>Target success rate: 78.6%</b> - most redistributed goods sell (at least partially) on the target store.
+</div>
+
+<h3>Flow direction and double-fail rate</h3>
+<table>
+<tr><th>Flow direction</th><th>Double Fail %</th><th>Rating</th></tr>
+<tr><td>Weak -&gt; Strong</td><td class="good">2.8%</td><td>Best direction</td></tr>
+<tr><td>Mid -&gt; Strong</td><td class="good">3.9%</td><td>Good direction</td></tr>
+<tr><td>Strong -&gt; Strong</td><td>5.1%</td><td>Acceptable</td></tr>
+<tr><td>Mid -&gt; Mid</td><td>5.8%</td><td>Average</td></tr>
+<tr><td>Strong -&gt; Weak</td><td class="bad">10.6%</td><td>Worst direction</td></tr>
+</table>
+</div>
+
+<!-- ========== SECTION 7: PROMO/PRICE + CHRISTMAS ========== -->
+<div class="section">
+<h2>7. Promo, Price, and Christmas Effects</h2>
+
+<h3>Promo share and oversell</h3>
+<p>Declining sales pattern is <b>NOT caused by promotions</b> - promo share (~30%) is the same as other patterns.</p>
+
+<table>
+<tr><th>Promo share</th><th>Oversell %</th><th>Note</th></tr>
+<tr><td>0% (no promo)</td><td>14.2%</td><td>Baseline</td></tr>
+<tr><td>1-20% promo</td><td class="bad">34.4%</td><td>HIGHEST oversell</td></tr>
+<tr><td>20-50% promo</td><td>29.1%</td><td>Above average</td></tr>
+<tr><td>&gt;50% promo</td><td>27.8%</td><td>High but lower than 1-20%</td></tr>
+</table>
+
+<h3>Christmas seasonality</h3>
+<table>
+<tr><th>Xmas sales share</th><th>Oversell %</th><th>Description</th></tr>
+<tr><td>0-5% (non-seasonal)</td><td>16.0%</td><td>Standard products</td></tr>
+<tr><td>5-20% (mildly seasonal)</td><td>20.1%</td><td>Mild Xmas effect</td></tr>
+<tr><td>20-60% (seasonal)</td><td class="bad">25-27%</td><td>Significant Xmas boost</td></tr>
+<tr><td>&gt;60% (pure Xmas)</td><td>18.8%</td><td>Sells mainly at Xmas</td></tr>
+</table>
+
+<div class="insight">
+<b>Riskiest segment: 20-60% Xmas share</b> - year-round sellers that get a Xmas boost.
+After redistribution (outside Xmas), they sell slower than expected.
+Pure Xmas products (&gt;60%) paradoxically have lower oversell (18.8%) because they simply don't sell outside season.
+</div>
+</div>
+
+<!-- ========== SECTION 8: OTHER FACTORS ========== -->
+<div class="section">
+<h2>8. Other Factors</h2>
+
+<h3>Redistribution loop</h3>
+<p>3,117 SKU (8.5%) were <b>re-redistributed</b> (Y-STORE TRANSFER). 72% of them are zero-sellers with ML1.
+This indicates some products are cyclically moved without being sold.</p>
+
+<h3>SkuClass delisting</h3>
+<p>Delisted source SKU have <b>29pp lower reorder</b> (13.2% vs 42.7%).
+For delisted products, redistribution is safe - MinLayer can be 0.</p>
+
+<h3>Brand-Store fit (source perspective)</h3>
+<table>
+<tr><th>Combination</th><th>Reorder %</th><th>Oversell %</th><th>Difference from avg</th></tr>
+<tr><td>Strong brand + Strong store</td><td class="bad">45.3%</td><td class="bad">~25%</td><td>+16pp reorder</td></tr>
+<tr><td>Weak brand + Weak store</td><td class="good">29.3%</td><td class="good">~10%</td><td>-8pp reorder</td></tr>
+</table>
+</div>
+
+<!-- ========== SECTION 9: SUMMARY TABLE ========== -->
+<div class="section">
+<h2>9. Summary of ALL Factors with Direction Arrows</h2>
+
+<p>This table shows all analyzed factors and their impact on BOTH source and target MinLayer.</p>
+
+<table>
+<tr><th>Factor</th><th>Impact (metric)</th>
+<th>Source ML direction</th><th>Target ML direction</th>
+<th>Size</th><th>Priority</th></tr>
+
+<tr><td>Sales Pattern: Declining</td><td>Oversell 35.4% (Strong)</td>
+<td class="bad">SOURCE UP (raise ML)</td><td>-</td>
+<td class="bad">+27pp vs Dead</td><td>1 - Primary</td></tr>
+
+<tr><td>Sales Pattern: Dead/Dying + Weak</td><td>Oversell 5-8%</td>
+<td class="good">SOURCE DOWN (lower ML)</td><td>-</td>
+<td class="good">Safe, under target</td><td>1 - Primary</td></tr>
+
+<tr><td>Store Strength (source)</td><td>Strong 44% vs Weak 26% reorder</td>
+<td class="bad">SOURCE UP for strong</td><td>-</td>
+<td class="bad">+18pp</td><td>1 - Primary</td></tr>
+
+<tr><td>Store Strength (target)</td><td>Strong 74.7% all-sold</td>
+<td>-</td><td class="good">TARGET UP for strong</td>
+<td class="good">Send more to strong stores</td><td>1 - Primary</td></tr>
+
+<tr><td>Target sell-through: Weak+Zero</td><td>43.7% nothing-sold</td>
+<td>-</td><td class="bad">TARGET DOWN</td>
+<td class="bad">Send less to weak stores</td><td>1 - Primary</td></tr>
+
+<tr><td>Brand-Store Fit: Strong+Strong</td><td>65.7% all-sold target</td>
+<td class="bad">SOURCE UP (+1 modifier)</td><td class="good">TARGET UP (+1)</td>
+<td>+16pp reorder, +15pp all-sold</td><td>2 - Secondary</td></tr>
+
+<tr><td>Product Concentration (100+)</td><td>42.9% source reorder, 63.2% tgt all-sold</td>
+<td class="bad">SOURCE UP (+1)</td><td class="good">TARGET UP (+1)</td>
+<td>+25.9pp reorder</td><td>2 - Secondary</td></tr>
+
+<tr><td>Product Concentration (&lt;=20)</td><td>17% reorder, 38.6% nothing-sold</td>
+<td class="good">SOURCE DOWN (safe)</td><td class="bad">TARGET DOWN</td>
+<td>Niche product, fewer stores</td><td>2 - Secondary</td></tr>
+
+<tr><td>SkuClass Delisting</td><td>13.2% vs 42.7% reorder</td>
+<td class="good">SOURCE = 0 (override)</td><td>-</td>
+<td class="good">-29.5pp</td><td>1 - Override</td></tr>
+
+<tr><td>Xmas Seasonality (20-60%)</td><td>25-27% oversell</td>
+<td class="bad">SOURCE UP (+1)</td><td>-</td>
+<td class="warn">+9-11pp</td><td>3 - Modifier</td></tr>
+
+<tr><td>Redist. Loop</td><td>8.5% SKU re-redistributed</td>
+<td colspan="2">Monitoring signal</td>
+<td class="warn">Indicator</td><td>3 - Monitoring</td></tr>
+</table>
+
+<div class="insight">
+<b>4 directions for ML adjustment:</b>
+<ul>
+<li><b>SOURCE UP:</b> Declining pattern, strong store, high concentration, brand-fit strong+strong, Xmas seasonal</li>
+<li><b>SOURCE DOWN:</b> Dead/Dying on weak/mid store, delisted, low concentration = safe to take more</li>
+<li><b>TARGET UP:</b> Strong store + Med+ sales (high sell-through, high all-sold) = send more</li>
+<li><b>TARGET DOWN:</b> Weak store + Zero/Low sales (high nothing-sold, low sell-through) = send less</li>
+</ul>
+See <a href="consolidated_decision_tree.html">Report 2: Decision Tree</a> for concrete rules.
+</div>
+</div>
+
+<p><i>Generated: 2026-03-22 10:23 | CalculationId=233 | EntityListId=3</i></p>
+</body>
+</html>
