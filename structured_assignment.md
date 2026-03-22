@@ -167,15 +167,31 @@ Pred analýzou overiť kvalitu vstupov:
 
 Výstup: overview tabuľka podľa globálnych inštrukcií (SKU count + qty pre každú metriku, 4M + total).
 
-### FÁZE 3: Predajné vzorce (24M história)
+### FÁZE 3: Predajné vzorce (24M história) + Velocity normalizácia
+
+#### 3a. Pattern klasifikácia (pôvodná, referenčná)
 Klasifikácia source SKU do vzorov podľa 4 polročných periód:
 - Dead / Dying / Sporadic / Consistent / Declining
-- Hypotéza: vzorec predajov je silnejší prediktor ako 6M frekvencia
-- Kombinovať s silou predajne (Weak/Mid/Strong)
+- **PROBLÉM (z v6/v7):** Neberie do úvahy dobu dostupnosti zásob. SKU s 0 predajmi ale len 2 mesiacmi stocku = "Dead" aj keď je to nový produkt.
 
-**Doplnkové signály:**
-- **Mesačná kadencia** = počet aktívnych mesiacov z 24M (alternatívny vstup pre ML)
-- **Last sale gap** = doba od posledného predaja k dátumu kalkulácie (prediktor: čím dlhšie, tým menej rizikový odvoz)
+#### 3b. Velocity normalizácia (PREFEROVANÁ, z v6/v7)
+```
+Velocity_12M = Sales_12M / DaysInStock_12M × 30  (predaje za mesiac na sklade)
+```
+Eliminuje skreslenie krátkym stockom. Segmenty:
+- **TrueDead** = 0 predajov, stock ≥270 dní (naozaj mŕtve)
+- **PartialDead** = 0 predajov, stock 90-270 dní (krátky stock, neisté)
+- **BriefNoSale** = 0 predajov, stock <90 dní (príliš nové na záver)
+- **ActiveSeller** = velocity ≥0.5/mesiac (aktívne sa predáva)
+- **SlowFull** = velocity <0.5, stock ≥270 dní (pomalé, ale dlhodobo)
+- **SlowPartial** = velocity <0.5, stock 90-270 dní (krátky stock, rozjíždí sa)
+
+**Finding v7:** Sporadic (13 645 SKU) sa rozpadá na 3 dramaticky odlišné segmenty s rôznym sold-after (64%, 77%, 92%).
+
+#### 3c. Doplnkové signály
+- **Mesačná kadencia** = počet aktívnych mesiacov z 24M
+- **Last sale gap** = doba od posledného predaja k dátumu kalkulácie
+- **SoldAfter%** = % source SKU, ktoré sa predali po navrhnutí redistribúcie (silný prediktor: >80% = rizikové)
 
 ### FÁZE 4: Cross-product analýza
 - Predaje produktu na VŠETKÝCH predajniach (okrem ecomm) – celoplošný trend
@@ -187,6 +203,11 @@ Klasifikácia source SKU do vzorov podľa 4 polročných periód:
 - Decily podľa tržieb za 6M pred redistribúciou
 - Per brand (kvintily)
 - Brand-store fit: celková sila vs sila v danom brande → mismatch analýza
+- **Finding v7/v8:** BrandStoreFit má ~12pp dopad na target sell-through (konzistentne naprieč StoreStrength). Efekt je **graduovaný podľa SalesBucket:**
+  - SalesBucket 0-2: BrandFit delta +10 až +40pp ST → **plný modifier** (BrandWeak -1, BrandStrong +1)
+  - SalesBucket 3-5: BrandFit delta +7 až +9pp → **čiastočný modifier** (BrandWeak -1, BrandStrong 0)
+  - SalesBucket 6+: BrandFit delta <3pp → **bez modifieru** (predaje hovoria samy za seba)
+  - Logika: keď nemáte predajnú históriu, brand fit je najlepší prediktor úspešnosti target.
 - Matice prietoku (odkiaľ kam): decil source × decil target
 
 ### FÁZE 6: Phantom Stock analýza (LEN SOURCE)
@@ -217,10 +238,16 @@ Detekcia SKU ktoré boli redistribuované opakovane:
 - Promo analýza: IsPromo podiel cross-store (overenie či declining vzorec je spôsobený promo)
 - Cenové zmeny produktu medzi periódami
 
-**Sezónna (Vianoce):**
-- Xmas Lift: podiel Nov+Dec predajov z 12M
-- Ak >=20% predajov v Nov+Dec → seasonal flag
-- Problém: 6M okno s Vianocami nafukuje frekvenciu
+**Sezónna korekcia (kalendárny discount faktor):**
+- **NEIDENTIFIKOVAŤ seasonal per SKU.** Pri Douglas (parfuméria) sú VŠETKY produkty seasonal (Vianoce = darčeky). SKU s 1 predajom za rok nemá štatistickú silu na seasonal detection — 1 predaj v novembri = 100% XmasLift, ale je to náhoda.
+- **Namiesto toho: kalendárny discount faktor na obdobie.** Ak analytické okno obsahuje Nov+Dec (Q4), predaje v tomto období sú nafúknuté vianočným efektom a MUSIA byť váhovo znížené.
+- **CalendarWeight:** Ak polročné obdobie obsahuje Nov+Dec → weight = 0.7. Inak weight = 1.0.
+- **Aplikácia:** Na Pattern klasifikáciu (H1-H4), Velocity kalkuláciu, akýkoľvek 6M/12M predajový signál.
+- **Dôvod:** Bez korekcie 12M okno s Vianocami nafukuje frekvenciu → skreslí Pattern aj Velocity → nesprávne ML.
+```
+Adjusted_Sales(period) = Raw_Sales(period) × CalendarWeight(period)
+CalendarWeight = 0.7 ak period obsahuje Nov+Dec, inak 1.0
+```
 
 **SkuClass zmeny:**
 - Sledovať zmeny SkuClass po redistribúcii (delisting)
@@ -254,11 +281,31 @@ Rozhodovací strom s 4 smermi: source up/down, target up/down
 - **CONSTRAINT: A-O / Z-O (orderable) → MIN ML=1, NIKDY 0**
 
 **Modifikátory (úprava base ML, výsledok cappovaný na 0-4):**
-- Xmas seasonal flag → +1 / -1 podľa smeru
-- Brand-store mismatch → -1 na target
-- Vysoká product concentration (Gini) → opatrnosť na source
+
+Source modifikátory (POTVRDENÉ v7/v8):
+- LastSaleGap ≤90 dní → +1 (sold after 85-90%)
+- Sezónna korekcia → CalendarWeight na vstupné dáta (nie per-SKU flag)
 - Delisting (SkuClass zmena) → ML=0 (jediný prípad keď orderable môže ísť na 0)
-- Redistribučná slučka → penalizácia
+- **BrandStoreFit na source (POTVRDENÝ v8):** BrandStrong source SKU sa predávajú o 5-11pp viac po redistribúcii → redistribúcia z nich je rizikovejšia.
+  - TrueDead/SlowFull + BrandStrong → +1 ML (sold after +8-11pp, reorder +5-6pp)
+  - ActiveSeller: BrandFit ignorovať (sold after >92% bez ohľadu na brand)
+  - Logika: ak brand je silný na tejto predajni, aj "mŕtve" SKU majú vyššiu šancu predaja → treba chrániť
+
+Target modifikátory (POTVRDENÉ v7/v8):
+- AllSold/ST1 high → +1
+- Growth pocket (Strong, Sales 3-10, ST≥45%) → +1
+- Nothing-sold / ST<20% → -1
+- **BrandStoreFit (graduovaný, POTVRDENÝ v8):**
+  - SalesBucket 0-2: BrandWeak → -1, BrandStrong → +1 (delta +10-40pp ST)
+  - SalesBucket 3-5: BrandWeak → -1, BrandStrong → 0 (delta +7-9pp)
+  - SalesBucket 6+: bez modifieru (delta <3pp, predaje dominujú)
+- Delisting → ML=0
+
+**VYRADENÉ modifikátory (nepotvrdené na v7 dátach CalculationId=233):**
+- ~~PhantomStock~~ → len 1 SKU so správnym oversell vzorcom
+- ~~ProductConcentration <10%~~ → žiadny gradient v oversell/reorder
+- ~~Redistribučná slučka 4+~~ → len 7 SKU, štatisticky nevýznamné
+- ~~Xmas seasonal flag per SKU~~ → nahradené kalendárnym discount faktorom
 
 ### FÁZE 11: Backtest
 - Aplikácia navrhovaných pravidiel na aktuálne dáta
@@ -266,6 +313,25 @@ Rozhodovací strom s 4 smermi: source up/down, target up/down
 - **Trade-off analýza:** ušetrený oversell (qty) vs stratené úspešné redistribúcie (qty)
 - **Target dopad:** extra ks potrebné aby zostal 1 ks (ST-1pc optimalizácia)
 - **Sensitivity:** čo ak posunieme thresholdy o ±1 ML level → ako sa zmení objem a oversell
+
+---
+
+## Findings z predchádzajúcich verzií (validované na CalculationId=233)
+
+### Potvrdené princípy
+- **Velocity normalizácia** (v6) je lepší prediktor než raw Pattern (v5). Sporadic sa rozpadá na 3 segmenty.
+- **SoldAfter%** (v6) je silný prediktor: ActiveSeller 94%, SlowPartial 77%, TrueDead 37%.
+- **Bidirectionálny target** (v5) — nielen znižovať, ale aj growth pockets pre silné segmenty.
+- **BrandStoreFit** má ~12pp dopad na target ST — rovnako silný ako StoreStrength.
+- **Sezónnosť je celoplošná** (Douglas = parfuméria). Neidentifikovať per SKU, ale korigovať kalendárne.
+
+### Metriky baseline (CalculationId=233)
+- Oversell 4M: 3.0% qty — v cíli
+- Reorder total: 34.1% qty — hlavná metrika na optimalizáciu
+- Target nothing-sold 4M: 42.2% — príležitosť na realokáciu
+
+### Definitions dokument
+Kompletný algoritmický popis všetkých metrik a klasifikácií je v `reports/v7/definitions.md` a `definitions.html`. Obsahuje 13 sekcií (A-M) pokrývajúcich všetky vzorce.
 
 ---
 
