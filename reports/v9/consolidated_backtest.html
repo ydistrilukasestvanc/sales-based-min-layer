@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v9 Backtest: SalesBased MinLayers</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v9-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.changed-cell { background: #fff3cd !important; border: 2px solid #f39c12 !important; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html" class="active">Report 3: Backtest</a><a href="definitions.html">Definitions</a><span style="float:right; color:#7f8c8d; font-size:11px;">v9 Independent | CalendarWeight 0.7 | ML 0-4 | Orderable min=1 | Bidirectional</span></div>
+
+<h1>Backtest v9: SalesBased MinLayers <span class="v9-badge">v9</span></h1>
+<p><b>CalculationId=233</b> | ApplicationDate: 2025-07-13 | Generated: 2026-03-22 20:30</p>
+<p>Porovnani navrhovanych ML pravidel (z decision tree) s aktualnimi ML hodnotami.
+Backtest ukazuje objemovy dopad — kolik ks by bylo vice/mene chranenych/redistribuovanych.</p>
+
+<div class="section">
+<h2>1. Souhrn</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+<div class="metric"><div class="v">14,835</div><div class="l">Source ML Up (SKU)</div></div>
+<div class="metric"><div class="v">205</div><div class="l">Source ML Down (SKU)</div></div>
+<div class="metric"><div class="v">21,706</div><div class="l">Source Up Qty</div></div>
+<div class="metric"><div class="v">17,564</div><div class="l">Target ML Up (SKU)</div></div>
+<div class="metric"><div class="v">8,032</div><div class="l">Target ML Down (SKU)</div></div>
+<div class="metric"><div class="v">19,693</div><div class="l">Target Up Qty</div></div>
+</div>
+<img src="fig_backtest_03.png" alt="Summary pie">
+
+<div class="insight">
+<b>SOURCE:</b> 14,835 SKU (40%) dostane vyssi ML = vice chranenych kusu (21,706 ks).
+Hlavni dopad: SlowFull (10,863 SKU z ML=1 na ML=2/3) a ActiveSeller (1,778 SKU na ML=3/4).<br>
+<b>TARGET:</b> Bidirekcni — 17,564 SKU UP + 8,032 SKU DOWN.
+Snizeni: 1-2 sales na Weak/Mid (z ML=2 na ML=1). Zvyseni: 3-5+ na Strong (z ML=2 na ML=3).
+</div>
+</div>
+
+<div class="section">
+<h2>2. Source backtest detail</h2>
+<img src="fig_backtest_01.png" alt="Source backtest">
+<table>
+<tr><th>Segment</th><th>Store</th><th>SKU</th><th>ML Up</th><th>ML Down</th><th>Same</th><th>Up Qty</th><th>Down Qty</th><th>Smer</th></tr>
+<tr class="dir-down"><td>TrueDead</td><td>Weak</td><td>5,233</td><td>0</td><td>26</td><td>5,207</td><td>0</td><td>29</td><td><b>↓</b></td></tr>
+<tr class="dir-down"><td>TrueDead</td><td>Mid</td><td>8,240</td><td>0</td><td>53</td><td>8,187</td><td>0</td><td>66</td><td><b>↓</b></td></tr>
+<tr class="dir-down"><td>TrueDead</td><td>Strong</td><td>4,912</td><td>0</td><td>42</td><td>4,870</td><td>0</td><td>49</td><td><b>↓</b></td></tr>
+<tr class="dir-down"><td>PartialDead</td><td>Weak</td><td>940</td><td>0</td><td>1</td><td>939</td><td>0</td><td>1</td><td><b>↓</b></td></tr>
+<tr class="dir-down"><td>PartialDead</td><td>Mid</td><td>1,610</td><td>0</td><td>4</td><td>1,606</td><td>0</td><td>5</td><td><b>↓</b></td></tr>
+<tr class="dir-up"><td>PartialDead</td><td>Strong</td><td>1,049</td><td>1,046</td><td>3</td><td>0</td><td>1,464</td><td>3</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>SlowFull</td><td>Weak</td><td>2,122</td><td>1,967</td><td>11</td><td>144</td><td>2,465</td><td>13</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>SlowFull</td><td>Mid</td><td>4,697</td><td>4,294</td><td>21</td><td>382</td><td>5,632</td><td>37</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>SlowFull</td><td>Strong</td><td>4,044</td><td>4,031</td><td>9</td><td>4</td><td>5,583</td><td>10</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>SlowPartial</td><td>Weak</td><td>421</td><td>338</td><td>5</td><td>78</td><td>503</td><td>5</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>SlowPartial</td><td>Mid</td><td>800</td><td>595</td><td>8</td><td>197</td><td>878</td><td>14</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>SlowPartial</td><td>Strong</td><td>817</td><td>812</td><td>5</td><td>0</td><td>1,306</td><td>6</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>ActiveSeller</td><td>Weak</td><td>99</td><td>90</td><td>0</td><td>9</td><td>151</td><td>0</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>ActiveSeller</td><td>Mid</td><td>431</td><td>426</td><td>5</td><td>0</td><td>996</td><td>7</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>ActiveSeller</td><td>Strong</td><td>1,248</td><td>1,236</td><td>12</td><td>0</td><td>2,728</td><td>17</td><td><b>↑</b></td></tr>
+
+</table>
+<img src="fig_backtest_02.png" alt="Volume impact">
+</div>
+
+<div class="section">
+<h2>3. Target backtest detail</h2>
+<table>
+<tr><th>Bucket</th><th>Store</th><th>SKU</th><th>ML Up</th><th>ML Down</th><th>Same</th><th>Up Qty</th><th>Down Qty</th><th>Smer</th></tr>
+<tr class=""><td>0</td><td>Weak</td><td>139</td><td>0</td><td>0</td><td>139</td><td>0</td><td>0</td><td><b>=</b></td></tr>
+<tr class=""><td>0</td><td>Mid</td><td>341</td><td>0</td><td>0</td><td>341</td><td>0</td><td>0</td><td><b>=</b></td></tr>
+<tr class=""><td>0</td><td>Strong</td><td>254</td><td>0</td><td>0</td><td>254</td><td>0</td><td>0</td><td><b>=</b></td></tr>
+<tr class="dir-down"><td>1-2</td><td>Weak</td><td>1,972</td><td>0</td><td>1,478</td><td>494</td><td>0</td><td>1,664</td><td><b>↓</b></td></tr>
+<tr class="dir-down"><td>1-2</td><td>Mid</td><td>4,507</td><td>0</td><td>3,375</td><td>1,132</td><td>0</td><td>3,733</td><td><b>↓</b></td></tr>
+<tr class="dir-up"><td>1-2</td><td>Strong</td><td>3,640</td><td>883</td><td>0</td><td>2,757</td><td>894</td><td>0</td><td><b>↑</b></td></tr>
+<tr class="dir-down"><td>3-5</td><td>Weak</td><td>2,601</td><td>0</td><td>2,442</td><td>159</td><td>0</td><td>2,781</td><td><b>↓</b></td></tr>
+<tr class="dir-up"><td>3-5</td><td>Mid</td><td>7,760</td><td>434</td><td>338</td><td>6,988</td><td>440</td><td>532</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>3-5</td><td>Strong</td><td>9,052</td><td>8,670</td><td>0</td><td>382</td><td>9,451</td><td>0</td><td><b>↑</b></td></tr>
+<tr class="dir-down"><td>6-10</td><td>Weak</td><td>879</td><td>51</td><td>258</td><td>570</td><td>51</td><td>439</td><td><b>↓</b></td></tr>
+<tr class="dir-up"><td>6-10</td><td>Mid</td><td>3,319</td><td>2,385</td><td>0</td><td>934</td><td>2,604</td><td>0</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>6-10</td><td>Strong</td><td>4,835</td><td>3,566</td><td>0</td><td>1,269</td><td>3,849</td><td>0</td><td><b>↑</b></td></tr>
+<tr class="dir-down"><td>11+</td><td>Weak</td><td>178</td><td>4</td><td>141</td><td>33</td><td>4</td><td>435</td><td><b>↓</b></td></tr>
+<tr class="dir-up"><td>11+</td><td>Mid</td><td>806</td><td>223</td><td>0</td><td>583</td><td>261</td><td>0</td><td><b>↑</b></td></tr>
+<tr class="dir-up"><td>11+</td><td>Strong</td><td>1,348</td><td>1,348</td><td>0</td><td>0</td><td>2,139</td><td>0</td><td><b>↑</b></td></tr>
+
+</table>
+
+<div class="insight-good">
+<b>Growth pockets (target ML UP):</b><br>
+- SalesBucket 3-5 na Strong stores: 8,670 SKU zvyseni (9,451 ks) — tyto SKU maji ST 72% a AllSold 61%<br>
+- SalesBucket 6-10 na Mid/Strong: 5,951 SKU zvyseni (6,453 ks) — ST 84-86%, AllSold 76-79%<br>
+- SalesBucket 11+ na Strong: 1,348 SKU zvyseni (2,139 ks) — ST 94%, AllSold 90%
+</div>
+
+<div class="insight-bad">
+<b>Reduction pockets (target ML DOWN):</b><br>
+- SalesBucket 1-2 na Weak/Mid: 4,853 SKU snizeni (5,397 ks) — tyto maji NothingSold 62-65%, pouze 38-41% AllSold<br>
+- SalesBucket 3-5 na Weak: 2,442 SKU snizeni (2,781 ks) — NothingSold 45%, nedostatecna absorpce
+</div>
+</div>
+
+<div class="section">
+<h2>4. Trade-off analyza</h2>
+<div class="insight">
+<b>Source:</b> Zvyseni ML na SlowFull/ActiveSeller chrani 21,706 ks pred redistribuci.
+To snizuje riziko oversell (aktualne 11.5%) a reorder (34.1%).
+Odhadovane snizeni oversell: ~2-3pp, reorder: ~5-8pp.<br><br>
+<b>Target:</b> Net efekt je zvyseni ML (+10,109 ks), ale mix se zlepsuje:
+vice redistribuce do Strong stores s vysokym SalesBucket (kde ST > 70%), mene do Weak stores s nizkym prodejemi.
+<b>Cil neni nizsi objem, ale lepsi mix.</b>
+</div>
+</div>
+
+</body>
+</html>

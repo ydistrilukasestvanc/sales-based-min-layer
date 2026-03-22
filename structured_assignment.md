@@ -1,112 +1,91 @@
-# Strukturované zadání: Analytika SalesBased MinLayers (v4)
+# Strukturované zadání: Analytika SalesBased MinLayers
 
-## GLOBÁLNE INŠTRUKCIE (platia pre všetky analýzy a kalkulácie)
+## GLOBÁLNE INŠTRUKCIE
 
 ### Všeobecné
-- **JAZYK: Vysvetlenia a texty v reportoch VŽDY ČESKY.** Parametre, premenné, termíny (source, target, sell-through, oversell, reorder, MinLayer, SKU, ...) VŽDY anglicky. Toto je MUST.
-- **Všetky zistenia z konverzácie VŽDY zapisovať do tohto zadania** (ak sú to nápady/prístupy) alebo do `reports/vX/findings.md` (ak sú to výsledky).
-- **Výstupy = vždy 3 reporty:** 1) Findings (zistenia + korelácie), 2) Decision tree (pravidlá), 3) Backtest (dopad pravidiel s objemami).
-- **Výstupy VŽDY aj GRAFICKY** — Python skript (`generate_consolidated_reports.py`) generuje 3 HTML reporty + PNG grafy (heatmapy, bar charty, scatter ploty, waterfall). Grafy sú POVINNÁ súčasť každej verzie. Skript používa matplotlib + seaborn, embedded dáta, a generuje self-contained HTML s CSS + navigáciou medzi reportmi.
-- **Reporty sú VERZOVANÉ** v podadresároch `reports/v1/`, `reports/v2/` atď. Každá verzia je self-contained (skript + popis + reporty + grafy + findings.md). Staré verzie sa nemažú.
-- **Toto zadanie NEOBSAHUJE výsledky.** Výsledky sú vždy v `reports/vX/findings.md`. Tu sú len: inštrukcie, nápady, prístupy, hypotézy, brainstorming.
-- **Nová verzia začína s čistým štítom** – žiadne predpoklady z predchádzajúcej verzie.
-- **Overview tabuľka VŽDY obsahuje celkové metriky:** overprosim  (SKU + qty), reorder (SKU + qty), sell-through + ST-1pc (qty) – všetko aj v quantity, nie len percentá. Vždy 4M aj total.
-- **MinLayer rozsah: 0-4.** Hodnota 0 = odvézt/neposlať nič (resp. všetko). Hodnota 4 = maximálna ochrana.
-- **Business rule: A-O (9) a Z-O (11) = ORDERABLE → NIKDY ML=0.** Minimum ML=1 pre orderable SKU. ML=0 len pre delisted (D/L) alebo non-orderable triedy. Toto je HARD CONSTRAINT, nie odporúčanie.
+- **JAZYK:** Vysvetlenia a texty v reportoch VŽDY ČESKY. Parametre, premenné, termíny (source, target, sell-through, oversell, reorder, MinLayer, SKU, ...) VŽDY anglicky.
+- **Výstupy = vždy 4 dokumenty:** 1) Findings (zistenia + korelácie), 2) Decision tree (pravidlá), 3) Backtest (dopad pravidiel s objemami), 4) Definitions (kompletný algoritmický popis všetkých metrík a klasifikácií).
+- **Výstupy VŽDY aj GRAFICKY** — Python skript (`generate_consolidated_reports.py`) generuje HTML reporty + PNG grafy (heatmapy, bar charty, scatter ploty, waterfall). Skript používa matplotlib + seaborn, embedded dáta, generuje self-contained HTML s CSS + navigáciou medzi reportmi.
+- **Reporty sú VERZOVANÉ** v podadresároch `reports/vX/`. Každá verzia je self-contained. Staré verzie sa nemažú.
+- **Toto zadanie NEOBSAHUJE výsledky.** Tu sú len inštrukcie, vzorce, prístupy a pravidlá.
+- **Nová verzia začína s čistým štítom.**
+- **Overview tabuľka VŽDY obsahuje:** oversell (SKU + qty), reorder (SKU + qty), sell-through + ST-1pc (qty) – vždy 4M aj total.
+- **MinLayer rozsah: 0-4.** 0 = odvézt/neposlať všetko. 4 = maximálna ochrana.
+- **HARD CONSTRAINT:** A-O (9) a Z-O (11) = ORDERABLE → NIKDY ML=0. Minimum ML=1. ML=0 len pre delisted (D/L) alebo non-orderable. Jediná výnimka: delisting override.
 
-### Metriky – VŽDY uvádať OBE, NIKDY nemiešať
-- Vo VŠETKÝCH štatistikách VŽDY uvádzať OBE metriky vedľa seba. Sú to rôzne ukazovatele.
-- Vždy uvádzať **4M aj total** verziu oboch metrík.
+---
 
-#### REORDER (metrika, source)
-Inbound po redistribúcii — cappované na redistrib. qty (rovnaký princíp ako oversell).
-Bežné doobjednávky prekračujúce redistribuované množstvo sa nepočítajú — tie by sa objednali aj bez redistribúcie.
-```
-Reorder_SKU  = 1 ak SkuId má aspoň 1 záznam v Inbound po ApplicationDate
-Raw_Inbound  = SUM(Inbound.Quantity) pre dané obdobie (4M / total)
-Reorder_Qty  = LEAST(Raw_Inbound, TotalQtyRedistributed)
-Reorder_Rate = Reorder_SKU_count / Total_Source_SKU × 100
-```
-- Cap na `TotalQtyRedistributed` = nemôže byť reorder viac ks, než sme odviezli.
-- Ak source dostal 5 ks inboundu, ale redistribuoval sa len 1 ks → reorder = 1 (nie 5).
+## METRIKY — vzorce
 
-#### OVERSELL (PRIMÁRNA metrika, source)
+Vo VŠETKÝCH štatistikách VŽDY uvádzať OBE source metriky (oversell + reorder) vedľa seba. Vždy 4M aj total.
+
+### OVERSELL (primárna source metrika)
 Predalo sa viac, než čo na source **zostalo** po redistribúcii. Cappované na redistrib. qty.
 ```
 RemainingAfterRedist = SourceAvailableSupply - TotalQtyRedistributed
-Oversell_Qty = LEAST(
-    GREATEST(Sales_Post - RemainingAfterRedist, 0),
-    TotalQtyRedistributed
-)
+Oversell_Qty = LEAST(GREATEST(Sales_Post - RemainingAfterRedist, 0), TotalQtyRedistributed)
 ```
-- `SourceAvailableSupply` = zásoba na source v momente kalkulácie
-- `TotalQtyRedistributed` = SUM(Quantity) zo všetkých párov pre daný SourceSkuId
-- `Sales_Post` = SUM(SaleTransaction.Quantity) za obdobie po ApplicationDate (4M / total)
-- `RemainingAfterRedist` = koľko ks zostane na source po odvezení
-- Oversell nastáva IBA ak predaj prekročí zostatok. Ak source predá menej než zostalo → oversell = 0.
+- Oversell nastáva IBA ak predaj prekročí zostatok. Ak predá menej než zostalo → oversell = 0.
 - Cap na `TotalQtyRedistributed` = nemôže byť oversell viac ks než sme odviezli.
 
-**Príklad:**
 | Supply | Redist | Remaining | Sales Post | Oversell |
 |---|---|---|---|---|
-| 5 | 1 | 4 | 3 | MAX(3-4,0) = **0** (zásoba stačila) |
+| 5 | 1 | 4 | 3 | MAX(3-4,0) = **0** |
 | 2 | 1 | 1 | 2 | MIN(MAX(2-1,0), 1) = **1** |
-| 3 | 2 | 1 | 5 | MIN(MAX(5-1,0), 2) = **2** (cap na redistrib qty) |
+| 3 | 2 | 1 | 5 | MIN(MAX(5-1,0), 2) = **2** (cap) |
 | 3 | 1 | 2 | 0 | MAX(0-2,0) = **0** (nič sa nepredalo) |
 
-#### SELL-THROUGH (ST) (PRIMÁRNA metrika, target)
-Koľko z prijatého + existujúceho sa predalo. Cappované na 100%.
+### REORDER (source metrika)
+Inbound po redistribúcii — cappované na redistrib. qty (rovnaký princíp ako oversell).
+```
+Reorder_Qty = LEAST(SUM(Inbound.Quantity), TotalQtyRedistributed)
+```
+Bežné doobjednávky prekračujúce redistribuované množstvo sa nepočítajú — tie by sa objednali aj bez redistribúcie.
+
+### SELL-THROUGH (ST) (primárna target metrika)
 ```
 Base = TargetAvailableSupply + TotalQtyReceived
-Sold = SUM(SaleTransaction.Quantity) za obdobie po ApplicationDate (4M / total)
 ST = LEAST(Sold, Base) / Base × 100
 ```
-- `TargetAvailableSupply` = zásoba na target v momente kalkulácie
-- `TotalQtyReceived` = SUM(Quantity) zo všetkých párov pre daný TargetSkuId
-- ST = 100% keď sa predalo všetko alebo viac
 
-#### SELL-THROUGH-1pc (ST1) (doplnková metrika, target)
-Ideálny stav = zostáva presne 1 ks (nie stockout, ale minimum). ST1 = 100% pri 1 ks zvyšku.
+### SELL-THROUGH-1pc (ST1) (doplnková target metrika)
+Ideálny stav = zostáva presne 1 ks. ST1 = 100% pri 1 ks zvyšku.
 ```
-Ak Sold >= Base:
-    ST1 = ST (= 100%)
-Ak Sold < Base AND Base > 1:
-    ST1 = LEAST(Sold, Base - 1) / (Base - 1) × 100
-Ak Base <= 1:
-    ST1 = NULL (nemá zmysel)
+Ak Sold >= Base:  ST1 = 100%
+Ak Sold < Base AND Base > 1:  ST1 = LEAST(Sold, Base-1) / (Base-1) × 100
+Ak Base <= 1:  ST1 = NULL
 ```
 
-#### NOTHING-SOLD (flag, target)
+### NOTHING-SOLD / ALL-SOLD (target flagy)
 ```
-NothingSold = 1 ak SUM(Sales_Post) = 0 za dané obdobie
-```
-
-#### ALL-SOLD (flag, target)
-```
-AllSold = 1 ak SUM(Sales_Post) >= Base (predalo sa všetko)
+NothingSold = 1 ak Sales_Post = 0
+AllSold = 1 ak Sales_Post >= Base
 ```
 
-### Source pravidlá
-- **Cieľ OVERSELL rate:** 4M: 5-10%, 9M: <20%.
-- **Cieľ REORDER rate:** znížiť o 10-15% oproti aktuálnemu stavu na total období. Reorder je tiež dôležitá metrika — indikuje, že source bol príliš agresívne vyčerpaný a musel sa znova doplniť.
-- **Source ML sa môže aj ZNÍŽIŤ** – ak sa dá identifikovať, že produkty sa na source nepredávajú. Analyzovať kedy je bezpečné byť agresívnejší.
+---
 
-### Target pravidlá – ROVNAKO DÔLEŽITÉ ako source
-- **Target all-sold = ÚSPECH.** Signál na zvýšenie target ML.
-- **Target nothing-sold = PROBLÉM.** Zbytočná redistribúcia.
-- **Low sell-through (<30% po 4M) = PROBLÉM:** predáva sa pomaly → ML ZNÍŽIŤ.
-- **Target ML sa môže aj ZNÍŽIŤ** – ak sell-through je nízky.
-- **Target ML sa ZVÝŠI** – ak silné predajne predajú všetko.
-- **Target analytika musí byť ROVNAKO podrobná ako source.**
+## CIELE
+
+### Source
+- **Cieľ OVERSELL:** 4M: 5-10%, total: <20%.
+- **Cieľ REORDER:** znížiť o 10-15% oproti aktuálnemu stavu. Reorder indikuje, že source bol príliš agresívne vyčerpaný.
+- Source ML sa môže aj ZNÍŽIŤ — ak sa dá identifikovať, že produkty sa nepredávajú.
+
+### Target — ROVNAKO DÔLEŽITÉ ako source
+- **All-sold = ÚSPECH** → signál na zvýšenie ML.
+- **Nothing-sold = PROBLÉM** → zbytočná redistribúcia.
+- **Low ST (<30% po 4M)** → ML znížiť.
+- Target analytika musí byť ROVNAKO podrobná ako source.
+- **Bidirectionálny prístup:** nielen znižovať (reduction pockets), ale aj zvyšovať (growth pockets) tam, kde target preukázateľne absorbuje.
 
 ### Backtest
-- **Backtest vždy na SALES (oversell)**, nie na inbound.
-- **Backtest musí ukazovať zmenu OBJEMU** redistribúcie (koľko ks viac/menej).
+- Backtest vždy na SALES (oversell + reorder), nie na inbound.
+- Musí ukazovať zmenu OBJEMU redistribúcie (koľko ks viac/menej).
 - **Decision tree: 4 smery:** source up, source down, target up, target down.
 
 ---
 
-## Parametre analýzy (zmeniť pre inú kalkuláciu)
+## PARAMETRE ANALÝZY
 
 | Parametr | Hodnota |
 |---|---|
@@ -118,20 +97,19 @@ AllSold = 1 ak SUM(Sales_Post) >= Base (predalo sa všetko)
 | Ecomm (vylúčiť) | WarehouseId = 300 |
 | MinLayer JSON | SkuPotential.SourceMinLayerLists / TargetMinLayerLists |
 | ForecastQuantity | IGNOROVAŤ (chybný údaj) |
-| Git repo | git@github.com:ydistrilukasestvanc/sales-based-min-layer.git |
-| Temp schéma prefix | SBM_[version]_ (napr. SBM_v4_ pre verziu 4) |
+| Temp schéma prefix | SBM_[version]_ |
 | DB pripojenie | MCP server `ydistri-kb` → tool `mcp__ydistri-kb__query_database` |
 
 ---
 
-## Klíčové tabulky
+## KLÍČOVÉ TABULKY
 
 | Tabulka | Účel | Kľúčové stĺpce |
 |---|---|---|
 | SkuRedistributionExpanded | Redistribučné páry | SourceSkuId, TargetSkuId, Quantity, *MinLayerListQuantity |
 | SkuPotential | MinLayer JSON detaily | SourceMinLayerLists, TargetMinLayerLists (JSON) |
 | SaleTransaction | Predaje | SkuId, Date, IsPromo, Quantity, SalePrice |
-| SkuAvailableSupply | História zásoby | SkuId, DateFrom, DateTo, AvailableSupply. DateFrom = NULL → platí do dnes. DateFrom prvý záznam = začiatok histórie SKU |
+| SkuAvailableSupply | História zásoby | SkuId, DateFrom, DateTo, AvailableSupply |
 | Inbound | Príjmy (reorder) | SkuId, Date, InboundTypeId, Quantity |
 | Outbound | Výdaje | SkuId, Date, OutboundTypeId, Quantity |
 | SkuAttributeValue | Historický snapshot | SkuId, AttributeValueId, SkuClassId, Frequency*, SalePrice |
@@ -141,201 +119,179 @@ AllSold = 1 ak SUM(Sales_Post) >= Base (predalo sa všetko)
 
 ---
 
-## Postup práce – fáze
+## POSTUP PRÁCE — FÁZE
 
 ### FÁZE 0: Príprava dát
-Vytvoriť a naindexovať v temp schéme (prefix SBM_[version]_):
-1. Redistribučné páry s MinLayer3 z JSON
-2. Všetky SKU dotčených produktov (excl ecomm) – pre cross-product analýzu
-3. Predaje 12M pred + 9M po redistribúcii (+ rozšírené 24M pre vzorce)
-4. Zásoby (SkuAvailableSupply) pre source+target
+Vytvoriť a naindexovať v temp schéme:
+1. Redistribučné páry s MinLayer z JSON (EntityListId)
+2. Všetky SKU dotčených produktov (excl ecomm) — pre cross-product analýzu
+3. Predaje 12M pred + 9M po redistribúcii (+ 24M pre vzorce)
+4. Zásoby (SkuAvailableSupply) pre source+target — potrebné pre DaysInStock výpočet
 5. Inbound/Outbound po redistribúcii
 6. SkuAttributeValue snapshot k dátumu kalkulácie + aktuálny
-7. Sila predajní (decily podľa tržieb 6M) + per brand (kvintily)
+7. Sila predajní: decily podľa tržieb 6M (StoreStrength: Weak/Mid/Strong)
+8. Brand sila: kvintily per brand (BrandFit: BrandWeak/BrandMid/BrandStrong)
+9. **DaysInStock** per source SKU per obdobie (z SkuAvailableSupply — koľko dní mal SKU stock > 0)
 
 ### FÁZE 1: Validácia dát
-Pred analýzou overiť kvalitu vstupov:
-- Počet redistribučných párov, distribúcia Quantity (min/max/median/percentily)
-- Pokrytie predajov: koľko source/target SKU má aspoň 1 predaj za 12M pred
-- Zásoby: koľko SKU má AvailableSupply záznam, koľko má medzery
-- Sanity checks: negatívne quantity, duplicitné páry, source=target
-- Výstup: krátky report s flagmi ak niečo nesedí, PREDTÝM než sa pokračuje ďalej
+- Distribúcia Quantity (min/max/median/percentily)
+- Pokrytie predajov: koľko source/target SKU má aspoň 1 predaj za 12M
+- Zásoby: pokrytie AvailableSupply záznamov
+- Sanity checks: negatívne qty, duplicity, source=target
+- Výstup: report s flagmi PRED pokračovaním
 
 ### FÁZE 2: Základné metriky
 **Source:** predaje 6M/12M pred, 4M/total po, reorder (4M + total), oversell (4M + total)
 **Target:** predaje 6M/12M pred, 4M/total po, sell-through (ST + ST-1pc, 4M + total), nothing-sold, all-sold
 
-Výstup: overview tabuľka podľa globálnych inštrukcií (SKU count + qty pre každú metriku, 4M + total).
+Výstup: overview tabuľka (SKU count + qty pre každú metriku, 4M + total).
 
-### FÁZE 3: Predajné vzorce (24M história) + Velocity normalizácia
+### FÁZE 3: Source klasifikácia — Velocity Segmenty
 
-#### 3a. Pattern klasifikácia (pôvodná, referenčná)
-Klasifikácia source SKU do vzorov podľa 4 polročných periód:
-- Dead / Dying / Sporadic / Consistent / Declining
-- **PROBLÉM (z v6/v7):** Neberie do úvahy dobu dostupnosti zásob. SKU s 0 predajmi ale len 2 mesiacmi stocku = "Dead" aj keď je to nový produkt.
-
-#### 3b. Velocity normalizácia (PREFEROVANÁ, z v6/v7)
+#### 3a. Kalendárna korekcia (PRED klasifikáciou)
+Douglas = parfuméria → VŠETKY produkty sú seasonal (Vianoce = darčeky). Neidentifikovať seasonal per SKU — namiesto toho korigovať vstupné dáta:
 ```
-Velocity_12M = Sales_12M / DaysInStock_12M × 30  (predaje za mesiac na sklade)
+CalendarWeight = 0.7 ak polročné obdobie obsahuje Nov+Dec, inak 1.0
+Adjusted_Sales(period) = Raw_Sales(period) × CalendarWeight(period)
 ```
-Eliminuje skreslenie krátkym stockom. Segmenty:
-- **TrueDead** = 0 predajov, stock ≥270 dní (naozaj mŕtve)
-- **PartialDead** = 0 predajov, stock 90-270 dní (krátky stock, neisté)
-- **BriefNoSale** = 0 predajov, stock <90 dní (príliš nové na záver)
-- **ActiveSeller** = velocity ≥0.5/mesiac (aktívne sa predáva)
-- **SlowFull** = velocity <0.5, stock ≥270 dní (pomalé, ale dlhodobo)
-- **SlowPartial** = velocity <0.5, stock 90-270 dní (krátky stock, rozjíždí sa)
+Dôvod: Nov+Dec generujú ~24% ročných predajov namiesto očakávaných ~17% (lift 1.42×). Bez korekcie Velocity a Pattern sú skreslené.
 
-**Finding v7:** Sporadic (13 645 SKU) sa rozpadá na 3 dramaticky odlišné segmenty s rôznym sold-after (64%, 77%, 92%).
+#### 3b. Velocity normalizácia (PREFEROVANÁ klasifikácia)
+```
+Velocity_12M = Adjusted_Sales_12M / DaysInStock_12M × 30
+```
+DaysInStock = počet dní s AvailableSupply > 0 v danom období (z SkuAvailableSupply). Eliminuje skreslenie krátkym stockom — SKU na sklade 2 mesiace s 1 predajom ≠ mŕtve.
 
-#### 3c. Doplnkové signály
-- **Mesačná kadencia** = počet aktívnych mesiacov z 24M
-- **Last sale gap** = doba od posledného predaja k dátumu kalkulácie
-- **SoldAfter%** = % source SKU, ktoré sa predali po navrhnutí redistribúcie (silný prediktor: >80% = rizikové)
+**Segmenty:**
+| Segment | Definícia | Typické chovanie |
+|---|---|---|
+| **TrueDead** | 0 predajov, stock ≥270 dní | Naozaj mŕtve. Bezpečné na redistribúciu. |
+| **PartialDead** | 0 predajov, stock 90-270 dní | Krátky stock, neisté. Opatrnosť. |
+| **BriefNoSale** | 0 predajov, stock <90 dní | Príliš nové na záver. |
+| **ActiveSeller** | Velocity ≥0.5/mesiac | Aktívne sa predáva! Chrániť. |
+| **SlowFull** | Velocity <0.5, stock ≥270 dní | Pomalé, ale dlhodobo na sklade. |
+| **SlowPartial** | Velocity <0.5, stock 90-270 dní | Krátky stock, rozjíždí sa. Prekvapivo aktívne. |
+
+#### 3c. SoldAfter% (post-redistribučný prediktor)
+```
+SoldAfter = 1 ak source SKU malo aspoň 1 predaj po ApplicationDate
+```
+Silný prediktor rizika redistribúcie. Per-segment priemer určuje, či je bezpečné odvážať.
+
+#### 3d. LastSaleGap
+```
+LastSaleGapDays = DATEDIFF(DAY, MAX(SaleDate pred ApplicationDate), ApplicationDate)
+```
+Krátky gap (≤90 dní) = produkt sa nedávno predal = rizikovejšie odvážať.
 
 ### FÁZE 4: Cross-product analýza
-- Predaje produktu na VŠETKÝCH predajniach (okrem ecomm) – celoplošný trend
-- Product Volatility Score – variabilita predajov medzi predajňami/mesiacmi
-- Product Concentration – Gini koeficient, na koľkých predajniach sa produkt predáva
-- **Redistribučný ratio** = Quantity / AvailableSupply na source → aký % zásoby odvážame. Korelácia s oversell.
+- Product Volatility Score — CV (StdDev/Mean) predajov medzi predajňami/mesiacmi
+- Product Concentration — na koľkých predajniach sa produkt predáva (% stores s prodejem)
+- **Redistribučný ratio** = TotalQtyRedistributed / SourceAvailableSupply
 
-### FÁZE 5: Sila predajní
-- Decily podľa tržieb za 6M pred redistribúciou
-- Per brand (kvintily)
-- Brand-store fit: celková sila vs sila v danom brande → mismatch analýza
-- **Finding v7/v8:** BrandStoreFit má ~12pp dopad na target sell-through (konzistentne naprieč StoreStrength). Efekt je **graduovaný podľa SalesBucket:**
-  - SalesBucket 0-2: BrandFit delta +10 až +40pp ST → **plný modifier** (BrandWeak -1, BrandStrong +1)
-  - SalesBucket 3-5: BrandFit delta +7 až +9pp → **čiastočný modifier** (BrandWeak -1, BrandStrong 0)
-  - SalesBucket 6+: BrandFit delta <3pp → **bez modifieru** (predaje hovoria samy za seba)
-  - Logika: keď nemáte predajnú históriu, brand fit je najlepší prediktor úspešnosti target.
-- Matice prietoku (odkiaľ kam): decil source × decil target
+### FÁZE 5: Sila predajní a Brand-Store Fit
 
-### FÁZE 6: Phantom Stock analýza (LEN SOURCE)
-**Phantom stock** = source SKU kde:
-1. Zásoby existovali dlhodobo (mesiace bez stockoutu = AvailableSupply > 0 kontinuálne)
-2. Žiadne alebo minimálne predaje počas tejto doby
-3. Po navrhnutí redistribúcie sa predaje VRÁTILI (oversell)
+#### StoreStrength
+```
+Revenue_6M = SUM(SaleTransaction.Quantity × SalePrice) za 6M pred redistribúciou
+StoreDecile = NTILE(10) OVER (ORDER BY Revenue_6M)
+Weak = Decile 1-3, Mid = 4-7, Strong = 8-10
+```
 
-Vysvetlenie: produkt fyzicky nebol v regáli (backstore, krádež), systém videl zásobu, ale zákazník produkt nemohol kúpiť. Keď sme navrhli odvoz, produkt sa vrátil do regálu a začal sa predávať.
+#### BrandFit
+```
+BrandRevenue_6M = SUM(Quantity × SalePrice) za 6M filtrované na daný BrandId
+BrandQuintile = NTILE(5) OVER (PARTITION BY BrandId ORDER BY BrandRevenue_6M)
+BrandWeak = Q1-2, BrandMid = Q3, BrandStrong = Q4-5
+```
 
-**DÔLEŽITÉ: Očistenie od šumu (false positives):**
-- Ak sa produkt nepredával predtým, štatisticky je logické, že potom bude predaj vyšší → to samo o sebe NIE JE phantom stock
-- **Cross-store filter:** Phantom stock vzorec musí byť prítomný LEN na tomto konkrétnom SKU (store), NIE naprieč všetkými predajňami rovnakého product_id. Ak rovnaký product_id nepredáva na VŠETKÝCH predajniach → nie je to phantom stock, ale product-level trend (zomierajúci produkt)
-- Teda: porovnať predaje pred redistribúciou na TOMTO SKU vs ostatné SKU rovnakého product_id. Ak ostatné predajne predávajú normálne a len TOTO SKU nie → phantom stock kandidát
+**BrandStoreFit je silný prediktor (~12pp dopad na ST).** Efekt je graduovaný:
+- **Na target strane:** Najsilnejší pri nízkom SalesBucket (0-2 sales: delta +10-40pp ST). Pri 6+ sales irelevantný — predaje hovoria samy za seba.
+- **Na source strane:** BrandStrong source SKU sa predávajú o 5-11pp viac po redistribúcii. Najsilnejší efekt pri SlowFull a TrueDead. Redistribúcia z BrandStrong source je rizikovejšia.
 
-**Phantom stock sa NETÝKA target strany** – na target nemá zmysel (target dostáva nový tovar).
+#### Matice prietoku
+Odkiaľ kam tečie redistribúcia: StoreStrength(source) × StoreStrength(target).
 
-### FÁZE 7: Redistribučná slučka (Y-STORE TRANSFER loop)
-Detekcia SKU ktoré boli redistribuované opakovane:
-- Identifikácia cez Inbound/Outbound s OutboundTypeId / InboundTypeId pre Y-STORE TRANSFER
-- Koľko krát bolo SKU redistribuované v posledných 12M/24M
-- Korelácia: opakovaná redistribúcia × oversell rate / sell-through
-- Hypotéza: SKU v slučke sú špatní kandidáti (nestabilná situácia)
+### FÁZE 6: Phantom Stock (LEN SOURCE)
+Phantom stock = source SKU kde zásoby existovali dlhodobo, žiadne predaje, ale po redistribúcii sa predaje vrátili. Cross-store filter: vzorec musí byť len na tomto SKU, nie celoplošne.
+
+**Poznámka:** So správnym oversell vzorcom (RemainingAfterRedist) je phantom stock typicky minimálny (<10 SKU). Analyzovať, ale neočakávať veľký objem.
+
+### FÁZE 7: Redistribučná slučka
+Detekcia cez Outbound s OutboundTypeId pre Y-STORE TRANSFER / STORE TRANSFER. Korelovat s oversell/reorder.
+
+**Poznámka:** Typicky veľmi malá skupina (<200 SKU s 2+ loop). Analyzovať, ale neočakávať štatistickú signifikantnosť.
 
 ### FÁZE 8: Cenová a sezónna analýza
-**Cenová:**
-- Cenové pásma vs oversell/sell-through
-- Promo analýza: IsPromo podiel cross-store (overenie či declining vzorec je spôsobený promo)
-- Cenové zmeny produktu medzi periódami
+**Cenová:** pásma vs oversell/sell-through, cenové zmeny, promo podiel.
+**Sezónna:** Riešená cez CalendarWeight (FÁZE 3a), nie per-SKU flag.
+**SkuClass zmeny:** Delisting po redistribúcii → dopad na oversell/sell-through. Delisted = bezpečné.
 
-**Sezónna korekcia (kalendárny discount faktor):**
-- **NEIDENTIFIKOVAŤ seasonal per SKU.** Pri Douglas (parfuméria) sú VŠETKY produkty seasonal (Vianoce = darčeky). SKU s 1 predajom za rok nemá štatistickú silu na seasonal detection — 1 predaj v novembri = 100% XmasLift, ale je to náhoda.
-- **Namiesto toho: kalendárny discount faktor na obdobie.** Ak analytické okno obsahuje Nov+Dec (Q4), predaje v tomto období sú nafúknuté vianočným efektom a MUSIA byť váhovo znížené.
-- **CalendarWeight:** Ak polročné obdobie obsahuje Nov+Dec → weight = 0.7. Inak weight = 1.0.
-- **Aplikácia:** Na Pattern klasifikáciu (H1-H4), Velocity kalkuláciu, akýkoľvek 6M/12M predajový signál.
-- **Dôvod:** Bez korekcie 12M okno s Vianocami nafukuje frekvenciu → skreslí Pattern aj Velocity → nesprávne ML.
-```
-Adjusted_Sales(period) = Raw_Sales(period) × CalendarWeight(period)
-CalendarWeight = 0.7 ak period obsahuje Nov+Dec, inak 1.0
-```
+### FÁZE 9: Klasifikácia a párová analýza
 
-**SkuClass zmeny:**
-- Sledovať zmeny SkuClass po redistribúcii (delisting)
-- Vplyv na oversell/sell-through
-
-### FÁZE 9: Klasifikácia skupín
-**Source:** segmenty podľa Pattern × Store → reorder + oversell rate
-- Identifikovať kde je bezpečné ZNÍŽIŤ ML (oversell <10%)
-- Identifikovať kde TREBA ZVÝŠIŤ ML (oversell >20%)
-
-**Target:** segmenty podľa Sales × Store → sell-through + ST-1pc rate
-- Low sell-through = ML ZNÍŽIŤ
-- High sell-through + all-sold = ML ZVÝŠIŤ
+**Source:** Velocity Segment × StoreStrength → oversell + reorder + SoldAfter%
+**Target:** SalesBucket × StoreStrength × BrandFit → sell-through + nothing-sold + all-sold
 
 **Párová analýza source↔target:**
-- Combined outcome: source oversell × target sell-through matice
-- Identifikácia "win-win" (low oversell + high ST) a "lose-lose" (high oversell + low ST) segmentov
-- Čo majú spoločné win-win páry? (sila predajní, product type, cena, ...)
+- Win-Win (no oversell + good ST), Win-Lose, Lose-Win, Lose-Lose
+- Identifikácia kde sú growth pockets a kde reduction pockets
 
 ### FÁZE 10: Decision tree
-Rozhodovací strom s 4 smermi: source up/down, target up/down
 
-**Source lookup:** Pattern × Store Strength → ML 0-4
-- Vstupné signály: predajný vzorec, mesačná kadencia, last sale gap, phantom stock flag, redistribučný ratio
-- Výstup: navrhovaná source ML pre každý segment
-- **CONSTRAINT: A-O / Z-O (orderable) → MIN ML=1, NIKDY 0**
+Rozhodovací strom s 4 smermi: source up/down, target up/down.
 
-**Target lookup:** SalesBucket × Store Strength → ML 0-4
-- Vstupné signály: sell-through, ST-1pc, nothing-sold flag, brand-store fit
-- Výstup: navrhovaná target ML pre každý segment
-- **CONSTRAINT: A-O / Z-O (orderable) → MIN ML=1, NIKDY 0**
+#### Source lookup: Velocity Segment × StoreStrength → ML 0-4
+Vstupné signály: Velocity segment (po kalendárnej korekcii), StoreStrength, SoldAfter%.
+CONSTRAINT: Orderable → min ML=1.
 
-**Modifikátory (úprava base ML, výsledok cappovaný na 0-4):**
+#### Source modifikátory (potvrdené)
+| Modifikátor | Podmínka | Úprava |
+|---|---|---|
+| LastSaleGap krátky | ≤90 dní | +1 |
+| BrandFit source | TrueDead/SlowFull/SlowPartial + BrandStrong | +1 |
+| BrandFit source | ActiveSeller | ignorovať (sold after >92%) |
+| Delisting | SkuClass → D/L | ML=0 (override) |
 
-Source modifikátory (POTVRDENÉ v7/v8):
-- LastSaleGap ≤90 dní → +1 (sold after 85-90%)
-- Sezónna korekcia → CalendarWeight na vstupné dáta (nie per-SKU flag)
-- Delisting (SkuClass zmena) → ML=0 (jediný prípad keď orderable môže ísť na 0)
-- **BrandStoreFit na source (POTVRDENÝ v8):** BrandStrong source SKU sa predávajú o 5-11pp viac po redistribúcii → redistribúcia z nich je rizikovejšia.
-  - TrueDead/SlowFull + BrandStrong → +1 ML (sold after +8-11pp, reorder +5-6pp)
-  - ActiveSeller: BrandFit ignorovať (sold after >92% bez ohľadu na brand)
-  - Logika: ak brand je silný na tejto predajni, aj "mŕtve" SKU majú vyššiu šancu predaja → treba chrániť
+#### Target lookup: SalesBucket × StoreStrength → ML 0-4
+Vstupné signály: predaje 12M pred, StoreStrength, BrandFit.
+CONSTRAINT: Orderable → min ML=1.
 
-Target modifikátory (POTVRDENÉ v7/v8):
-- AllSold/ST1 high → +1
-- Growth pocket (Strong, Sales 3-10, ST≥45%) → +1
-- Nothing-sold / ST<20% → -1
-- **BrandStoreFit (graduovaný, POTVRDENÝ v8):**
-  - SalesBucket 0-2: BrandWeak → -1, BrandStrong → +1 (delta +10-40pp ST)
-  - SalesBucket 3-5: BrandWeak → -1, BrandStrong → 0 (delta +7-9pp)
-  - SalesBucket 6+: bez modifieru (delta <3pp, predaje dominujú)
-- Delisting → ML=0
+#### Target modifikátory (potvrdené)
+| Modifikátor | Podmínka | Úprava |
+|---|---|---|
+| AllSold / ST1 high | AllSold4M=1 OR ST1_4M ≥85% | +1 |
+| Growth pocket | Strong, Sales 3-10, ST≥45% | +1 |
+| Nothing-sold / low ST | NothingSold4M=1 OR ST4M <20% | -1 |
+| **BrandFit (0-2 sales)** | BrandWeak | -1 |
+| **BrandFit (0-2 sales)** | BrandStrong | +1 |
+| **BrandFit (3-5 sales)** | BrandWeak | -1 |
+| BrandFit (6+ sales) | — | ignorovať (predaje dominujú) |
+| Delisting | SkuClass → D/L | ML=0 (override) |
 
-**VYRADENÉ modifikátory (nepotvrdené na v7 dátach CalculationId=233):**
-- ~~PhantomStock~~ → len 1 SKU so správnym oversell vzorcom
-- ~~ProductConcentration <10%~~ → žiadny gradient v oversell/reorder
-- ~~Redistribučná slučka 4+~~ → len 7 SKU, štatisticky nevýznamné
-- ~~Xmas seasonal flag per SKU~~ → nahradené kalendárnym discount faktorom
+#### Nepotvrdené modifikátory (analyzovať, ale neočakávať signifikantnosť)
+- PhantomStock — typicky <10 SKU so správnym oversell vzorcom
+- ProductConcentration <10% — žiadny gradient v oversell/reorder
+- Redistribučná slučka 4+ — typicky <10 SKU
+- Xmas seasonal flag per SKU — nahradené CalendarWeight
+
+#### Clamp pravidlá
+```
+Final_ML = CLAMP(Base_ML + SUM(modifiers), 0, 4)
+Ak IsOrderable: Final_ML = MAX(Final_ML, 1)
+Ak IsDelisted: Final_ML = 0
+```
 
 ### FÁZE 11: Backtest
 - Aplikácia navrhovaných pravidiel na aktuálne dáta
 - **Objemový dopad:** koľko ks viac/menej redistribuovaných (celkovo + per segment)
-- **Trade-off analýza:** ušetrený oversell (qty) vs stratené úspešné redistribúcie (qty)
-- **Target dopad:** extra ks potrebné aby zostal 1 ks (ST-1pc optimalizácia)
-- **Sensitivity:** čo ak posunieme thresholdy o ±1 ML level → ako sa zmení objem a oversell
+- **Trade-off:** ušetrený oversell/reorder vs stratené úspešné redistribúcie
+- **Target:** bidirectionálny — growth pockets (kam posílať viac) + reduction pockets (kam posílať menej). Cieľ je lepší mix, nie len nižší objem.
+- **Sensitivity:** ±1 ML level → dopad na objem a metriky
 
 ---
 
-## Findings z predchádzajúcich verzií (validované na CalculationId=233)
-
-### Potvrdené princípy
-- **Velocity normalizácia** (v6) je lepší prediktor než raw Pattern (v5). Sporadic sa rozpadá na 3 segmenty.
-- **SoldAfter%** (v6) je silný prediktor: ActiveSeller 94%, SlowPartial 77%, TrueDead 37%.
-- **Bidirectionálny target** (v5) — nielen znižovať, ale aj growth pockets pre silné segmenty.
-- **BrandStoreFit** má ~12pp dopad na target ST — rovnako silný ako StoreStrength.
-- **Sezónnosť je celoplošná** (Douglas = parfuméria). Neidentifikovať per SKU, ale korigovať kalendárne.
-
-### Metriky baseline (CalculationId=233)
-- Oversell 4M: 3.0% qty — v cíli
-- Reorder total: 34.1% qty — hlavná metrika na optimalizáciu
-- Target nothing-sold 4M: 42.2% — príležitosť na realokáciu
-
-### Definitions dokument
-Kompletný algoritmický popis všetkých metrik a klasifikácií je v `reports/v7/definitions.md` a `definitions.html`. Obsahuje 13 sekcií (A-M) pokrývajúcich všetky vzorce.
-
----
-
-## Ďalšie nápady na preskúmanie
-- Warehouse clustering (RegionId vzorce) – regionálne rozdiely v úspešnosti
+## ĎALŠIE NÁPADY
+- Warehouse clustering (RegionId) — regionálne rozdiely
 - Doba na poličke (days since last inbound) ako prediktor pre target
-- Multi-product bundling – ak source má viacero produktov na redistribúciu, interakcia medzi nimi
+- Multi-product bundling — interakcia medzi produktmi na redistribúciu z jedného source
+- BrandFit ako tretia dimenzia target lookup tabuľky (SalesBucket × Store × BrandFit = 45 buniek) namiesto modifieru

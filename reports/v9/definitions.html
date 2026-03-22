@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v9 Definitions: SalesBased MinLayers</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v9-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.changed-cell { background: #fff3cd !important; border: 2px solid #f39c12 !important; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a><a href="definitions.html" class="active">Definitions</a><span style="float:right; color:#7f8c8d; font-size:11px;">v9 Independent | CalendarWeight 0.7 | ML 0-4 | Orderable min=1 | Bidirectional</span></div>
+
+<h1>Definitions v9: SalesBased MinLayers <span class="v9-badge">v9</span></h1>
+<p><b>CalculationId=233</b> | ApplicationDate: 2025-07-13 | Generated: 2026-03-22 20:30</p>
+<p>Kompletni algoritmicky popis vsech metrik a klasifikaci pouzitych v analyze.</p>
+
+<div class="section">
+<h2>1. Zakladni parametry</h2>
+<table>
+<tr><th>Parametr</th><th>Hodnota</th></tr>
+<tr><td>Server</td><td>DEV</td></tr>
+<tr><td>Databaze</td><td>ydistri-sql-db-dev-tenant-douglasde</td></tr>
+<tr><td>CalculationId</td><td>233</td></tr>
+<tr><td>EntityListId</td><td>3</td></tr>
+<tr><td>ApplicationDate</td><td>2025-07-13</td></tr>
+<tr><td>Ecomm (vylouceno)</td><td>WarehouseId = 300</td></tr>
+<tr><td>MinLayer rozsah</td><td>0-4</td></tr>
+<tr><td>CalendarWeight</td><td>0.7 na polrok s Nov+Dec</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>2. Source metriky</h2>
+
+<h3>2.1 Oversell</h3>
+<pre>
+RemainingAfterRedist = SourceAvailableSupply - TotalQtyRedistributed
+Oversell_Qty = LEAST(GREATEST(Sales_Post - RemainingAfterRedist, 0), TotalQtyRedistributed)
+
+Oversell nastava IBA ak predaj prekroci zostatok. Cap na TotalQtyRedistributed.
+</pre>
+
+<h3>2.2 Reorder</h3>
+<pre>
+Reorder_Qty = LEAST(SUM(Inbound.Quantity), TotalQtyRedistributed)
+
+Bezne doobjednavky prekracujici redistribuovane mnozstvi se nepocitaji.
+</pre>
+
+<h3>2.3 CalendarWeight</h3>
+<pre>
+CalendarWeight = 0.7 ak polrocne obdobie obsahuje Nov+Dec, inak 1.0
+Adjusted_Sales(period) = Raw_Sales(period) x CalendarWeight(period)
+
+Nov+Dec generuji 26.5% rocnich prodejov namiesto ocekavanych 16.7% (lift 1.59x).
+CalendarWeight 0.7 je konzervativni — skutecny lift by odpovidal vaze ~0.63.
+</pre>
+
+<h3>2.4 Velocity</h3>
+<pre>
+Velocity_12M = Adjusted_Sales_12M / DaysInStock_12M x 30
+
+DaysInStock = pocet dnu s AvailableSupply > 0 v danom obdobi.
+Eliminuje skresleni kratkym stockom.
+</pre>
+
+<h3>2.5 Velocity segmenty</h3>
+<table>
+<tr><th>Segment</th><th>Definice</th><th>SKU count</th><th>SoldAfter%</th></tr>
+<tr><td>TrueDead</td><td>0 predajov, stock >= 270 dni</td><td>18,385</td><td>36.9%</td></tr>
+<tr><td>PartialDead</td><td>0 predajov, stock 90-270 dni</td><td>3,599</td><td>56.7%</td></tr>
+<tr><td>BriefNoSale</td><td>0 predajov, stock < 90 dni</td><td>98</td><td>85.7%</td></tr>
+<tr><td>SlowFull</td><td>Velocity < 0.5, stock >= 270 dni</td><td>10,863</td><td>66.4%</td></tr>
+<tr><td>SlowPartial</td><td>Velocity < 0.5, stock 90-270 dni</td><td>2,038</td><td>77.2%</td></tr>
+<tr><td>SlowBrief</td><td>Velocity < 0.5, stock < 90 dni</td><td>9</td><td>44.4%</td></tr>
+<tr><td>ActiveSeller</td><td>Velocity >= 0.5/mesic</td><td>1,778</td><td>95.2%</td></tr>
+</table>
+
+<h3>2.6 SoldAfter</h3>
+<pre>
+SoldAfter = 1 ak source SKU malo aspon 1 predaj po ApplicationDate
+Celkove: 52.7% (19,390 z 36,770)
+</pre>
+
+<h3>2.7 LastSaleGap</h3>
+<pre>
+LastSaleGapDays = DATEDIFF(DAY, MAX(SaleDate pred ApplicationDate), ApplicationDate)
+Kratky gap (<=90 dni) = modifier +1 ML
+</pre>
+</div>
+
+<div class="section">
+<h2>3. Target metriky</h2>
+
+<h3>3.1 Sell-Through (ST)</h3>
+<pre>
+Base = TargetAvailableSupply + TotalQtyReceived
+ST = LEAST(Sold, Base) / Base x 100
+</pre>
+
+<h3>3.2 Sell-Through-1pc (ST1)</h3>
+<pre>
+Idealny stav = zostava presne 1 ks.
+Ak Sold >= Base: ST1 = 100%
+Ak Sold < Base AND Base > 1: ST1 = LEAST(Sold, Base-1) / (Base-1) x 100
+Ak Base <= 1: ST1 = NULL
+</pre>
+
+<h3>3.3 Nothing-Sold / All-Sold</h3>
+<pre>
+NothingSold = 1 ak Sales_Post = 0
+AllSold = 1 ak Sales_Post >= Base
+</pre>
+
+<h3>3.4 SalesBucket</h3>
+<pre>
+Klasifikace na zaklade predejov 12M pred redistribuci:
+0, 1-2, 3-5, 6-10, 11+
+</pre>
+</div>
+
+<div class="section">
+<h2>4. Store a Brand klasifikace</h2>
+
+<h3>4.1 StoreStrength</h3>
+<pre>
+Revenue_6M = SUM(SaleTransaction.Quantity x SalePrice) za 6M pred redistribuci
+StoreDecile = NTILE(10) OVER (ORDER BY Revenue_6M)
+Weak = Decile 1-3 (107 stores), Mid = 4-7 (140), Strong = 8-10 (105)
+</pre>
+
+<h3>4.2 BrandFit</h3>
+<pre>
+BrandRevenue_6M = SUM(Qty x SalePrice) za 6M filtrovane na dany BrandId
+BrandQuintile = NTILE(5) OVER (PARTITION BY BrandId ORDER BY BrandRevenue_6M)
+BrandWeak = Q1-2, BrandMid = Q3, BrandStrong = Q4-5
+
+BrandFit ma ~12pp dopad na ST. Efekt je graduovany:
+  0-2 sales: delta +17 az +34pp => modifikator +-1
+  3-5 sales: delta +6 az +8pp => BrandWeak -1
+  6+ sales: zanedbatelny => ignorovat
+</pre>
+</div>
+
+<div class="section">
+<h2>5. Decision Tree formule</h2>
+<pre>
+Source: Base_ML = lookup(VelocitySegment, StoreStrength)
+  + LastSaleGap modifier (+1 ak gap <= 90d)
+  + BrandFit modifier (+1 ak BrandStrong na TrueDead/Slow*)
+  Delisting override: ML=0
+
+Target: Base_ML = lookup(SalesBucket, StoreStrength)
+  + AllSold modifier (+1)
+  + GrowthPocket modifier (+1)
+  + NothingSold modifier (-1)
+  + BrandFit modifier (0-5 sales: +-1)
+  Delisting override: ML=0
+
+Final_ML = CLAMP(Base_ML + SUM(modifiers), 0, 4)
+Ak IsOrderable (SkuClassId IN (9, 11)): Final_ML = MAX(Final_ML, 1)
+Ak IsDelisted (SkuClassId IN (3, 4)): Final_ML = 0
+</pre>
+</div>
+
+<div class="section">
+<h2>6. SkuClass distribuce (source)</h2>
+<table>
+<tr><th>Class</th><th>SKU count</th><th>%</th><th>Kategorie</th></tr>
+<tr><td>A-O (Active Orderable)</td><td>31,773</td><td>86.4%</td><td>ORDERABLE</td></tr>
+<tr><td>Z-O (Central Orderable)</td><td>3,288</td><td>8.9%</td><td>ORDERABLE</td></tr>
+<tr><td>A (Active)</td><td>1,449</td><td>3.9%</td><td>OTHER</td></tr>
+<tr><td>D (Delisted Douglas)</td><td>166</td><td>0.5%</td><td>DELISTED</td></tr>
+<tr><td>L (Delisted Supplier)</td><td>36</td><td>0.1%</td><td>DELISTED</td></tr>
+<tr><td>Others</td><td>58</td><td>0.2%</td><td>OTHER</td></tr>
+</table>
+<p>Orderable (A-O + Z-O): 35,061 SKU (95.4%) => NIKDY ML=0, minimum ML=1.<br>
+Delisted (D + L): 202 SKU (0.5%) => vzdy ML=0 (delisting override).</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>v9 Decision Tree: SalesBased MinLayers</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #3498db; }
+.nav a.active { color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; }
+.dir-down { background: #d4edda; }
+.new-badge { background: #17a2b8; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.v9-badge { background: #6f42c1; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.changed-cell { background: #fff3cd !important; border: 2px solid #f39c12 !important; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html" class="active">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a><a href="definitions.html">Definitions</a><span style="float:right; color:#7f8c8d; font-size:11px;">v9 Independent | CalendarWeight 0.7 | ML 0-4 | Orderable min=1 | Bidirectional</span></div>
+
+<h1>Decision Tree v9: SalesBased MinLayers <span class="v9-badge">v9</span></h1>
+<p><b>CalculationId=233</b> | ApplicationDate: 2025-07-13 | Generated: 2026-03-22 20:30</p>
+<p>4 smery: source up, source down, target up, target down. ML rozsah 0-4. Orderable min=1.</p>
+
+<div class="section">
+<h2>1. Source: Velocity Segment x StoreStrength => ML</h2>
+<img src="fig_dtree_01.png" alt="Source ML heatmap">
+<table>
+<tr><th>Segment</th><th>Store</th><th>MinLayer</th></tr>
+<tr><td>TrueDead</td><td>Weak</td><td class=""><b>1</b></td></tr>
+<tr><td>TrueDead</td><td>Mid</td><td class=""><b>1</b></td></tr>
+<tr><td>TrueDead</td><td>Strong</td><td class=""><b>1</b></td></tr>
+<tr><td>PartialDead</td><td>Weak</td><td class=""><b>1</b></td></tr>
+<tr><td>PartialDead</td><td>Mid</td><td class=""><b>1</b></td></tr>
+<tr><td>PartialDead</td><td>Strong</td><td class="warn"><b>2</b></td></tr>
+<tr><td>SlowPartial</td><td>Weak</td><td class="warn"><b>2</b></td></tr>
+<tr><td>SlowPartial</td><td>Mid</td><td class="warn"><b>2</b></td></tr>
+<tr><td>SlowPartial</td><td>Strong</td><td class="good"><b>3</b></td></tr>
+<tr><td>SlowFull</td><td>Weak</td><td class="warn"><b>2</b></td></tr>
+<tr><td>SlowFull</td><td>Mid</td><td class="warn"><b>2</b></td></tr>
+<tr><td>SlowFull</td><td>Strong</td><td class="good"><b>3</b></td></tr>
+<tr><td>ActiveSeller</td><td>Weak</td><td class="good"><b>3</b></td></tr>
+<tr><td>ActiveSeller</td><td>Mid</td><td class="good"><b>4</b></td></tr>
+<tr><td>ActiveSeller</td><td>Strong</td><td class="good"><b>4</b></td></tr>
+
+</table>
+
+<div class="insight">
+<b>Logika:</b> TrueDead = nulove predaje, vysoka zasoba => bezpecne odvazet (ML=1).
+ActiveSeller = vysoka velocity + 95% sold-after => chranit (ML=3-4).
+SlowFull/SlowPartial = pomalsi prodej, ale stale aktivni => stredni ochrana (ML=2-3).
+</div>
+</div>
+
+<div class="section">
+<h2>2. Source modifikatory</h2>
+<img src="fig_dtree_03.png" alt="Modifiers">
+
+<table>
+<tr><th>Modifikator</th><th>Podminka</th><th>Uprava</th></tr>
+<tr><td>LastSaleGap kratky</td><td>≤90 dni</td><td class="arrow-up">+1</td></tr>
+<tr><td>BrandFit source</td><td>TrueDead/SlowFull/SlowPartial + BrandStrong</td><td class="arrow-up">+1</td></tr>
+<tr><td>BrandFit source</td><td>ActiveSeller</td><td>ignorovat (sold_after >92%)</td></tr>
+<tr><td>Delisting</td><td>SkuClass D/L</td><td><b>ML=0 (override)</b></td></tr>
+</table>
+
+<pre>
+Final_ML = CLAMP(Base_ML + SUM(modifiers), 0, 4)
+Ak IsOrderable: Final_ML = MAX(Final_ML, 1)
+Ak IsDelisted: Final_ML = 0
+</pre>
+</div>
+
+<div class="section">
+<h2>3. Target: SalesBucket x StoreStrength => ML</h2>
+<img src="fig_dtree_02.png" alt="Target ML heatmap">
+<table>
+<tr><th>SalesBucket</th><th>Store</th><th>MinLayer</th></tr>
+<tr><td>0</td><td>Weak</td><td class=""><b>1</b></td></tr>
+<tr><td>0</td><td>Mid</td><td class=""><b>1</b></td></tr>
+<tr><td>0</td><td>Strong</td><td class=""><b>1</b></td></tr>
+<tr><td>1-2</td><td>Weak</td><td class=""><b>1</b></td></tr>
+<tr><td>1-2</td><td>Mid</td><td class=""><b>1</b></td></tr>
+<tr><td>1-2</td><td>Strong</td><td class="warn"><b>2</b></td></tr>
+<tr><td>3-5</td><td>Weak</td><td class=""><b>1</b></td></tr>
+<tr><td>3-5</td><td>Mid</td><td class="warn"><b>2</b></td></tr>
+<tr><td>3-5</td><td>Strong</td><td class="good"><b>3</b></td></tr>
+<tr><td>6-10</td><td>Weak</td><td class="warn"><b>2</b></td></tr>
+<tr><td>6-10</td><td>Mid</td><td class="good"><b>3</b></td></tr>
+<tr><td>6-10</td><td>Strong</td><td class="good"><b>3</b></td></tr>
+<tr><td>11+</td><td>Weak</td><td class="warn"><b>2</b></td></tr>
+<tr><td>11+</td><td>Mid</td><td class="good"><b>3</b></td></tr>
+<tr><td>11+</td><td>Strong</td><td class="good"><b>4</b></td></tr>
+
+</table>
+
+<div class="insight">
+<b>Logika:</b> 0 predaju = neni jistota ze se proda => ML=1.
+11+ predaju na Strong store => excelentni absorpce => ML=4.
+Bidirekcni pristup: snizit ML kde target neabsorbuje, zvysit kde ano.
+</div>
+</div>
+
+<div class="section">
+<h2>4. Target modifikatory</h2>
+<table>
+<tr><th>Modifikator</th><th>Podminka</th><th>Uprava</th></tr>
+<tr><td>AllSold / ST1 high</td><td>AllSold4M=1 OR ST1_4M >= 85%</td><td class="arrow-up">+1</td></tr>
+<tr><td>Growth pocket</td><td>Strong, Sales 3-10, ST >= 45%</td><td class="arrow-up">+1</td></tr>
+<tr><td>NothingSold / low ST</td><td>NothingSold4M=1 OR ST4M < 20%</td><td class="arrow-down">-1</td></tr>
+<tr><td>BrandFit (0-2 sales)</td><td>BrandWeak</td><td class="arrow-down">-1</td></tr>
+<tr><td>BrandFit (0-2 sales)</td><td>BrandStrong</td><td class="arrow-up">+1</td></tr>
+<tr><td>BrandFit (3-5 sales)</td><td>BrandWeak</td><td class="arrow-down">-1</td></tr>
+<tr><td>BrandFit (6+ sales)</td><td>—</td><td>ignorovat (predaje dominuji)</td></tr>
+<tr><td>Delisting</td><td>SkuClass D/L</td><td><b>ML=0 (override)</b></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>5. Distribuce ML: Current vs Proposed</h2>
+<img src="fig_dtree_04.png" alt="ML distribution">
+<div class="insight-new">
+<b>Hlavni zmena SOURCE:</b> SlowFull (10,863 SKU) presun z ML=1 na ML=2/3.
+ActiveSeller (1,778 SKU) presun z ML=1-2 na ML=3-4. Tyto SKU maji 95% sold_after.<br>
+<b>Hlavni zmena TARGET:</b> Bidirekcni — 1-2 sales na Weak/Mid klesa z ML=2 na ML=1;
+3-5+ sales na Strong roste z ML=2 na ML=3. Celkove rozsireni distribuce ML.
+</div>
+</div>
+
+</body>
+</html>
