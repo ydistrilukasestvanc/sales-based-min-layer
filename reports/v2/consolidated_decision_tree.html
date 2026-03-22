@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>Decision Tree: MinLayer Rules 0-5</title>
+<title>Rozhodovací strom: MinLayer pravidla 0-5</title>
 <style>
 body { font-family: 'Segoe UI', sans-serif; max-width: 1300px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
 h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
@@ -36,42 +36,42 @@ pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; o
 </style>
 </head>
 <body>
-<div class="nav"><a href="consolidated_findings.html">Report 1: Findings</a><a href="consolidated_decision_tree.html" class="active">Report 2: Decision Tree</a><a href="consolidated_backtest.html">Report 3: Backtest</a></div>
+<div class="nav"><a href="consolidated_findings.html">Report 1: Zjištění</a><a href="consolidated_decision_tree.html" class="active">Report 2: Rozhodovací strom</a><a href="consolidated_backtest.html">Report 3: Backtest</a></div>
 
-<h1>Decision Tree: MinLayer Rules 0-5</h1>
-<p><b>CalculationId=233</b> | Date: 2025-07-13 | Generated: 2026-03-22 10:47</p>
-<p>This report defines concrete rules for MinLayer settings based on analytics from
-<a href="consolidated_findings.html">Report 1: Consolidated Findings</a>.
-The tree has <b>4 directions</b>: source up, source down, target up, target down.</p>
+<h1>Rozhodovací strom: MinLayer pravidla 0-5</h1>
+<p><b>CalculationId=233</b> | Datum: 2025-07-13 | Vygenerováno: 2026-03-22 11:14</p>
+<p>Tento report definuje konkrétní pravidla pro nastavení MinLayer na základě analytiky z
+<a href="consolidated_findings.html">Report 1: Zjištění</a>.
+Strom má <b>4 směry</b>: source nahoru, source dolů, target nahoru, target dolů.</p>
 
 <!-- ========== 4-DIRECTION OVERVIEW ========== -->
 <div class="section">
-<h2>1. Four-Direction Framework</h2>
+<h2>1. 4směrný rámec</h2>
 
 <img src="fig_dtree_03.png">
 
 <table>
-<tr><th>Direction</th><th>When</th><th>Action</th><th>Reason</th></tr>
-<tr class="dir-up"><td><b>SOURCE ML UP</b></td><td>Oversell &gt;20%</td><td>Keep more at source</td>
-<td>Products still selling at source, redistribution causes oversell</td></tr>
-<tr class="dir-down"><td><b>SOURCE ML DOWN</b></td><td>Oversell &lt;10%</td><td>Take more from source (be more aggressive)</td>
-<td>Products NOT selling at source, safe to take more</td></tr>
-<tr class="dir-down"><td><b>TARGET ML UP</b></td><td>High sell-through, high all-sold</td><td>Send more to target</td>
-<td>Target sells everything = success, but need 1 remaining. Send more next time.</td></tr>
-<tr class="dir-up"><td><b>TARGET ML DOWN</b></td><td>Low sell-through, high nothing-sold</td><td>Send less to target</td>
-<td>Target doesn't sell = wasted redistribution. Send less next time.</td></tr>
+<tr><th>Směr</th><th>Kdy</th><th>Akce</th><th>Důvod</th></tr>
+<tr class="dir-up"><td><b>SOURCE ML NAHORU</b></td><td>Oversell &gt;20%</td><td>Ponechat více na source</td>
+<td>Produkty se stále prodávají na source, redistribuce způsobuje oversell</td></tr>
+<tr class="dir-down"><td><b>SOURCE ML DOLŮ</b></td><td>Oversell &lt;10%</td><td>Odebrat více ze source (být agresivnější)</td>
+<td>Produkty se NEPRODÁVAJÍ na source, bezpečné odebrat více</td></tr>
+<tr class="dir-down"><td><b>TARGET ML NAHORU</b></td><td>Vysoký sell-through, vysoké vše prodáno</td><td>Poslat více na target</td>
+<td>Target prodá vše = úspěch, ale potřeba 1 zbývající. Příště poslat více.</td></tr>
+<tr class="dir-up"><td><b>TARGET ML DOLŮ</b></td><td>Nízký sell-through, vysoké nic neprodáno</td><td>Poslat méně na target</td>
+<td>Target neprodává = zbytečná redistribuce. Příště poslat méně.</td></tr>
 </table>
 </div>
 
 <!-- ========== SOURCE RULES ========== -->
 <div class="section">
-<h2>2. Source Rules (with CAN LOWER and MUST RAISE)</h2>
+<h2>2. Pravidla source (s lze snížit ML a nutno zvýšit ML)</h2>
 
-<h3>2.1 Lookup Table: Pattern x Store</h3>
+<h3>2.1 Vyhledávací tabulka: Vzorec x Prodejna</h3>
 <img src="fig_dtree_01.png">
 
 <table>
-<tr><th>Pattern</th><th>Store</th><th>Reorder %</th><th>Oversell %</th><th>Proposed ML</th><th>Recommendation</th><th>Direction</th></tr>
+<tr><th>Vzorec</th><th>Prodejna</th><th>Reorder %</th><th>Oversell %</th><th>Navrhovaný ML</th><th>Doporučení</th><th>Směr</th></tr>
 <tr class="dir-down"><td>Dead</td><td>Weak</td><td>24.5%</td><td>5.1%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
 <tr class="dir-down"><td>Dead</td><td>Mid</td><td>29.5%</td><td>7.8%</td><td><b>0*</b></td><td>CAN LOWER ML</td><td>DOWN</td></tr>
 <tr class=""><td>Dead</td><td>Strong</td><td>31.4%</td><td>10.0%</td><td><b>1</b></td><td>OK</td><td>OK</td></tr>
@@ -90,96 +90,96 @@ The tree has <b>4 directions</b>: source up, source down, target up, target down
 
 </table>
 
-<p><b>* = 0 for delisted items, but business rule: A-O (SkuClass 9) and Z-O (SkuClass 11) minimum ML=1.</b></p>
+<p><b>* = 0 pro vyřazené položky, ale obchodní pravidlo: A-O (SkuClass 9) a Z-O (SkuClass 11) minimum ML=1.</b></p>
 
 <div class="insight-good">
-<b>CAN LOWER ML (source down):</b> Dead+Weak (5.1%), Dead+Mid (7.8%), Dying+Weak (8.1%), Dying+Mid (9.7%).
-Proposed ML=0* means delisted items get ML=0, active items get ML=1 (business rule).
-This frees up ~16,040 SKU for more aggressive redistribution.
+<b>Lze snížit ML (source dolů):</b> Dead+Weak (5,1%), Dead+Mid (7,8%), Dying+Weak (8,1%), Dying+Mid (9,7%).
+Navrhovaný ML=0* znamená, že vyřazené položky dostanou ML=0, aktivní položky dostanou ML=1 (obchodní pravidlo).
+To uvolní ~16 040 SKU pro agresivnější redistribuci.
 </div>
 
 <div class="insight-bad">
-<b>MUST RAISE ML (source up):</b> 6 segments with oversell &gt;20%.
-Declining+Strong goes from ML~1.1 to ML=3, Consistent+Strong from ML~2 to ML=3.
-This protects ~7,889 SKU from excessive oversell.
+<b>Nutno zvýšit ML (source nahoru):</b> 6 segmentů s oversell &gt;20%.
+Declining+Strong jde z ML~1,1 na ML=3, Consistent+Strong z ML~2 na ML=3.
+To chrání ~7 889 SKU před nadměrným oversell.
 </div>
 
-<h3>2.2 Business Rules (Overrides)</h3>
+<h3>2.2 Obchodní pravidla (override)</h3>
 <table>
-<tr><th>Rule</th><th>Condition</th><th>MinLayer</th><th>Reason</th></tr>
-<tr><td>Active orderable</td><td>SkuClass = A-O (9)</td><td>MIN = 1</td><td>Active goods must stay in stock</td></tr>
-<tr><td>Z orderable</td><td>SkuClass = Z-O (11)</td><td>MIN = 1</td><td>Z goods still orderable</td></tr>
-<tr><td>Delisted</td><td>SkuClass = D(3), L(4), R(5)</td><td>= 0</td><td>Delisted - safe to take all (-29pp reorder)</td></tr>
+<tr><th>Pravidlo</th><th>Podmínka</th><th>MinLayer</th><th>Důvod</th></tr>
+<tr><td>Aktivní objednatelné</td><td>SkuClass = A-O (9)</td><td>MIN = 1</td><td>Aktivní zboží musí zůstat skladem</td></tr>
+<tr><td>Z objednatelné</td><td>SkuClass = Z-O (11)</td><td>MIN = 1</td><td>Z zboží stále objednatelné</td></tr>
+<tr><td>Vyřazené</td><td>SkuClass = D(3), L(4), R(5)</td><td>= 0</td><td>Vyřazené - bezpečné odebrat vše (-29 p.b. reorder)</td></tr>
 </table>
 
-<h3>2.3 Modifiers (added to base ML)</h3>
+<h3>2.3 Modifikátory (přidané k základnímu ML)</h3>
 <table>
-<tr><th>Modifier</th><th>Condition</th><th>Adjustment</th><th>Reason (see Findings)</th></tr>
-<tr><td>Xmas seasonality</td><td>Xmas share 20-60%</td><td>+1</td><td>Sec 7: +9-11pp oversell for seasonal products</td></tr>
-<tr><td>Brand-Store fit</td><td>Strong brand + Strong store</td><td>+1</td><td>Sec 8: +16pp reorder gap</td></tr>
-<tr><td>Wide distribution</td><td>Product on 100+ stores</td><td>+1</td><td>Sec 8: +25.9pp reorder gap</td></tr>
+<tr><th>Modifikátor</th><th>Podmínka</th><th>Úprava</th><th>Důvod (viz Zjištění)</th></tr>
+<tr><td>Vánoční sezónnost</td><td>Vánoční podíl 20-60%</td><td>+1</td><td>Sekce 7: +9-11 p.b. oversell u sezónních produktů</td></tr>
+<tr><td>Brand-store fit</td><td>Strong brand + Strong store</td><td>+1</td><td>Sekce 8: +16 p.b. reorder rozdíl</td></tr>
+<tr><td>Široká distribuce</td><td>Produkt na 100+ prodejnách</td><td>+1</td><td>Sekce 8: +25,9 p.b. reorder rozdíl</td></tr>
 </table>
 
 <div class="insight">
-<b>CAP:</b> Final MinLayer is capped at maximum 5. Modifiers are added to the base value from lookup table.
+<b>CAP:</b> Výsledný MinLayer je omezen na maximum 5. Modifikátory se přičítají k základní hodnotě z vyhledávací tabulky.
 </div>
 </div>
 
 <!-- ========== TARGET RULES ========== -->
 <div class="section">
-<h2>3. Target Rules (sell-through based)</h2>
+<h2>3. Pravidla target (na základě sell-through)</h2>
 
-<p><b>Goal:</b> Send enough pieces so the product sells AND 1 piece remains at the store.
-All-sold = success but send more next time. Nothing-sold = problem, send less.</p>
+<p><b>Cíl:</b> Poslat dostatek kusů, aby se produkt prodal A 1 kus zůstal na prodejně.
+Vše prodáno = úspěch, ale příště poslat více. Nic neprodáno = problém, poslat méně.</p>
 
-<h3>3.1 Lookup Table: SalesBucket x Store</h3>
+<h3>3.1 Vyhledávací tabulka: Prodejní skupina x Prodejna</h3>
 <img src="fig_dtree_02.png">
 
 <table>
-<tr><th>Sales Bucket</th><th>Store</th><th>ST Total</th><th>All-sold %</th><th>Nothing %</th><th>Proposed ML</th><th>Direction</th></tr>
-<tr class="dir-up"><td>Zero</td><td>Weak</td><td>0.76</td><td>53.7%</td><td>43.7%</td><td><b>1</b></td><td>DOWN (send less)</td></tr>
-<tr class="dir-up"><td>Zero</td><td>Mid</td><td>0.85</td><td>57.2%</td><td>39.3%</td><td><b>1</b></td><td>DOWN (send less)</td></tr>
-<tr class="dir-down"><td>Zero</td><td>Strong</td><td>1.18</td><td>66.5%</td><td>31.8%</td><td><b>2</b></td><td>UP (send more)</td></tr>
-<tr class="dir-up"><td>Low(1-2)</td><td>Weak</td><td>0.77</td><td>44.4%</td><td>34.6%</td><td><b>1</b></td><td>DOWN (send less)</td></tr>
+<tr><th>Prodejní skupina</th><th>Prodejna</th><th>ST celkem</th><th>Vše prodáno %</th><th>Nic neprodáno %</th><th>Navrhovaný ML</th><th>Směr</th></tr>
+<tr class="dir-up"><td>Zero</td><td>Weak</td><td>0.76</td><td>53.7%</td><td>43.7%</td><td><b>1</b></td><td>DOLŮ (poslat méně)</td></tr>
+<tr class="dir-up"><td>Zero</td><td>Mid</td><td>0.85</td><td>57.2%</td><td>39.3%</td><td><b>1</b></td><td>DOLŮ (poslat méně)</td></tr>
+<tr class="dir-down"><td>Zero</td><td>Strong</td><td>1.18</td><td>66.5%</td><td>31.8%</td><td><b>2</b></td><td>NAHORU (poslat více)</td></tr>
+<tr class="dir-up"><td>Low(1-2)</td><td>Weak</td><td>0.77</td><td>44.4%</td><td>34.6%</td><td><b>1</b></td><td>DOLŮ (poslat méně)</td></tr>
 <tr class=""><td>Low(1-2)</td><td>Mid</td><td>0.88</td><td>48.6%</td><td>28.8%</td><td><b>2</b></td><td>OK</td></tr>
 <tr class=""><td>Low(1-2)</td><td>Strong</td><td>1.09</td><td>57.1%</td><td>22.3%</td><td><b>3</b></td><td>OK</td></tr>
-<tr class="dir-down"><td>Med+(3+)</td><td>Weak</td><td>1.42</td><td>67.2%</td><td>12.6%</td><td><b>2</b></td><td>UP (send more)</td></tr>
-<tr class="dir-down"><td>Med+(3+)</td><td>Mid</td><td>1.57</td><td>69.3%</td><td>12.5%</td><td><b>3</b></td><td>UP (send more)</td></tr>
-<tr class="dir-down"><td>Med+(3+)</td><td>Strong</td><td>1.83</td><td>74.7%</td><td>9.0%</td><td><b>4</b></td><td>UP (send more)</td></tr>
-<tr class="dir-down"><td>High (ML3=3)</td><td>Weak</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>3</b></td><td>UP (send more)</td></tr>
-<tr class="dir-down"><td>High (ML3=3)</td><td>Mid</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>4</b></td><td>UP (send more)</td></tr>
-<tr class="dir-down"><td>High (ML3=3)</td><td>Strong</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>5</b></td><td>UP (send more)</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Weak</td><td>1.42</td><td>67.2%</td><td>12.6%</td><td><b>2</b></td><td>NAHORU (poslat více)</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Mid</td><td>1.57</td><td>69.3%</td><td>12.5%</td><td><b>3</b></td><td>NAHORU (poslat více)</td></tr>
+<tr class="dir-down"><td>Med+(3+)</td><td>Strong</td><td>1.83</td><td>74.7%</td><td>9.0%</td><td><b>4</b></td><td>NAHORU (poslat více)</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Weak</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>3</b></td><td>NAHORU (poslat více)</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Mid</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>4</b></td><td>NAHORU (poslat více)</td></tr>
+<tr class="dir-down"><td>High (ML3=3)</td><td>Strong</td><td>&gt;1.5</td><td>&gt;75%</td><td>&lt;5%</td><td><b>5</b></td><td>NAHORU (poslat více)</td></tr>
 
 </table>
 
-<h3>3.2 Target sell-through categories and actions</h3>
+<h3>3.2 Kategorie target sell-through a akce</h3>
 <table>
-<tr><th>Category</th><th>Sell-through</th><th>Color</th><th>Action</th></tr>
-<tr><td class="bad">Nothing sold (0%)</td><td>0%</td><td>RED (problem)</td><td>ML DOWN - don't send to this store/product</td></tr>
-<tr><td class="warn">Low ST (&lt;30% at 4M)</td><td>&lt;30%</td><td>YELLOW (warning)</td><td>ML DOWN - sells too slowly</td></tr>
-<tr><td>Medium ST (30-80%)</td><td>30-80%</td><td>Neutral</td><td>ML OK - reasonable sell-through</td></tr>
-<tr><td class="good">High ST (80-99%)</td><td>80-99%</td><td>GREEN</td><td>ML OK/UP - selling well, 1+ remains</td></tr>
-<tr><td class="good">All sold (100%+)</td><td>100%+</td><td>GREEN (success!)</td><td>ML UP - everything sold, send more next time</td></tr>
+<tr><th>Kategorie</th><th>Sell-through</th><th>Barva</th><th>Akce</th></tr>
+<tr><td class="bad">Nic neprodáno (0%)</td><td>0%</td><td>ČERVENÁ (problém)</td><td>ML DOLŮ - neposílat do této prodejny/produktu</td></tr>
+<tr><td class="warn">Nízký ST (&lt;30% za 4M)</td><td>&lt;30%</td><td>ŽLUTÁ (varování)</td><td>ML DOLŮ - prodává se příliš pomalu</td></tr>
+<tr><td>Střední ST (30-80%)</td><td>30-80%</td><td>Neutrální</td><td>ML OK - přiměřený sell-through</td></tr>
+<tr><td class="good">Vysoký ST (80-99%)</td><td>80-99%</td><td>ZELENÁ</td><td>ML OK/NAHORU - prodává se dobře, 1+ zbývá</td></tr>
+<tr><td class="good">Vše prodáno (100%+)</td><td>100%+</td><td>ZELENÁ (úspěch!)</td><td>ML NAHORU - vše prodáno, příště poslat více</td></tr>
 </table>
 
 <div class="insight-good">
-<b>Key principle:</b> Target all-sold = SUCCESS (green, not red!). It means redistribution worked perfectly.
-The only issue is that nothing remains at the store. Solution: send more next time (higher target ML).
+<b>Klíčový princip:</b> Target vše prodáno = ÚSPĚCH (zelená, ne červená!). Znamená to, že redistribuce fungovala perfektně.
+Jediný problém je, že na prodejně nic nezůstalo. Řešení: příště poslat více (vyšší target ML).
 </div>
 
-<h3>3.3 Target modifiers</h3>
+<h3>3.3 Target modifikátory</h3>
 <table>
-<tr><th>Modifier</th><th>Condition</th><th>Adjustment</th><th>Reason</th></tr>
-<tr><td>Brand-Store fit strong</td><td>Strong brand + Strong store</td><td>+1 to target ML</td><td>65.7% all-sold, high sell-through</td></tr>
-<tr><td>Brand-Store fit weak</td><td>Weak brand + Weak store</td><td>-1 to target ML</td><td>30.7% nothing-sold</td></tr>
-<tr><td>Wide distribution</td><td>Product on 100+ stores</td><td>+1</td><td>63.2% all-sold vs 45.7%</td></tr>
-<tr><td>Niche product</td><td>Product on &lt;=20 stores</td><td>-1</td><td>38.6% nothing-sold</td></tr>
+<tr><th>Modifikátor</th><th>Podmínka</th><th>Úprava</th><th>Důvod</th></tr>
+<tr><td>Brand-store fit silný</td><td>Strong brand + Strong store</td><td>+1 k target ML</td><td>65,7% vše prodáno, vysoký sell-through</td></tr>
+<tr><td>Brand-store fit slabý</td><td>Weak brand + Weak store</td><td>-1 k target ML</td><td>30,7% nic neprodáno</td></tr>
+<tr><td>Široká distribuce</td><td>Produkt na 100+ prodejnách</td><td>+1</td><td>63,2% vše prodáno vs 45,7%</td></tr>
+<tr><td>Niche produkt</td><td>Produkt na &lt;=20 prodejnách</td><td>-1</td><td>38,6% nic neprodáno</td></tr>
 </table>
 </div>
 
 <!-- ========== PSEUDOCODE ========== -->
 <div class="section">
-<h2>4. Pseudocode</h2>
+<h2>4. Pseudokód</h2>
 
 <h3>4.1 Source MinLayer</h3>
 <pre>
@@ -259,7 +259,7 @@ FUNCTION CalculateTargetMinLayer(sku, store):
 </pre>
 </div>
 
-<p><i>Generated: 2026-03-22 10:47 | CalculationId=233 | EntityListId=3 |
-See <a href="consolidated_backtest.html">Report 3: Backtest</a> for impact of proposed rules.</i></p>
+<p><i>Vygenerováno: 2026-03-22 11:14 | CalculationId=233 | EntityListId=3 |
+Viz <a href="consolidated_backtest.html">Report 3: Backtest</a> pro dopad navrhovaných pravidel.</i></p>
 </body>
 </html>
