@@ -57,25 +57,25 @@
 
 ## Klíčové tabulky
 
-| Tabulka | Účel | Kľúčové stĺpce |
-|---|---|---|
-| SkuRedistributionExpanded | Redistribučné páry | SourceSkuId, TargetSkuId, Quantity, *MinLayerListQuantity |
-| SkuPotential | MinLayer JSON detaily | SourceMinLayerLists, TargetMinLayerLists (JSON) |
-| SaleTransaction | Predaje | SkuId, Date, IsPromo, Quantity, SalePrice |
-| SkuAvailableSupply | História zásoby | SkuId, DateFrom, DateTo, AvailableSupply |
-| Inbound | Príjmy (reorder) | SkuId, Date, InboundTypeId, Quantity |
-| Outbound | Výdaje | SkuId, Date, OutboundTypeId, Quantity |
-| SkuAttributeValue | Historický snapshot | SkuId, AttributeValueId, SkuClassId, Frequency*, SalePrice |
-| AttributeValue | Mapovanie na dátum | AttributeValueId → ApplicationDate |
-| Warehouse | Predajne | WarehouseId, RegionId, WarehouseTypeId |
-| SkuClass | Triedy SKU | 9=A-O, 11=Z-O (orderable), 3=D, 4=L (delisted) |
+| Tabulka | Účel | Kľúčové stĺpce                                                                                                            |
+|---|---|---------------------------------------------------------------------------------------------------------------------------|
+| SkuRedistributionExpanded | Redistribučné páry | SourceSkuId, TargetSkuId, Quantity, *MinLayerListQuantity                                                                 |
+| SkuPotential | MinLayer JSON detaily | SourceMinLayerLists, TargetMinLayerLists (JSON)                                                                           |
+| SaleTransaction | Predaje | SkuId, Date, IsPromo, Quantity, SalePrice                                                                                 |
+| SkuAvailableSupply | História zásoby | SkuId, DateFrom, DateTo, AvailableSupply. DateFrom = NULL -> plati do dnes. DateFrom prvy zaznam je zaciatok historie SKU |
+| Inbound | Príjmy (reorder) | SkuId, Date, InboundTypeId, Quantity                                                                                      |
+| Outbound | Výdaje | SkuId, Date, OutboundTypeId, Quantity                                                                                     |
+| SkuAttributeValue | Historický snapshot | SkuId, AttributeValueId, SkuClassId, Frequency*, SalePrice                                                                |
+| AttributeValue | Mapovanie na dátum | AttributeValueId → ApplicationDate                                                                                        |
+| Warehouse | Predajne | WarehouseId, RegionId, WarehouseTypeId                                                                                    |
+| SkuClass | Triedy SKU | 9=A-O, 11=Z-O (orderable), 3=D, 4=L (delisted)                                                                            |
 
 ---
 
 ## Postup práce – fáze
 
 ### FÁZE 0: Príprava dát
-Vytvoriť a naindexovať v temp schéme (prefix SBM_):
+Vytvoriť a naindexovať v temp schéme (prefix SBM_[version]_):
 1. Redistribučné páry s MinLayer3 z JSON
 2. Všetky SKU dotčených produktov (excl ecomm) – pre cross-product analýzu
 3. Predaje 12M pred + 9M po redistribúcii (+ rozšírené 24M pre vzorce)
