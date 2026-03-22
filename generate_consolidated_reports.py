@@ -542,18 +542,27 @@ html1 = f"""<!DOCTYPE html>
 <tr><td style="text-align:left"><b>Oversell</b> (sales-based)</td><td>1,317 (3.6%)</td><td>1,464 (3.0%)</td><td>4,718 (12.8%)</td><td>5,578 (11.4%)</td></tr>
 </table>
 
-<h3>Target: Overall metrics (SKU + quantity) - 4M and total</h3>
-<p><b>Sell-through formula:</b> LEAST(QuantitySold, SupplyBefore + QtyRedistributed) / (SupplyBefore + QtyRedistributed) -- capped at 100%</p>
+<h3>Target: Overall metrics - 4M and total</h3>
+<p><b>ST</b> = LEAST(Sold, Base) / Base, where Base = SupplyBefore + QtyRedistributed (capped at 100%)<br>
+<b>ST-1pc</b> = if sold &lt; base: LEAST(Sold, Base-1) / (Base-1); if sold &ge; base: same as ST. <b>ST-1pc = 100% when exactly 1 pc remains = IDEAL state.</b></p>
 <table>
 <tr><th>Metric</th><th colspan="2">4 months</th><th colspan="2">Total (~9M)</th></tr>
-<tr><th></th><th>SKU (%)</th><th>Qty (pcs)</th><th>SKU (%)</th><th>Qty (pcs)</th></tr>
-<tr><td style="text-align:left"><b>Total supply</b> (pre + redist)</td><td colspan="2">81,196</td><td colspan="2">81,196</td></tr>
-<tr><td style="text-align:left"><b>Capped sold</b></td><td>-</td><td>37,577</td><td>-</td><td>56,928</td></tr>
-<tr style="background:#d4edda"><td style="text-align:left"><b>Sell-through</b></td><td colspan="2"><b>46.3%</b></td><td colspan="2"><b>70.1%</b></td></tr>
+<tr><th></th><th>SKU (%)</th><th>Qty / %</th><th>SKU (%)</th><th>Qty / %</th></tr>
+<tr><td style="text-align:left"><b>Total supply (base)</b></td><td colspan="2">81,196 pcs</td><td colspan="2">81,196 pcs</td></tr>
+<tr><td style="text-align:left"><b>Capped sold</b></td><td>-</td><td>37,577 pcs</td><td>-</td><td>56,928 pcs</td></tr>
+<tr style="background:#fff3cd"><td style="text-align:left"><b>Sell-Through (ST)</b></td><td colspan="2"><b>46.3%</b></td><td colspan="2"><b>70.1%</b></td></tr>
+<tr style="background:#d4edda"><td style="text-align:left"><b>Sell-Through-1pc (ST1)</b></td><td colspan="2"><b>70.6%</b></td><td colspan="2"><b>88.4%</b></td></tr>
 <tr><td style="text-align:left"><b>All sold</b> (SUCCESS)</td><td class="good">13,631 (32.7%)</td><td>-</td><td class="good">24,862 (59.7%)</td><td>-</td></tr>
+<tr><td style="text-align:left"><b>Exactly 1 remains</b> (IDEAL)</td><td>-</td><td>-</td><td class="good">9,731 (23.4%)</td><td>-</td></tr>
+<tr><td style="text-align:left"><b>ST1 &ge; 100%</b> (all sold OR 1 remains)</td><td>-</td><td>-</td><td class="good">34,593 (83.1%)</td><td>-</td></tr>
 <tr><td style="text-align:left"><b>Nothing sold</b> (PROBLEM)</td><td class="bad">17,552 (42.2%)</td><td>-</td><td class="bad">8,872 (21.3%)</td><td>-</td></tr>
-<tr><td style="text-align:left"><b>Remaining stock</b></td><td>-</td><td>43,619</td><td>-</td><td>24,268</td></tr>
+<tr><td style="text-align:left"><b>Remaining stock</b></td><td>-</td><td>43,619 pcs</td><td>-</td><td>24,268 pcs</td></tr>
 </table>
+
+<div class="insight-good">
+<b>ST-1pc is the key metric:</b> 88.4% at total period means 88% of target stock was either fully sold or sold down to exactly 1 pc.
+34,593 SKU (83.1%) achieved the ideal state (all sold or 1 remaining). The real problem is the 8,872 SKU (21.3%) where nothing sold at all.
+</div>
 
 <h3>All metrics by MinLayer</h3>
 <p>Oversell targets: 4M: <b>5-10%</b> | total: <b>&lt;20%</b>. Goal is NOT zero reorder.</p>
