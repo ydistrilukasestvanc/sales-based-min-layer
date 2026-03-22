@@ -114,56 +114,103 @@ Pro každý source/target SKU spočítat:
 - Zda zůstal alespoň 1 kus (cíl)
 - Změna SkuClass po redistribuci (z A/Z na D/L/R/C)
 
+### FÁZE 1b: Prodejní vzorce (NOVÉ – navržené na základě dat)
+Na základě prvních výsledků přidávám tyto metriky, které se ukázaly jako důležité:
+
+**Distribuce prodejů v čase (Sales Pattern):**
+- **Koeficient variace (CV) prodejů** – rozptyl mezi měsíci. Sporadický prodej (CV>2) vs. pravidelný (CV<0.5)
+- **Longest gap** – nejdelší mezera bez prodeje (v dnech) za posledních 12M. Indikátor sporadičnosti.
+- **Poměr Sales6M_Pre vs Sales12M_Pre** – zda se prodeje zrychlují nebo zpomalují
+- **Trend prodejů produktu** – srovnání sales 6M pre-redistr. vs 6M ještě před tím (2024-07 až 2025-01). Celoplošný pokles/nárůst produktu.
+- **Days-to-first-sale po redistribuci** – na source: jak rychle se prodalo po odvezení? Na target: jak rychle se začalo prodávat?
+
+**Efektivita redistribuce (Redistribution Efficiency):**
+- **Source Redistribution Ratio** = Quantity / SourceAvailableSupply – kolik % zásoby jsme odvezli
+- **Target Fill Ratio** = Quantity / (TargetAvailableSupply + Quantity) – kolik % finální zásoby tvoří redistribuce
+- **Reorder Speed** – za kolik dní po redistribuci přišel první inbound na source
+- **Time-to-stockout na target** – kolik dní po redistribuci klesla zásoba na 0
+
+**Párová analýza Source↔Target:**
+- **Decile Flow** – z jakého decilu (síla prodejny) do jakého posíláme. Matice: strong→weak, strong→strong, weak→strong
+- **Brand-Store Fit Score** – percentilové pořadí prodejny v daném brandu vs. celkově. Mismatch = prodejna celkově silná, ale v tomto brandu slabá
+- **Price Ratio** – SourceStockPrice vs TargetStockPrice – jsou tam velké rozdíly?
+
 ### FÁZE 2: Cross-product analýza
-- Pro každý ProductId spočítat prodeje na VŠECH prodejnách (ne jen source/target)
+- Pro každý ProductId spočítat prodeje na VŠECH prodejnách (kromě ecomm)
 - Detekce celoplošného poklesu/nárůstu prodejů → indikátor externích faktorů (cena, sezónnost, konkurence)
 - Porovnání trendu na source vs. celý produkt
+- **NOVÉ: Product Volatility Score** – jak moc kolísají prodeje produktu mezi prodejnami a měsíci. Vysoce volatilní produkty = redistribuce riskantnější.
+- **NOVÉ: Product Concentration** – Gini koeficient prodejů produktu napříč prodejnami. Pokud je produkt koncentrovaný (prodává se jen na pár prodejnách), redistribuce na jiné je riskantnější.
 
 ### FÁZE 3: Analýza síly prodejen
 - Percentily prodejen dle tržeb za 6M před redistribucí (bez WarehouseId=300)
 - Percentily per brand
-- Klasifikace: SILNÁ (top 20%), PRŮMĚRNÁ (20-80%), SLABÁ (dolních 20%)
-- Analýza: jak často posíláme ze silných do slabých a naopak
+- Klasifikace decily (1-10), seskupení: SLABÁ (1-3), PRŮMĚRNÁ (4-7), SILNÁ (8-10)
+- **Klíčový nález z dat:** Reorder rate roste lineárně se sílou prodejny: decil 1 → 26%, decil 10 → 44%. Silné prodejny reorderují víc! → MinLayer musí zohledňovat sílu.
+- **Klíčový nález:** Target all-sold rate: decil 1 → 48%, decil 10 → 70%. Na silné prodejny posíláme víc, ale ty prodají vše → spouštějí reorder.
+- Matice přetoku (odkud kam): decil source × decil target
 
 ### FÁZE 4: Stockout analýza
 - Zjistit stockouty na source/target před a po redistribuci
 - Korelace stockoutů s REORDER/OVERSELL
-- Phantom stock indikátory: dlouhý stockout → náhlý prodej po redistribuci
+- Phantom stock indikátory: dlouhý stockout před redistribucí → náhlý prodej po redistribuci
+- **NOVÉ: Stockout Days Ratio** – kolik % období po redistribuci byl source/target ve stockoutu
 
 ### FÁZE 5: Cenová analýza
-- Distribuce problémů dle cenových pásem
+- Distribuce problémů dle cenových pásem (kvartily ceny)
 - Korelace ceny s úspěšností redistribuce
+- **NOVÉ: Cena vs. frekvence** – drahé produkty s nízkou frekvencí = jiné chování než levné s vysokou
 
 ### FÁZE 6: Sezónní analýza (Vánoce)
-- Rozdělit úspěšnost na období 4M (do 2025-11-13), vánoce (2025-11 + 2025-12), a celé období
+- Rozdělit úspěšnost na období: pre-4M (do 2025-11-12), Xmas (2025-11 + 2025-12), post-Xmas (2026-01+)
 - Kolik REORDERů/OVERSELLů padlo do vánočního období
+- **NOVÉ: Xmas Lift** – poměr měsíčních prodejů v 11-12/2025 vs. průměr ostatních měsíců. Produkty s vysokým Xmas liftem = sezónní
+
+### FÁZE 6b: SkuClass změny (NOVÉ)
+- SkuClass hodnoty: 9=A-O(Active Orderable), 11=Z-O(Z Orderable), 8=Z, 1=A, 3=D(Delisted Douglas), 4=L(Delisted supplier)
+- **Zjištění:** 7,448 source SKU a 8,236 target SKU změnilo SkuClass od redistribuce
+- Hlavní přesuny: A-O(9)→L(4) [2408 src, 2803 tgt], A-O(9)→D(3) [1362 src, 1607 tgt]
+- Analýza: jaký vliv má delisting na úspěšnost? Pokud bylo SKU delistováno po redistribuci, je reorder/not-sold "omluvitelný"?
 
 ### FÁZE 7: Klasifikace problémových skupin
 
 Každý redistribuční řádek klasifikovat do skupin:
 
 **SOURCE problémy (REORDER/OVERSELL):**
-1. **Sporadický prodejce** – Frequency6M_pre = 0, ale prodal se po redistribuci → statistická náhoda
+1. **Sporadický prodejce** – Sales6M_pre = 0, ale prodal se po redistribuci → statistická náhoda
 2. **Sezónní efekt** – prodej celoplošně vzrostl (cross-product analýza potvrzuje)
 3. **Phantom stock** – dlouhý stockout před redistribucí, pak náhlý prodej
 4. **Cenový efekt** – korelace s cenou produktu
 5. **Slabá prodejna** – source je slabá prodejna, náhodný prodej ji ovlivní víc
 6. **Silná prodejna oslabená** – source silná, ale MinLayer příliš nízký
+7. **NOVÉ: Delisted po redistribuci** – SKU změnilo class na D/L → reorder je logický (prodejna si objedná náhradu)
+8. **NOVÉ: Vysoká volatilita produktu** – produkt má velké výkyvy, redistribuce je riskantnější
 
 **TARGET problémy (NOT SOLD):**
 1. **Slabá prodejna** – nízké tržby, produkt se tam přirozeně neprodává
-2. **SkuClass změna** – produkt delisted po redistribuci
+2. **SkuClass změna** – produkt delisted po redistribuci → neprodá se
 3. **Přesycení** – příliš mnoho dovezeno, víc než prodejna uměla prodat
 4. **Sezónní výkyv** – cíl měl dobré prodeje jen v sezóně, pak pokles
 5. **Brand-store mismatch** – prodejna není silná v daném brandu
+6. **NOVÉ: Vysoko-obrátkový target** – prodejně se prodalo VŠE a objednala znovu → redistribuce selhala v cíli "udržet zásobu 1ks"
+7. **NOVÉ: Koncentrovaný produkt** – produkt se přirozeně prodává jen na pár prodejnách
 
 ### FÁZE 8: Souhrnný report
 Pro každou skupinu:
-- Počet SKU / řádků redistribuce
+- Počet SKU / řádků redistribuce / celková hodnota (Quantity × StockPrice)
 - Úspěšnost SOURCE (% bez reorderu / oversell) – za 4M a celkově
 - Úspěšnost TARGET (% kde se prodalo / zůstal 1 ks) – za 4M a celkově
 - Podíl vánočního období na výsledcích
+- **NOVÉ: Průměrný MinLayer3 v každé skupině** – aby bylo jasné, zda vyšší/nižší vrstva koreluje s problémem
+- **NOVÉ: Doporučený MinLayer rozsah** – na základě analýzy, jaký MinLayer by zabránil problému
 - Doporučení pro úpravu MinLayer pravidel
+
+### FÁZE 9: Prediktivní model pravidel (NOVÉ)
+- Na základě všech zjištění navrhnout **rozhodovací strom** pro MinLayer:
+  - vstup: Sales6M, Sales12M, Frequency, store decile, brand-store fit, price, product volatility, Xmas lift
+  - výstup: doporučený MinLayer (source i target)
+- Backtest: jak by se výsledky změnily s novými pravidly?
+- Kvantifikace: kolik reorderů/oversellů bychom ušetřili
 
 ---
 
