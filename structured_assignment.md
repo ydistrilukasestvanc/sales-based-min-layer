@@ -241,6 +241,7 @@ Pro každou skupinu:
 - Všechny tabulky v temp schématu mají prefix **SBM_**
 - Pokud v průběhu analýz objevím statisticky významnou věc, zařadím ji do analýz, ověřím a přidám do postupu
 - Všechny instrukce průběžně zapisuji do tohoto souboru
+- **DŮLEŽITÉ: Reorder/Oversell vždy reportovat ve dvou dimenzích:** (1) počet SKU, (2) množství kusů. Reorder 1ks z 10 redistribuovaných NENÍ neúspěch. Klíčový je poměr ReorderQty/RedistributedQty (= "míra zbytečnosti"). Časové hledisko taktéž důležité.
 
 ---
 
@@ -258,6 +259,12 @@ Pro každou skupinu:
 | temp.SBM_SkuSnapshotNow | 78 401 | Aktuální snapshot atributů (AV=385) | SkuId |
 | temp.SBM_StoreStrength | 352 | Síla prodejen (decily dle tržeb 6M) | WarehouseId |
 | temp.SBM_StoreBrandStrength | 37 858 | Síla prodejen per brand (kvintily) | WarehouseId+BrandId |
+| temp.SBM_SourceMetrics | 36 770 | Agregované metriky per source SKU | SourceSkuId |
+| temp.SBM_TargetMetrics | 41 631 | Agregované metriky per target SKU | TargetSkuId |
+| temp.SBM_SourceProblems | 36 770 | REORDER/OVERSELL výpočty | SourceSkuId |
+| temp.SBM_TargetProblems | 41 631 | NOT_SOLD/ALL_SOLD výpočty | TargetSkuId |
+| temp.SBM_SourceFull | 36 770 | Kompletní source metriky + timing + ratio | SourceSkuId |
+| temp.SBM_TargetFull | 41 631 | Kompletní target metriky + timing | TargetSkuId |
 
 ---
 
@@ -270,3 +277,41 @@ Pro každou skupinu:
 - **Ecomm WarehouseId=300** vyloučen z cross-product analýzy i percentilů
 - **Redistribuce proběhla 2025-07-14 až 2025-07-29**, referenční datum globálně 2025-07-13
 - **AttributeValueId**: kalkulace=134 (2025-07-13), aktuální=385 (2026-03-20)
+- **SkuClass rozšířené**: 9=A-O(Active Orderable), 11=Z-O(Z Orderable), 8=Z, 1=A → "dobré". 3=D, 4=L, 5=R → "špatné"
+
+### FÁZE 1 – Základní metriky
+- **Source reorder rate**: 37.6% SKU, 34.1% qty. MinLayer3=2 nejhorší (52.3% SKU, 43.5% qty).
+- **Source reorder je bimodální**: 89% reorderů je 75-100% qty. Buď se reorderuje vše, nebo nic.
+- **Target all-sold**: 59.8% SKU. MinLayer3=3 nejhorší (79.5% all-sold).
+- **Hlavní inbound typ**: PURCHASE 72% (23k ks), Y-STORE TRANSFER 12.5% (4k ks), STORE TRANSFER 13% (4.2k ks).
+- **Časování reorderu**: 51.6% do 4M (90.7% qty ratio), 18.5% v Xmas, 29.6% po novém roce.
+
+### FÁZE 2-3 – Store + Brand + Trend
+- **Source reorder lineárně roste se sílou prodejny**: decil 1→26%, decil 10→44%.
+- **Target all-sold lineárně roste**: decil 1→48%, decil 10→70%.
+- **Brand-store fit**: "Strong store + strong brand" = 45.3% reorder (40.3% qty). "Weak store + weak brand" = 29.3% (26.4% qty). Rozdíl 16pp!
+- **Product trend**: Klesající produkty mají nejnižší reorder (31.3%), rostoucí nejvyšší (39.6%).
+
+### FÁZE 4 – Stockout
+- **Stockout korelace**: 0 dní stockoutu → 37.3% reorder. 91-150 dní → 53.6%. Ale jen 497 SKU (1.4%) mělo 31+ dní.
+
+### FÁZE 5 – Cena
+- **Levné (<15 EUR)**: 55.6% reorder SKU, ale malý vzorek (63 SKU). Target: 80.3% all-sold.
+- **30-60 EUR**: nejnižší reorder (34.8%), nejvyšší target nothing-sold (25.1%).
+- **60+ EUR**: 40.2% reorder – drahé se reorderují víc.
+
+### Kombinovaná segmentace (klíčový nález)
+- **Zero-sellers na silných prodejnách** (MinLayer3=1, Sales6M=0, Store 8-10): 41% reorder, 37.2% qty ratio → VELKÝ problém.
+- **Zero-sellers na slabých prodejnách** (MinLayer3=1, Sales6M=0, Store 1-3): 30.7% reorder → STÁLE vysoké.
+- **Low-sellers (1-2) na silných prodejnách** (MinLayer3=1): 53.2% reorder → KRITICKÉ.
+- **Target MinLayer3=3, Med+ sales, Strong store**: 81.4% all-sold → redistribuce tu selhává v udržení zásoby.
+- **Target MinLayer3=1, Zero sales, Weak store**: 43.7% nothing-sold → sem nemá smysl posílat.
+
+### Delisting analýza
+- **Source**: 6,047 SKU delistováno po redistribuci → jen 13.2% reorder (vs 42.7% u aktivních). Delisting = -29pp reorder.
+- **Target**: 7,108 delistovaných. 24.5% nothing-sold (vs 20.7%), 61.8% all-sold (vs 59.3%) – delistované se vyprodávají (clearance).
+
+### Redistribuční ratio
+- **76-100% zásoby odvezeno**: jen 10.7% reorder! Tyto SKU mají velkou zásobu a nízký prodej – bezpečné.
+- **51-75% odvezeno**: 42.8% reorder – nebezpečné, zbylá zásoba nestačí.
+- **26-50%** (hlavní skupina 24.5k): 38.9% reorder.

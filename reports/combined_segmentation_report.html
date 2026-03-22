@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Kombinovaná segmentace & Rozhodovací strom – Calc 233</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 12px; }
+th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: right; }
+th { background: #3498db; color: white; font-size: 11px; }
+tr:nth-child(even) { background: #f9f9f9; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Kombinovaná segmentace & Rozhodovací strom</h1>
+<p>CalculationId=233 | EntityListId=3 | Vygenerováno: 2026-03-22 02:51</p>
+
+<div class="section">
+<h2>1. SOURCE: Kombinovaná segmentace (MinLayer3 × Sales6M × Síla prodejny)</h2>
+<p>Klíčová tabulka: jak se chovají source SKU v závislosti na třech dimenzích.</p>
+
+<img src="fig06_combined_source_heatmap.png">
+
+<table>
+<tr><th>MinLayer3</th><th>Sales 6M</th><th>Síla prodejny</th><th>SKU</th><th>S reorderem</th><th>% SKU reorder</th><th>Reorder ks</th><th>Redistrib. ks</th><th>Qty ratio</th></tr><tr><td>0</td><td>Low(1-2)</td><td>Mid(4-7)</td>
+    <td>69</td><td>2</td>
+    <td class="good">2.9%</td>
+    <td>2</td><td>99</td>
+    <td>2.0%</td></tr><tr><td>0</td><td>Low(1-2)</td><td>Strong(8-10)</td>
+    <td>33</td><td>7</td>
+    <td class="good">21.2%</td>
+    <td>8</td><td>51</td>
+    <td>15.7%</td></tr><tr><td>0</td><td>Low(1-2)</td><td>Weak(1-3)</td>
+    <td>22</td><td>0</td>
+    <td class="good">0.0%</td>
+    <td>0</td><td>28</td>
+    <td>0.0%</td></tr><tr><td>0</td><td>Med+(3+)</td><td>Mid(4-7)</td>
+    <td>4</td><td>0</td>
+    <td class="good">0.0%</td>
+    <td>0</td><td>7</td>
+    <td>0.0%</td></tr><tr><td>0</td><td>Med+(3+)</td><td>Strong(8-10)</td>
+    <td>13</td><td>3</td>
+    <td class="good">23.1%</td>
+    <td>5</td><td>30</td>
+    <td>16.7%</td></tr><tr><td>0</td><td>Med+(3+)</td><td>Weak(1-3)</td>
+    <td>2</td><td>0</td>
+    <td class="good">0.0%</td>
+    <td>0</td><td>3</td>
+    <td>0.0%</td></tr><tr><td>0</td><td>Zero</td><td>Mid(4-7)</td>
+    <td>701</td><td>59</td>
+    <td class="good">8.4%</td>
+    <td>66</td><td>841</td>
+    <td>7.8%</td></tr><tr><td>0</td><td>Zero</td><td>Strong(8-10)</td>
+    <td>413</td><td>28</td>
+    <td class="good">6.8%</td>
+    <td>29</td><td>477</td>
+    <td>6.1%</td></tr><tr><td>0</td><td>Zero</td><td>Weak(1-3)</td>
+    <td>452</td><td>8</td>
+    <td class="good">1.8%</td>
+    <td>11</td><td>525</td>
+    <td>2.1%</td></tr><tr><td>1</td><td>Low(1-2)</td><td>Mid(4-7)</td>
+    <td>1,476</td><td>685</td>
+    <td class="bad">46.4%</td>
+    <td>861</td><td>2,116</td>
+    <td>40.7%</td></tr><tr><td>1</td><td>Low(1-2)</td><td>Strong(8-10)</td>
+    <td>1,535</td><td>816</td>
+    <td class="bad">53.2%</td>
+    <td>1,048</td><td>2,280</td>
+    <td>46.0%</td></tr><tr><td>1</td><td>Low(1-2)</td><td>Weak(1-3)</td>
+    <td>660</td><td>250</td>
+    <td class="warn">37.9%</td>
+    <td>297</td><td>908</td>
+    <td>32.7%</td></tr><tr><td>1</td><td>Zero</td><td>Mid(4-7)</td>
+    <td>12,617</td><td>4,717</td>
+    <td class="warn">37.4%</td>
+    <td>5,335</td><td>15,788</td>
+    <td>33.8%</td></tr><tr><td>1</td><td>Zero</td><td>Strong(8-10)</td>
+    <td>8,264</td><td>3,390</td>
+    <td class="warn">41.0%</td>
+    <td>3,922</td><td>10,536</td>
+    <td>37.2%</td></tr><tr><td>1</td><td>Zero</td><td>Weak(1-3)</td>
+    <td>7,413</td><td>2,279</td>
+    <td class="good">30.7%</td>
+    <td>2,515</td><td>8,970</td>
+    <td>28.0%</td></tr><tr><td>2</td><td>Low(1-2)</td><td>Mid(4-7)</td>
+    <td>541</td><td>276</td>
+    <td class="bad">51.0%</td>
+    <td>354</td><td>862</td>
+    <td>41.1%</td></tr><tr><td>2</td><td>Low(1-2)</td><td>Strong(8-10)</td>
+    <td>787</td><td>397</td>
+    <td class="bad">50.4%</td>
+    <td>562</td><td>1,311</td>
+    <td>42.9%</td></tr><tr><td>2</td><td>Low(1-2)</td><td>Weak(1-3)</td>
+    <td>216</td><td>96</td>
+    <td class="warn">44.4%</td>
+    <td>120</td><td>326</td>
+    <td>36.8%</td></tr><tr><td>2</td><td>Med+(3+)</td><td>Mid(4-7)</td>
+    <td>286</td><td>162</td>
+    <td class="bad">56.6%</td>
+    <td>259</td><td>563</td>
+    <td>46.0%</td></tr><tr><td>2</td><td>Med+(3+)</td><td>Strong(8-10)</td>
+    <td>780</td><td>441</td>
+    <td class="bad">56.5%</td>
+    <td>709</td><td>1,521</td>
+    <td>46.6%</td></tr><tr><td>2</td><td>Med+(3+)</td><td>Weak(1-3)</td>
+    <td>70</td><td>30</td>
+    <td class="warn">42.9%</td>
+    <td>48</td><td>133</td>
+    <td>36.1%</td></tr><tr><td>3</td><td>Med+(3+)</td><td>Mid(4-7)</td>
+    <td>64</td><td>32</td>
+    <td class="bad">50.0%</td>
+    <td>112</td><td>303</td>
+    <td>37.0%</td></tr><tr><td>3</td><td>Med+(3+)</td><td>Strong(8-10)</td>
+    <td>343</td><td>159</td>
+    <td class="bad">46.4%</td>
+    <td>335</td><td>1,034</td>
+    <td>32.4%</td></tr><tr><td>3</td><td>Med+(3+)</td><td>Weak(1-3)</td>
+    <td>9</td><td>4</td>
+    <td class="warn">44.4%</td>
+    <td>17</td><td>42</td>
+    <td>40.5%</td></tr></table>
+
+<div class="insight-bad">
+<b>Kritické segmenty (>45% reorder SKU):</b>
+<ul>
+<li>MinLayer3=1, Low(1-2), Strong(8-10): <b>53.2%</b> – 1,535 SKU, 46% qty ratio</li>
+<li>MinLayer3=2, Med+(3+), Mid/Strong: <b>56.5-56.6%</b> – potřebují MinLayer 3+</li>
+<li>MinLayer3=2, Low(1-2), Mid: <b>51.0%</b></li>
+<li>MinLayer3=3, Med+(3+), Mid: <b>50.0%</b> – i MaxLayer3 nestačí!</li>
+</ul>
+</div>
+
+<div class="insight-good">
+<b>Bezpečné segmenty (<10% reorder SKU):</b>
+<ul>
+<li>MinLayer3=0, Zero, Weak(1-3): <b>1.8%</b> – 452 SKU, bezpečné</li>
+<li>MinLayer3=0, Zero, Strong(8-10): <b>6.8%</b> – 413 SKU, relativně bezpečné</li>
+<li>MinLayer3=0, Low(1-2), Mid: <b>2.9%</b> – 69 SKU</li>
+</ul>
+</div>
+</div>
+
+<div class="section">
+<h2>2. TARGET: Kombinovaná segmentace</h2>
+<img src="fig07_combined_target_heatmap.png">
+
+<table>
+<tr><th>MinLayer3</th><th>Sales 6M</th><th>Síla prodejny</th><th>SKU</th><th>Nic neprodáno</th><th>Vše prodáno</th><th>% Nic</th><th>% Vše</th><th>Přijato ks</th><th>Prodáno ks</th><th>Zbývá ks</th></tr><tr><td>1</td><td>Low(1-2)</td><td>Mid(4-7)</td>
+    <td>1,113</td><td>448</td><td>661</td>
+    <td class="bad">40.3%</td>
+    <td class="">59.4%</td>
+    <td>1,124</td><td>1,032</td><td>477</td></tr><tr><td>1</td><td>Low(1-2)</td><td>Strong(8-10)</td>
+    <td>998</td><td>345</td><td>648</td>
+    <td class="">34.6%</td>
+    <td class="">64.9%</td>
+    <td>1,006</td><td>1,178</td><td>360</td></tr><tr><td>1</td><td>Low(1-2)</td><td>Weak(1-3)</td>
+    <td>467</td><td>233</td><td>234</td>
+    <td class="bad">49.9%</td>
+    <td class="">50.1%</td>
+    <td>469</td><td>336</td><td>236</td></tr><tr><td>1</td><td>Zero</td><td>Mid(4-7)</td>
+    <td>982</td><td>386</td><td>562</td>
+    <td class="bad">39.3%</td>
+    <td class="">57.2%</td>
+    <td>1,057</td><td>880</td><td>633</td></tr><tr><td>1</td><td>Zero</td><td>Strong(8-10)</td>
+    <td>790</td><td>251</td><td>525</td>
+    <td class="">31.8%</td>
+    <td class="">66.5%</td>
+    <td>820</td><td>950</td><td>343</td></tr><tr><td>1</td><td>Zero</td><td>Weak(1-3)</td>
+    <td>380</td><td>166</td><td>204</td>
+    <td class="bad">43.7%</td>
+    <td class="">53.7%</td>
+    <td>407</td><td>306</td><td>279</td></tr><tr><td>2</td><td>Low(1-2)</td><td>Mid(4-7)</td>
+    <td>8,674</td><td>2,370</td><td>4,100</td>
+    <td class="">27.3%</td>
+    <td class="">47.3%</td>
+    <td>9,588</td><td>14,021</td><td>6,760</td></tr><tr><td>2</td><td>Low(1-2)</td><td>Strong(8-10)</td>
+    <td>9,421</td><td>1,983</td><td>5,299</td>
+    <td class="">21.0%</td>
+    <td class="">56.2%</td>
+    <td>10,409</td><td>18,897</td><td>5,974</td></tr><tr><td>2</td><td>Low(1-2)</td><td>Weak(1-3)</td>
+    <td>3,093</td><td>1,000</td><td>1,348</td>
+    <td class="">32.3%</td>
+    <td class="">43.6%</td>
+    <td>3,438</td><td>4,470</td><td>2,673</td></tr><tr><td>2</td><td>Med+(3+)</td><td>Mid(4-7)</td>
+    <td>4,119</td><td>665</td><td>2,698</td>
+    <td class="">16.1%</td>
+    <td class="">65.5%</td>
+    <td>4,558</td><td>9,963</td><td>2,022</td></tr><tr><td>2</td><td>Med+(3+)</td><td>Strong(8-10)</td>
+    <td>5,345</td><td>613</td><td>3,823</td>
+    <td class="">11.5%</td>
+    <td class="bad">71.5%</td>
+    <td>5,731</td><td>15,053</td><td>2,088</td></tr><tr><td>2</td><td>Med+(3+)</td><td>Weak(1-3)</td>
+    <td>1,325</td><td>204</td><td>844</td>
+    <td class="">15.4%</td>
+    <td class="">63.7%</td>
+    <td>1,514</td><td>3,000</td><td>678</td></tr><tr><td>3</td><td>Med+(3+)</td><td>Mid(4-7)</td>
+    <td>1,866</td><td>86</td><td>1,451</td>
+    <td class="">4.6%</td>
+    <td class="bad">77.8%</td>
+    <td>3,558</td><td>10,990</td><td>713</td></tr><tr><td>3</td><td>Med+(3+)</td><td>Strong(8-10)</td>
+    <td>2,554</td><td>96</td><td>2,080</td>
+    <td class="">3.8%</td>
+    <td class="bad">81.4%</td>
+    <td>4,036</td><td>15,226</td><td>809</td></tr><tr><td>3</td><td>Med+(3+)</td><td>Weak(1-3)</td>
+    <td>504</td><td>26</td><td>385</td>
+    <td class="">5.2%</td>
+    <td class="bad">76.4%</td>
+    <td>1,039</td><td>2,967</td><td>223</td></tr></table>
+
+<div class="insight-bad">
+<b>Target problémové segmenty:</b>
+<ul>
+<li>MinLayer3=3, Med+, Strong: <b>81.4% all-sold</b> – silné prodejny s frekventními produkty prodají vše!</li>
+<li>MinLayer3=1, Low, Weak: <b>49.9% nic neprodáno</b> – slabé prodejny s low-sellers = zbytečná redistribuce</li>
+<li>MinLayer3=1, Zero, Weak: <b>43.7% nic neprodáno</b></li>
+</ul>
+</div>
+</div>
+
+<div class="section">
+<h2>3. Brand-Store Fit</h2>
+<img src="fig08_brand_store_fit.png">
+
+<div class="insight">
+<b>"Strong store + Strong brand"</b> = 45.3% reorder (9,749 SKU) – nejvyšší riziko. Prodejna je silná v tomto brandu → odvezené se prodá a musí se doobjednat.<br>
+<b>"Weak store + Weak brand"</b> = 29.3% reorder (7,596 SKU) – nejnižší riziko. Tyto redistribuce fungují nejlépe.
+<br><br>Rozdíl: <b>16 procentních bodů!</b> Brand-store fit je silný prediktor.
+</div>
+</div>
+
+<div class="section">
+<h2>4. Navrhovaný rozhodovací strom pro Source MinLayer</h2>
+<img src="fig09_decision_tree.png">
+
+<h3>Pravidla v pseudokódu:</h3>
+<pre style="background:#f8f9fa; padding:15px; border-radius:4px; font-size:12px;">
+FUNCTION CalculateSourceMinLayer(sku):
+    base = current_min_layer_3_value  // z heuristiky
+
+    // 1. Delisting override
+    IF sku.SkuClass IN (D, L, R):
+        RETURN 0  // bezpečné odvézt vše
+
+    // 2. Frekvence prodejů (hlavní faktor)
+    IF sku.Sales6M == 0:
+        IF store.Decile >= 8:   base = MAX(base, 2)
+        ELIF store.Decile >= 4: base = MAX(base, 2)
+        ELSE:                    base = MAX(base, 1)
+    ELIF sku.Sales6M <= 2:
+        base = MAX(base, 2)
+        IF store.Decile >= 8:   base = MAX(base, 3)
+    ELSE:  // Sales6M >= 3
+        base = MAX(base, 3)
+
+    // 3. Modifikátory
+    IF product.Trend == 'Growing':     base += 1
+    IF brand_store_fit == 'Strong+Strong': base += 1
+    IF sku.StockoutDays_6M > 90:       base += 1
+    IF sku.RedistRatio > 0.75:         base = MAX(base - 1, 0)  // odvážíme skoro vše
+    IF product.Trend == 'Declining':   base = MAX(base - 1, 0)
+
+    RETURN MIN(base, 5)  // cap na 5
+</pre>
+
+<h3>Odhad dopadu navrhovaných pravidel:</h3>
+<p>Při navýšení MinLayer by se:</p>
+<ul>
+<li><b>{skus_changed:,} SKU ({skus_changed/total_skus*100:.1f}%)</b> dostalo vyšší MinLayer → méně by se redistribuovalo (nebo vůbec)</li>
+<li><b>{skus_unchanged:,} SKU ({skus_unchanged/total_skus*100:.1f}%)</b> by zůstalo stejných</li>
+<li>Odhad snížení reorderu: pokud by zvýšení MinLayer o 1 zabránilo redistribuci u SKU s 1-2 prodejemi → ušetříme ~4,000-6,000 zbytečných reorderů</li>
+</ul>
+<p><i>Poznámka: Přesný backtest vyžaduje re-run kalkulačního engine s novými pravidly. Výše je konzervativní odhad.</i></p>
+</div>
+
+<div class="section">
+<h2>5. Shrnutí pro implementaci</h2>
+<table style="font-size:13px;">
+<tr><th>Priorita</th><th>Doporučení</th><th>Dopad</th><th>Riziko</th></tr>
+<tr><td>1</td><td style="text-align:left"><b>Zohlednit sílu prodejny v MinLayer</b> – Store decil 8-10: +1 na source MinLayer</td><td>~12k source SKU, snížení reorderu o ~8-10pp</td><td>Nízké – méně redistribucí ze silných prodejen</td></tr>
+<tr><td>2</td><td style="text-align:left"><b>Rozšířit frekvenci na 12M</b> – SKU s 1-2 prodejemi za 12M: MinLayer min 2</td><td>~6.9k SKU, snížení reorderu o ~15pp</td><td>Střední – menší objem redistribucí</td></tr>
+<tr><td>3</td><td style="text-align:left"><b>Brand-store fit</b> – "Strong+Strong": +1 na source MinLayer</td><td>~9.7k SKU, snížení reorderu o ~5-8pp</td><td>Nízké – lepší cílení</td></tr>
+<tr><td>4</td><td style="text-align:left"><b>Target omezení pro slabé prodejny</b> – Store decil 1-3: nesnižovat MinLayer pod 2</td><td>~5.8k target SKU, snížení "nic neprodáno" o ~10pp</td><td>Střední – méně targetů na slabých prodejnách</td></tr>
+<tr><td>5</td><td style="text-align:left"><b>Product trend</b> – Rostoucí produkty: +1, Klesající: -1</td><td>~7k SKU, jemné doladění</td><td>Nízké</td></tr>
+</table>
+</div>
+
+<p><i>Vygenerováno: {datetime.now().strftime('%Y-%m-%d %H:%M')} | CalculationId=233 | EntityListId=3</i></p>
+</body>
+</html>
