@@ -22,7 +22,9 @@
       "Bash(cd:*)",
       "Bash(PYTHONUTF8=1 python generate_consolidated_reports.py)",
       "Bash(ls reports/v2/*.py reports/v2/*.md)",
-      "Bash(PYTHONUTF8=1 python reports/v2/generate_consolidated_reports.py)"
+      "Bash(PYTHONUTF8=1 python reports/v2/generate_consolidated_reports.py)",
+      "Bash(git checkout:*)",
+      "Bash(reports/v2/findings.md:*)"
     ],
     "deny": []
   }
