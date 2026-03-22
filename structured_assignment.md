@@ -315,3 +315,25 @@ Pro každou skupinu:
 - **76-100% zásoby odvezeno**: jen 10.7% reorder! Tyto SKU mají velkou zásobu a nízký prodej – bezpečné.
 - **51-75% odvezeno**: 42.8% reorder – nebezpečné, zbylá zásoba nestačí.
 - **26-50%** (hlavní skupina 24.5k): 38.9% reorder.
+
+### FÁZE 1b – Prodejní vzorce (24M historie) – KLÍČOVÝ NÁLEZ
+Klasifikace 36,770 source SKU do 5 vzorců (4 půlroční periody):
+- **Dead (0 prodejů 24M)**: 15,625 SKU (43%), 28.5% reorder, 26.1% qty – nejbezpečnější
+- **Dying (prodeje jen staré)**: 6,427 SKU, 34.5% reorder – umírající ale 1/3 se vrací
+- **Sporadic (nepravidelné)**: ~9,900 SKU, 45.4% reorder – vysoké riziko
+- **Consistent (3-4 periody)**: 3,288 SKU, 55.5% reorder – nesmí se odvézt moc
+- **Declining (B>C>D)**: 1,539 SKU, **65.0% reorder, 56.8% qty** – NEJHORŠÍ! Aktuální ML=1.1 je drasticky nedostatečný
+
+### Doba od posledního prodeje – paradox
+- **91-180 dní**: NEJVYŠŠÍ reorder (51.1%) – "spící" produkty
+- **Nikdy neprodané**: 31.9% – nejnižší ale stále třetina
+
+### Dead SKU + Stockout analýza
+- Dead bez stockoutu: 28.0% reorder (12,304 SKU)
+- Dead + stockout >90d v D periodě: **52.1% reorder** (48 SKU) – phantom stock indikátor
+
+### Decision Tree – navrženo
+- **Source MinLayer** závisí primárně na prodejním vzorci (24M) + síla prodejny. Rozsah 0-5.
+- **Target MinLayer** závisí primárně na frekvenci prodejů (6M) + síla prodejny. Rozsah 0-5.
+- Source a Target pravidla jsou ODLIŠNÁ.
+- Odhad: snížení reorderu o 3,000-5,000 SKU (z 13,841 na ~9,000-11,000).

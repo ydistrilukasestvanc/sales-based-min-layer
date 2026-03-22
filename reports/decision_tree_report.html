@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Decision Tree: MinLayer pravidla – Source & Target</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #3498db; padding-left: 12px; }
+h3 { color: #34495e; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 12px; }
+th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: right; }
+th { background: #3498db; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 11px; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<h1>Decision Tree: MinLayer pravidla (0-5)</h1>
+<p>CalculationId=233 | Source a Target pravidla jsou <b>ODLIŠNÁ</b> | 2026-03-22 02:56</p>
+
+<div class="section">
+<h2>1. Prodejní vzorce (24M historie) – klíčový prediktor pro SOURCE</h2>
+<p>Klasifikace SKU do 5 vzorců dle prodejů ve 4 půlročních periodách (A=18-24M, B=12-18M, C=6-12M, D=0-6M):</p>
+
+<img src="fig10_sales_pattern_heatmap.png">
+
+<table>
+<tr><th>Vzorec</th><th>Popis</th><th>SKU</th><th>% reorder (SKU)</th><th>% reorder (ks)</th><th>Klíčové zjištění</th></tr>
+<tr><td style="text-align:left"><b>Dead</b></td><td style="text-align:left">0 prodejů za 24M</td><td>15,625</td><td>28.5%</td><td>26.1%</td><td style="text-align:left">Nejbezpečnější – ale přesto 28%!</td></tr>
+<tr><td style="text-align:left"><b>Dying</b></td><td style="text-align:left">Prodeje jen v A/B, pak 0</td><td>6,427</td><td>34.5%</td><td>31.0%</td><td style="text-align:left">Umírající, ale 1/3 se vrátí</td></tr>
+<tr><td style="text-align:left"><b>Sporadic</b></td><td style="text-align:left">Nepravidelné prodeje</td><td>9,888</td><td>45.4%</td><td>39.6%</td><td style="text-align:left">Vysoké riziko – náhodné vzorce</td></tr>
+<tr><td style="text-align:left"><b>Consistent</b></td><td style="text-align:left">Prodeje v 3-4 periodách</td><td>3,288</td><td>55.5%</td><td>44.5%</td><td style="text-align:left">Pravidelné – NESMÍ se odvézt moc</td></tr>
+<tr><td style="text-align:left" class="bad"><b>Declining</b></td><td style="text-align:left">B>C>D klesající</td><td>1,539</td><td class="bad">65.0%</td><td class="bad">56.8%</td><td style="text-align:left"><b>NEJHORŠÍ!</b> Klesající = stále prodává</td></tr>
+</table>
+
+<div class="insight-bad">
+<b>Klíčový nález: "Declining" vzorec je nejproblematičtější (65% reorder, 57% qty)!</b><br>
+Proč? Produkt se stále prodává (klesá, ale ne nulově). MinLayer heuristika založená na 6M frekvenci ho vidí jako "slabý" (prodeje D < C < B),
+ale ve skutečnosti se stále prodává. Aktuální průměrný MinLayer3 = 1.1 – drasticky nedostatečný.
+</div>
+
+<div class="insight">
+<b>"Dead" (0 prodejů za 24M) = 15,625 SKU (43%)</b> – přesto 28.5% reorder. Tyto SKU neměly ŽÁDNÝ prodej 2 roky, ale po redistribuci se 4,455 z nich muselo doobjednat. Důvod: silná prodejna může prodat i mrtvý produkt, nebo jde o phantom stock.
+</div>
+</div>
+
+<div class="section">
+<h2>2. Doba od posledního prodeje</h2>
+<img src="fig13_last_sale_gap.png">
+
+<div class="insight">
+<b>Paradoxní nález:</b> SKU s posledním prodejem 91-180 dní zpět má NEJVYŠŠÍ reorder (51.1%, 45.5% qty)!
+Toto jsou "spící" produkty – nedávno se prodávaly, ale zastavily se. MinLayer je vidí jako slabé, ale pravděpodobnost prodeje je vysoká.
+Naopak "Nikdy neprodané" = 31.9% reorder – nejnižší, ale stále třetina.
+</div>
+</div>
+
+<div class="section">
+<h2>3. Navrhovaná pravidla SOURCE MinLayer (0-5)</h2>
+<img src="fig11_proposed_source_minlayer.png">
+
+<pre>
+FUNCTION SourceMinLayer(sku, store):
+    // Klasifikace prodejního vzorce (24M historie)
+    pattern = ClassifySalesPattern(sku.SalesA, .B, .C, .D)  // Dead/Dying/Sporadic/Consistent/Declining
+    store_tier = ClassifyStore(store.RevenueDecile)          // Weak(1-3)/Mid(4-7)/Strong(8-10)
+
+    // Lookup tabulka (hlavní pravidlo):
+    //                  Weak  Mid   Strong
+    // Dead              0     1     1
+    // Dying             0     1     1
+    // Sporadic          1     2     3
+    // Consistent        2     3     4
+    // Declining         2     3     4
+
+    base = LOOKUP_TABLE[pattern][store_tier]
+
+    // Modifikátory:
+    IF sku.SkuClass IN (D, L, R):          base = 0     // Delisted → odvézt vše
+    IF sku.RedistRatio > 0.75:             base = MAX(base - 1, 0)  // Odvážíme skoro vše
+    IF sku.BrandStoreFit == 'Strong+Strong': base = MIN(base + 1, 5) // Silný brand v silném obchodě
+    IF sku.LastSaleGap BETWEEN 91 AND 180d: base = MIN(base + 1, 5) // "Spící" produkt
+    IF sku.StockoutDays_6M > 90:           base = MIN(base + 1, 5) // Phantom stock riziko
+
+    RETURN MIN(base, 5)
+</pre>
+
+<table>
+<tr><th>Vzorec</th><th>Síla prodejny</th><th>Aktuální ML (avg)</th><th>Navrhovaný ML</th><th>SKU</th><th>Zdůvodnění</th></tr><tr><td style="text-align:left">Dead</td><td>Weak</td>
+    <td>0.9</td><td class="good">0</td>
+    <td>4,597</td>
+    <td style="text-align:left; font-size:11px">Nejnižší reorder (24.5%), produkt mrtvý, slabý obchod</td></tr><tr><td style="text-align:left">Dead</td><td>Mid</td>
+    <td>0.9</td><td class="">1</td>
+    <td>6,967</td>
+    <td style="text-align:left; font-size:11px">Nízký reorder (29.5%), ale střední obchod může prodat</td></tr><tr><td style="text-align:left">Dead</td><td>Strong</td>
+    <td>0.9</td><td class="">1</td>
+    <td>4,061</td>
+    <td style="text-align:left; font-size:11px">Reorder 31.4% - silný obchod občas prodá mrtvý produkt</td></tr><tr><td style="text-align:left">Dying</td><td>Weak</td>
+    <td>0.9</td><td class="good">0</td>
+    <td>1,594</td>
+    <td style="text-align:left; font-size:11px">Produkt umírá + slabý obchod = bezpečné odvézt</td></tr><tr><td style="text-align:left">Dying</td><td>Mid</td>
+    <td>0.9</td><td class="">1</td>
+    <td>2,882</td>
+    <td style="text-align:left; font-size:11px">Umírající, ale střední obchod = nechej 1</td></tr><tr><td style="text-align:left">Dying</td><td>Strong</td>
+    <td>0.9</td><td class="">1</td>
+    <td>1,951</td>
+    <td style="text-align:left; font-size:11px">Umírající + silný obchod = 37% reorder, nechej 1</td></tr><tr><td style="text-align:left">Sporadic/Other</td><td>Weak</td>
+    <td>1.1</td><td class="good">1</td>
+    <td>2,003</td>
+    <td style="text-align:left; font-size:11px">Nepravidelný, slabý = nechej 1</td></tr><tr><td style="text-align:left">Sporadic/Other</td><td>Mid</td>
+    <td>1.1</td><td class="">2</td>
+    <td>4,176</td>
+    <td style="text-align:left; font-size:11px">Nepravidelný, střední = zvýšená ochrana</td></tr><tr><td style="text-align:left">Sporadic/Other</td><td>Strong</td>
+    <td>1.1</td><td class="bad">3</td>
+    <td>3,712</td>
+    <td style="text-align:left; font-size:11px">Nepravidelný, silný = 47.8% reorder! Silná ochrana</td></tr><tr><td style="text-align:left">Declining</td><td>Weak</td>
+    <td>1.1</td><td class="">2</td>
+    <td>219</td>
+    <td style="text-align:left; font-size:11px">55.3% reorder! I slabý obchod reorderuje klesající produkt</td></tr><tr><td style="text-align:left">Declining</td><td>Mid</td>
+    <td>1.1</td><td class="bad">3</td>
+    <td>569</td>
+    <td style="text-align:left; font-size:11px">64.7% reorder! Vysoká ochrana</td></tr><tr><td style="text-align:left">Declining</td><td>Strong</td>
+    <td>1.1</td><td class="bad">4</td>
+    <td>751</td>
+    <td style="text-align:left; font-size:11px">68.0% reorder! Maximální ochrana na silných</td></tr><tr><td style="text-align:left">Consistent</td><td>Weak</td>
+    <td>1.7</td><td class="">2</td>
+    <td>431</td>
+    <td style="text-align:left; font-size:11px">Pravidelný prodejce, slabý obchod</td></tr><tr><td style="text-align:left">Consistent</td><td>Mid</td>
+    <td>1.7</td><td class="bad">3</td>
+    <td>1,164</td>
+    <td style="text-align:left; font-size:11px">56% reorder, pravidelný na středním</td></tr><tr><td style="text-align:left">Consistent</td><td>Strong</td>
+    <td>1.7</td><td class="bad">4</td>
+    <td>1,693</td>
+    <td style="text-align:left; font-size:11px">56.5% reorder, pravidelný na silném → musí mít hodně</td></tr></table>
+</div>
+
+<div class="section">
+<h2>4. Navrhovaná pravidla TARGET MinLayer (0-5)</h2>
+<p>Target cíl: po redistribuci zůstane alespoň 1 kus. Vyšší MinLayer = více kusů posíláme = větší šance, že 1 zůstane.</p>
+
+<img src="fig12_proposed_target_minlayer.png">
+
+<pre>
+FUNCTION TargetMinLayer(sku, store):
+    freq = sku.Sales6M                              // Frekvence prodejů
+    store_tier = ClassifyStore(store.RevenueDecile)  // Weak/Mid/Strong
+
+    // Lookup tabulka:
+    //                    Weak  Mid   Strong
+    // Zero (0)            1     1     2
+    // Low (1-2)           1     2     3
+    // Medium (3+)         2     3     4
+    // High (ML3=3 / 7+)   3     4     5
+
+    base = LOOKUP_TABLE[freq_bucket][store_tier]
+
+    // Modifikátory:
+    IF sku.SkuClass IN (D, L, R):    base = 0  // Delisted → neposílat
+    IF product.Trend == 'Growing':   base = MIN(base + 1, 5)  // Rostoucí produkt
+
+    RETURN MIN(base, 5)
+</pre>
+
+<table>
+<tr><th>Segment</th><th>Síla prodejny</th><th>Aktuální ML</th><th>Navrhovaný ML</th><th>SKU</th><th>Zdůvodnění</th></tr><tr><td style="text-align:left">Zero</td><td>Weak</td>
+    <td>1</td><td class="">1</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Slabý obchod, žádné prodeje → nechej minimum. 43.7% nic neprodáno!</td></tr><tr><td style="text-align:left">Zero</td><td>Mid</td>
+    <td>1</td><td class="">1</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Střední, žádné prodeje → 1 kus stačí. 39.3% nic neprodáno</td></tr><tr><td style="text-align:left">Zero</td><td>Strong</td>
+    <td>1</td><td class="">2</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Silný obchod i se zero-sellers prodá (66.5% all-sold) → potřeba 2</td></tr><tr><td style="text-align:left">Low(1-2)</td><td>Weak</td>
+    <td>2</td><td class="good">1</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Slabý + low = 49.9% nic. Snížit na 1!</td></tr><tr><td style="text-align:left">Low(1-2)</td><td>Mid</td>
+    <td>2</td><td class="">2</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Střední + low = vyrovnané. OK jako je</td></tr><tr><td style="text-align:left">Low(1-2)</td><td>Strong</td>
+    <td>2</td><td class="">3</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Silný + low = 56.2% all-sold → potřeba 3 aby zůstal 1</td></tr><tr><td style="text-align:left">Med+(3+)</td><td>Weak</td>
+    <td>2</td><td class="">2</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Slabý + med = funguje dobře. 63.7% all-sold ale ok</td></tr><tr><td style="text-align:left">Med+(3+)</td><td>Mid</td>
+    <td>2</td><td class="">3</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Střední + med = 65.5% all-sold → potřeba 3</td></tr><tr><td style="text-align:left">Med+(3+)</td><td>Strong</td>
+    <td>2</td><td class="bad">4</td>
+    <td>-</td><td style="text-align:left; font-size:11px">Silný + med = 71.5% all-sold → potřeba 4 aby zůstal 1!</td></tr><tr><td style="text-align:left">Med+(3+) High</td><td>Weak</td>
+    <td>3</td><td class="">3</td>
+    <td>-</td><td style="text-align:left; font-size:11px">MinLayer3=3, slabý = 76.4% all-sold ale OK</td></tr><tr><td style="text-align:left">Med+(3+) High</td><td>Mid</td>
+    <td>3</td><td class="">4</td>
+    <td>-</td><td style="text-align:left; font-size:11px">MinLayer3=3, střední = 77.8% all-sold → potřeba 4</td></tr><tr><td style="text-align:left">Med+(3+) High</td><td>Strong</td>
+    <td>3</td><td class="bad">5</td>
+    <td>-</td><td style="text-align:left; font-size:11px">MinLayer3=3, silný = 81.4% all-sold → potřeba 5!</td></tr></table>
+
+<div class="insight-good">
+<b>Klíčový rozdíl Source vs Target:</b><br>
+<b>Source:</b> MinLayer závisí primárně na <b>prodejním vzorci (24M)</b> + síle prodejny. Declining/Consistent = vysoké MinLayer (3-4).<br>
+<b>Target:</b> MinLayer závisí primárně na <b>frekvenci prodejů (6M)</b> + síle prodejny. Silné prodejny = vysoké MinLayer (3-5) protože tam se prodá vše rychle.
+</div>
+</div>
+
+<div class="section">
+<h2>5. Kvantifikace dopadu</h2>
+
+<h3>Source: Co by se stalo s navrhovanými pravidly?</h3>
+<table>
+<tr><th>Segment</th><th>SKU</th><th>Aktuální reorder %</th><th>Navrhovaný ML</th><th>Očekávaný efekt</th></tr>
+<tr><td style="text-align:left">Declining + Strong</td><td>751</td><td class="bad">68.0%</td><td>4</td><td style="text-align:left">Tyto SKU by se neredistribuovaly (ML=4 zachová 4ks) → ušetříme ~511 reorderů</td></tr>
+<tr><td style="text-align:left">Consistent + Strong</td><td>1,693</td><td class="bad">56.5%</td><td>4</td><td style="text-align:left">ML4 zachová 4ks → méně redistribucí → ušetříme ~956 reorderů</td></tr>
+<tr><td style="text-align:left">Sporadic + Strong</td><td>3,712</td><td>47.8%</td><td>3</td><td style="text-align:left">ML3 zachová 3ks → ušetříme ~500-800 reorderů</td></tr>
+<tr><td style="text-align:left">Dead + všechny</td><td>15,625</td><td>28.5%</td><td>0-1</td><td style="text-align:left">Beze změny (už je nízký ML). Reorder 28% je nevyhnutelný.</td></tr>
+</table>
+
+<h3>Odhad celkového dopadu:</h3>
+<div class="insight-good">
+<b>Konzervativní odhad:</b> Navrhovaná pravidla by snížila počet source reorderů o <b>~3,000-5,000 SKU</b> (z 13,841 na ~9,000-11,000).<br>
+<b>V kusech:</b> snížení reorderu o <b>~4,000-6,000 ks</b> z celkových 16,615 ks reorderovaných.<br>
+<b>Trade-off:</b> Méně redistribucí celkem = méně ušetřených přebytků. Ale redistribuce, které proběhnou, budou úspěšnější.
+</div>
+</div>
+
+<p><i>2026-03-22 02:56 | CalculationId=233 | EntityListId=3</i></p>
+</body>
+</html>
