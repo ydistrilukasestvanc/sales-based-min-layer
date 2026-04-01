@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="UTF-8"><title>v10 Decision Tree — Meta-analyza</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #8e44ad; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #8e44ad; padding-left: 12px; }
+h3 { color: #34495e; }
+h4 { color: #7f8c8d; margin-top: 25px; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #8e44ad; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.evo-table th { background: #34495e; font-size: 12px; }
+.evo-table td { font-size: 12px; }
+.changed { background: #fff3cd; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #8e44ad; }
+.nav a.active { color: #8e44ad; border-bottom: 2px solid #8e44ad; padding-bottom: 4px; }
+.source-header { background: #2980b9; color: white; padding: 8px 15px; border-radius: 4px 4px 0 0; margin-top: 20px; font-weight: bold; }
+.target-header { background: #27ae60; color: white; padding: 8px 15px; border-radius: 4px 4px 0 0; margin-top: 20px; font-weight: bold; }
+.source-box { border: 2px solid #2980b9; border-radius: 0 0 4px 4px; padding: 15px; margin-bottom: 20px; background: white; }
+.target-box { border: 2px solid #27ae60; border-radius: 0 0 4px 4px; padding: 15px; margin-bottom: 20px; background: white; }
+.ml-0 { background: #e8f8f5; } .ml-1 { background: #d5f5e3; } .ml-2 { background: #fdebd0; }
+.ml-3 { background: #fadbd8; } .ml-4 { background: #f5b7b1; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; } .dir-down { background: #d4edda; } .dir-ok { background: #fef9e7; }
+.v10-badge { background: #8e44ad; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+</style></head><body>
+<div class="nav"><a href="consolidated_findings.html">Findings</a><a href="consolidated_decision_tree.html" class="active">Decision Tree</a><a href="definitions.html">Definitions</a><span style="float:right;color:#7f8c8d;font-size:11px;">v10 META | v2-v9 | ML 0-4</span></div>
+
+<h1>v10 — Decision Tree <span class="v10-badge">META</span></h1>
+<p><b>CalculationId:</b> 233 | <b>Generovano:</b> 2026-03-25 19:23</p>
+<p>Finalni decision tree konsolidovany z v2-v9. Stabilizovany od v8, potvrzeny v9.</p>
+
+<img src="fig_08_decision_tree.png" alt="Decision Tree Lookup">
+
+<!-- SOURCE -->
+<h2>1. SOURCE Decision Tree</h2>
+<div class="source-header">SOURCE — Lookup: Segment × Store → ML 0-4</div>
+<div class="source-box">
+
+<h3>1.1 Evoluce Source Lookup (velocity system v6+)</h3>
+<table class="evo-table">
+<tr><th>Segment / Store</th><th>v6</th><th>v7</th><th>v8-v9 (FINAL)</th></tr>
+<tr><td>TrueDead / Weak</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+<tr><td>TrueDead / Mid</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+<tr><td>TrueDead / Strong</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+<tr><td>PartialDead / Weak</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+<tr><td>PartialDead / Mid</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+<tr><td>PartialDead / Strong</td><td>2</td><td>2</td><td><b>2</b></td></tr>
+<tr><td>SlowPartial / Weak</td><td>2</td><td>2</td><td><b>2</b></td></tr>
+<tr><td>SlowPartial / Mid</td><td>2</td><td>2</td><td><b>2</b></td></tr>
+<tr><td>SlowPartial / Strong</td><td>3</td><td>3</td><td><b>3</b></td></tr>
+<tr><td>SlowFull / Weak</td><td>1</td><td>1</td><td class="changed"><b>2</b></td></tr>
+<tr><td>SlowFull / Mid</td><td>2</td><td>2</td><td><b>2</b></td></tr>
+<tr><td>SlowFull / Strong</td><td>2</td><td>2</td><td class="changed"><b>3</b></td></tr>
+<tr><td>ActiveSeller / Weak</td><td>3</td><td>3</td><td><b>3</b></td></tr>
+<tr><td>ActiveSeller / Mid</td><td>4</td><td>4</td><td><b>4</b></td></tr>
+<tr><td>ActiveSeller / Strong</td><td>4</td><td>4</td><td><b>4</b></td></tr>
+
+</table>
+<div class="insight">
+<b>Zmeny v8:</b> SlowFull+Weak 1→2, SlowFull+Strong 2→3. Duvod: sold_after 56-75%, CalendarWeight odhalil
+ze cast "ActiveSeller" byly SlowFull. v9 potvrdil nezavisle.
+</div>
+
+<h3>1.2 Finalni Source Lookup</h3>
+<table>
+<tr><th>Segment</th><th>Weak</th><th>Mid</th><th>Strong</th><th>Smer</th></tr>
+<tr class="ml-1"><td><b>TrueDead</b></td><td>1</td><td>1</td><td>1</td><td>DOWN — bezpecne odvazet</td></tr>
+<tr class="ml-1"><td><b>PartialDead</b></td><td>1</td><td>1</td><td class="ml-2">2</td><td>OK — opatrnost u Strong</td></tr>
+<tr class="ml-2"><td><b>SlowPartial</b></td><td>2</td><td>2</td><td class="ml-3">3</td><td>OK — rozjizdi se</td></tr>
+<tr class="ml-2"><td><b>SlowFull</b></td><td>2</td><td>2</td><td class="ml-3">3</td><td>OK/UP — vyssi ochrana od v8</td></tr>
+<tr class="ml-3"><td><b>ActiveSeller</b></td><td>3</td><td class="ml-4">4</td><td class="ml-4">4</td><td>UP — chranit!</td></tr>
+</table>
+
+<h3>1.3 Source modifikatory</h3>
+<table>
+<tr><th>Modifier</th><th>Podminka</th><th>Uprava</th><th>Potvrzeno</th></tr>
+<tr><td><b>LastSaleGap</b></td><td>≤90 dni</td><td class="arrow-up">+1 ML</td><td>v7-v9 (SA 85-90%)</td></tr>
+<tr><td><b>BrandFit source</b></td><td>TrueDead/SlowFull/SlowPartial + BrandStrong</td><td class="arrow-up">+1 ML</td><td>v8-v9 (delta 5-11pp)</td></tr>
+<tr><td><b>BrandFit source</b></td><td>ActiveSeller</td><td>ignorovat</td><td>SA >92%</td></tr>
+<tr><td><b>Delisting</b></td><td>D/L</td><td><b>ML = 0</b></td><td>v2-v9</td></tr>
+</table>
+
+<h3>1.4 Clamp</h3>
+<pre>
+Final_ML = CLAMP(Base_ML + SUM(modifiers), 0, 4)
+IF IsOrderable (A-O=9, Z-O=11): Final_ML = MAX(Final_ML, 1)
+IF IsDelisted (D=3, L=4):       Final_ML = 0
+</pre>
+</div>
+
+<!-- TARGET -->
+<h2>2. TARGET Decision Tree</h2>
+<div class="target-header">TARGET — Lookup: SalesBucket × Store → ML 0-4</div>
+<div class="target-box">
+
+<h3>2.1 Evoluce Target Lookup (v6+)</h3>
+<table class="evo-table">
+<tr><th>Bucket / Store</th><th>v6</th><th>v7</th><th>v8-v9 (FINAL)</th></tr>
+<tr><td>0 / Weak</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+<tr><td>0 / Mid</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+<tr><td>0 / Strong</td><td>2</td><td>1</td><td class="changed"><b>1</b></td></tr>
+<tr><td>1-2 / Weak</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+<tr><td>1-2 / Mid</td><td>2</td><td>1</td><td class="changed"><b>1</b></td></tr>
+<tr><td>1-2 / Strong</td><td>2</td><td>2</td><td><b>2</b></td></tr>
+<tr><td>3-5 / Weak</td><td>2</td><td>1</td><td class="changed"><b>1</b></td></tr>
+<tr><td>3-5 / Mid</td><td>2</td><td>2</td><td><b>2</b></td></tr>
+<tr><td>3-5 / Strong</td><td>2</td><td>3</td><td class="changed"><b>3</b></td></tr>
+<tr><td>6-10 / Weak</td><td>2</td><td>2</td><td><b>2</b></td></tr>
+<tr><td>6-10 / Mid</td><td>2</td><td>3</td><td class="changed"><b>3</b></td></tr>
+<tr><td>6-10 / Strong</td><td>2</td><td>3</td><td class="changed"><b>3</b></td></tr>
+<tr><td>11+ / Weak</td><td>3</td><td>2</td><td class="changed"><b>2</b></td></tr>
+<tr><td>11+ / Mid</td><td>3</td><td>3</td><td><b>3</b></td></tr>
+<tr><td>11+ / Strong</td><td>3</td><td>4</td><td class="changed"><b>4</b></td></tr>
+
+</table>
+<div class="insight-new">
+<b>Bidirectional pivot (v7):</b> Snizeni slabych targetu (0/Strong 2→1, 1-2/Mid 2→1, 3-5/Weak 2→1).
+Zvyseni silnych (3-5/Strong 2→3, 6-10/Mid+Strong 2→3, 11+/Strong 3→4).
+</div>
+
+<h3>2.2 Finalni Target Lookup</h3>
+<table>
+<tr><th>Bucket</th><th>Weak</th><th>Mid</th><th>Strong</th><th>Smer</th></tr>
+<tr class="ml-1"><td><b>0</b></td><td>1</td><td>1</td><td>1</td><td class="arrow-down">REDUCE (NS 61-73%)</td></tr>
+<tr class="ml-1"><td><b>1-2</b></td><td>1</td><td>1</td><td class="ml-2">2</td><td class="arrow-down">REDUCE (NS 58-65%)</td></tr>
+<tr><td><b>3-5</b></td><td class="ml-1">1</td><td class="ml-2">2</td><td class="ml-3">3</td><td>OK — zlom (ST 42-46%)</td></tr>
+<tr class="ml-2"><td><b>6-10</b></td><td>2</td><td class="ml-3">3</td><td class="ml-3">3</td><td class="arrow-up">GROWTH (ST 59-63%)</td></tr>
+<tr><td><b>11+</b></td><td class="ml-2">2</td><td class="ml-3">3</td><td class="ml-4">4</td><td class="arrow-up">GROWTH (ST 73-77%)</td></tr>
+</table>
+
+<h3>2.3 Target modifikatory</h3>
+<table>
+<tr><th>Modifier</th><th>Podminka</th><th>Uprava</th><th>Potvrzeno</th></tr>
+<tr><td><b>AllSold / ST1 high</b></td><td>AllSold4M=1 OR ST1_4M ≥85%</td><td class="arrow-up">+1</td><td>v4-v9</td></tr>
+<tr><td><b>Growth pocket</b></td><td>Strong, Sales 3-10, ST ≥45%</td><td class="arrow-up">+1</td><td>v7-v9</td></tr>
+<tr><td><b>NothingSold / low ST</b></td><td>NothingSold4M=1 OR ST4M &lt;20%</td><td class="arrow-down">-1</td><td>v5, v8-v9</td></tr>
+<tr><td><b>BrandFit (0-2 sales) BW</b></td><td>BrandWeak</td><td class="arrow-down">-1</td><td>v8-v9</td></tr>
+<tr><td><b>BrandFit (0-2 sales) BS</b></td><td>BrandStrong</td><td class="arrow-up">+1</td><td>v8-v9</td></tr>
+<tr><td><b>BrandFit (3-5) BW</b></td><td>BrandWeak</td><td class="arrow-down">-1</td><td>v8-v9</td></tr>
+<tr><td><b>BrandFit (6+)</b></td><td>—</td><td>ignorovat</td><td>delta &lt;4pp</td></tr>
+<tr><td><b>Delisting</b></td><td>D/L</td><td><b>ML = 0</b></td><td>v2-v9</td></tr>
+</table>
+
+<h3>2.4 Clamp</h3>
+<pre>
+Final_ML = CLAMP(Base_ML + SUM(modifiers), 0, 4)
+IF IsOrderable (A-O=9, Z-O=11): Final_ML = MAX(Final_ML, 1)
+IF IsDelisted (D=3, L=4):       Final_ML = 0
+</pre>
+</div>
+
+<!-- 3. PSEUDOKOD -->
+<h2>3. Kompletni pseudokod</h2>
+<div class="section">
+<h3>3.1 Source</h3>
+<pre>
+-- Velocity classification (s CalendarWeight)
+CalendarWeight = 0.7 IF half-year contains Nov+Dec ELSE 1.0
+Velocity_12M = (Adjusted_Sales_12M / DaysInStock_12M) × 30
+
+IF Sales_12M = 0 AND DaysInStock >= 270:  TrueDead
+IF Sales_12M = 0 AND DaysInStock 90-270:  PartialDead
+IF Sales_12M = 0 AND DaysInStock < 90:    BriefNoSale
+IF Velocity >= 0.5:                        ActiveSeller
+IF Velocity < 0.5 AND DaysInStock >= 270:  SlowFull
+IF Velocity < 0.5 AND DaysInStock < 270:   SlowPartial
+
+base_ml = SOURCE_LOOKUP[segment][store]
+IF LastSaleGapDays <= 90:                              base_ml += 1
+IF segment IN (TrueDead,SlowFull,SlowPartial) AND BS:  base_ml += 1
+final_ml = CLAMP(base_ml, 0, 4)
+IF IsOrderable: final_ml = MAX(final_ml, 1)
+IF IsDelisted:  final_ml = 0
+</pre>
+
+<h3>3.2 Target</h3>
+<pre>
+bucket = CASE WHEN sales=0 THEN '0' WHEN <=2 '1-2' WHEN <=5 '3-5' WHEN <=10 '6-10' ELSE '11+' END
+
+base_ml = TARGET_LOOKUP[bucket][store]
+IF AllSold4M=1 OR ST1_4M >= 85%:               base_ml += 1
+IF Strong AND sales 3-10 AND ST_4M >= 45%:      base_ml += 1
+IF NothingSold4M=1 OR ST_4M < 20%:              base_ml -= 1
+IF sales <= 2 AND BrandWeak:                     base_ml -= 1
+IF sales <= 2 AND BrandStrong:                   base_ml += 1
+IF sales 3-5 AND BrandWeak:                      base_ml -= 1
+final_ml = CLAMP(base_ml, 0, 4)
+IF IsOrderable: final_ml = MAX(final_ml, 1)
+IF IsDelisted:  final_ml = 0
+</pre>
+</div>
+
+<!-- 4. SMERY -->
+<h2>4. Souhrn — smery zasahu</h2>
+<div class="section">
+<div class="two-col">
+<div>
+<div class="source-header">SOURCE</div>
+<div class="source-box"><table>
+<tr><th>Segment</th><th>Smer</th><th>Prinos</th></tr>
+<tr class="dir-down"><td>TrueDead (vsechny)</td><td>DOWN (ML=1)</td><td>SA 33-41%</td></tr>
+<tr class="dir-ok"><td>PartialDead (W/M)</td><td>OK (ML=1)</td><td>Opatrnost</td></tr>
+<tr class="dir-up"><td>PartialDead (S)</td><td>UP (ML=2)</td><td>SA 62%</td></tr>
+<tr class="dir-up"><td>SlowFull (W/M)</td><td>UP (ML=2)</td><td>SA 56-64%</td></tr>
+<tr class="dir-up"><td>SlowFull (S)</td><td>UP (ML=3)</td><td>SA 75%</td></tr>
+<tr class="dir-up"><td>SlowPartial</td><td>UP (ML=2-3)</td><td>SA 72-84%</td></tr>
+<tr class="dir-up"><td>ActiveSeller</td><td>UP (ML=3-4)</td><td>SA 91-97%</td></tr>
+</table></div></div>
+<div>
+<div class="target-header">TARGET</div>
+<div class="target-box"><table>
+<tr><th>Bucket × Store</th><th>Smer</th><th>Prinos</th></tr>
+<tr class="dir-down"><td>0 / vsechny</td><td>REDUCE (ML=1)</td><td>NS 61-73%</td></tr>
+<tr class="dir-down"><td>1-2 / W,M</td><td>REDUCE (ML=1)</td><td>NS 62-65%</td></tr>
+<tr class="dir-ok"><td>1-2 / S</td><td>OK (ML=2)</td><td>ST 56%</td></tr>
+<tr class="dir-down"><td>3-5 / W</td><td>REDUCE (ML=1)</td><td>NS 45%</td></tr>
+<tr class="dir-ok"><td>3-5 / M</td><td>OK (ML=2)</td><td>ST 66%</td></tr>
+<tr class="dir-up"><td>3-5 / S</td><td>GROWTH (ML=3)</td><td>ST 72%</td></tr>
+<tr class="dir-up"><td>6-10 / M,S</td><td>GROWTH (ML=3)</td><td>ST 84-86%</td></tr>
+<tr class="dir-up"><td>11+ / S</td><td>GROWTH (ML=4)</td><td>ST 94%</td></tr>
+</table></div></div>
+</div>
+</div>
+
+<p style="text-align:center;color:#7f8c8d;margin-top:40px;">v10 Decision Tree | 2026-03-25 19:23 | CalculationId=233</p>
+</body></html>

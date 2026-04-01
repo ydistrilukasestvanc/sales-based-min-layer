@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="UTF-8"><title>v10 Definitions</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+h1 { color: #2c3e50; border-bottom: 3px solid #8e44ad; padding-bottom: 10px; }
+h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #8e44ad; padding-left: 12px; }
+h3 { color: #34495e; }
+h4 { color: #7f8c8d; margin-top: 25px; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; font-size: 13px; }
+th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+th { background: #8e44ad; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+td:first-child, th:first-child { text-align: left; }
+.bad { color: #e74c3c; font-weight: bold; }
+.good { color: #27ae60; font-weight: bold; }
+.warn { color: #e67e22; font-weight: bold; }
+.section { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+.metric { display: inline-block; background: white; padding: 12px 20px; margin: 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; min-width: 140px; }
+.metric .v { font-size: 24px; font-weight: bold; color: #2c3e50; }
+.metric .l { font-size: 11px; color: #7f8c8d; }
+.insight { background: #fff3cd; border-left: 4px solid #f39c12; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-good { background: #d4edda; border-left: 4px solid #27ae60; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-bad { background: #f8d7da; border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.insight-new { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px 15px; margin: 10px 0; border-radius: 4px; }
+.evo-table th { background: #34495e; font-size: 12px; }
+.evo-table td { font-size: 12px; }
+.changed { background: #fff3cd; }
+pre { background: #f8f9fa; padding: 15px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+.nav { background: #2c3e50; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+.nav a { color: #ecf0f1; margin-right: 20px; text-decoration: none; font-weight: bold; }
+.nav a:hover { color: #8e44ad; }
+.nav a.active { color: #8e44ad; border-bottom: 2px solid #8e44ad; padding-bottom: 4px; }
+.source-header { background: #2980b9; color: white; padding: 8px 15px; border-radius: 4px 4px 0 0; margin-top: 20px; font-weight: bold; }
+.target-header { background: #27ae60; color: white; padding: 8px 15px; border-radius: 4px 4px 0 0; margin-top: 20px; font-weight: bold; }
+.source-box { border: 2px solid #2980b9; border-radius: 0 0 4px 4px; padding: 15px; margin-bottom: 20px; background: white; }
+.target-box { border: 2px solid #27ae60; border-radius: 0 0 4px 4px; padding: 15px; margin-bottom: 20px; background: white; }
+.ml-0 { background: #e8f8f5; } .ml-1 { background: #d5f5e3; } .ml-2 { background: #fdebd0; }
+.ml-3 { background: #fadbd8; } .ml-4 { background: #f5b7b1; }
+.arrow-up { color: #e74c3c; font-weight: bold; }
+.arrow-down { color: #27ae60; font-weight: bold; }
+.dir-up { background: #fce4e4; } .dir-down { background: #d4edda; } .dir-ok { background: #fef9e7; }
+.v10-badge { background: #8e44ad; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 5px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+</style></head><body>
+<div class="nav"><a href="consolidated_findings.html">Findings</a><a href="consolidated_decision_tree.html">Decision Tree</a><a href="definitions.html" class="active">Definitions</a><span style="float:right;color:#7f8c8d;font-size:11px;">v10 META | v2-v9 | ML 0-4</span></div>
+
+<h1>v10 — Definitions <span class="v10-badge">META</span></h1>
+
+<div class="section">
+<h2>Metriky</h2>
+
+<h3>OVERSELL (source)</h3>
+<pre>
+RemainingAfterRedist = SourceAvailableSupply - TotalQtyRedistributed
+Oversell_Qty = LEAST(GREATEST(Sales_Post - RemainingAfterRedist, 0), TotalQtyRedistributed)
+</pre>
+
+<h3>REORDER (source)</h3>
+<pre>Reorder_Qty = LEAST(SUM(Inbound.Quantity), TotalQtyRedistributed)</pre>
+
+<h3>SELL-THROUGH (target)</h3>
+<pre>
+Base = TargetAvailableSupply + TotalQtyReceived
+ST = LEAST(Sold, Base) / Base × 100
+</pre>
+
+<h3>SELL-THROUGH-1pc (target)</h3>
+<pre>
+Ak Sold >= Base:  ST1 = 100%
+Ak Sold < Base AND Base > 1:  ST1 = LEAST(Sold, Base-1) / (Base-1) × 100
+Ak Base <= 1:  ST1 = NULL
+</pre>
+
+<h3>NOTHING-SOLD / ALL-SOLD</h3>
+<pre>
+NothingSold = 1 ak Sales_Post = 0
+AllSold = 1 ak Sales_Post >= Base
+</pre>
+</div>
+
+<div class="section">
+<h2>Klasifikace</h2>
+
+<h3>Velocity segmenty (source)</h3>
+<pre>
+CalendarWeight = 0.7 IF half-year contains Nov+Dec ELSE 1.0
+Adjusted_Sales(period) = Raw_Sales(period) × CalendarWeight(period)
+Velocity_12M = Adjusted_Sales_12M / DaysInStock_12M × 30
+
+TrueDead:    Sales_12M = 0, DaysInStock >= 270
+PartialDead: Sales_12M = 0, DaysInStock 90-270
+BriefNoSale: Sales_12M = 0, DaysInStock < 90
+ActiveSeller: Velocity >= 0.5/mesic
+SlowFull:    Velocity < 0.5, DaysInStock >= 270
+SlowPartial: Velocity < 0.5, DaysInStock 90-270
+</pre>
+
+<h3>StoreStrength</h3>
+<pre>
+Revenue_6M = SUM(SaleTransaction.Quantity × SalePrice) za 6M pred redistribuci
+StoreDecile = NTILE(10) OVER (ORDER BY Revenue_6M)
+Weak = Decile 1-3, Mid = 4-7, Strong = 8-10
+</pre>
+
+<h3>BrandFit</h3>
+<pre>
+BrandRevenue_6M = SUM(Quantity × SalePrice) za 6M, GROUP BY WarehouseId, BrandId
+BrandQuintile = NTILE(5) OVER (PARTITION BY BrandId ORDER BY BrandRevenue_6M)
+BrandWeak = Q1-2, BrandMid = Q3, BrandStrong = Q4-5
+</pre>
+
+<h3>SalesBucket (target)</h3>
+<pre>
+0: sales_12m = 0 | 1-2: 1-2 | 3-5: 3-5 | 6-10: 6-10 | 11+: >= 11
+</pre>
+
+<h3>LastSaleGap</h3>
+<pre>LastSaleGapDays = DATEDIFF(DAY, MAX(SaleDate pred ApplicationDate), ApplicationDate)</pre>
+
+<h3>SoldAfter</h3>
+<pre>SoldAfter = 1 ak source SKU malo aspon 1 predaj po ApplicationDate</pre>
+
+<h3>DaysInStock</h3>
+<pre>DaysInStock = pocet dni s AvailableSupply > 0 v danom obdobi (z SkuAvailableSupply)</pre>
+</div>
+
+<div class="section">
+<h2>Business Rules</h2>
+<pre>
+A-O (SkuClass=9):  MIN ML = 1 (nikdy ML=0)
+Z-O (SkuClass=11): MIN ML = 1 (nikdy ML=0)
+D (SkuClass=3):    ML = 0 (override)
+L (SkuClass=4):    ML = 0 (override)
+ML range: 0-4
+</pre>
+</div>
+
+<div class="section">
+<h2>Parametry</h2>
+<table>
+<tr><th>Parametr</th><th>Hodnota</th></tr>
+<tr><td>Server</td><td>DEV</td></tr>
+<tr><td>Databaze</td><td>ydistri-sql-db-dev-tenant-douglasde</td></tr>
+<tr><td>CalculationId</td><td>233</td></tr>
+<tr><td>EntityListId</td><td>3</td></tr>
+<tr><td>Ecomm (vyloucit)</td><td>WarehouseId = 300</td></tr>
+<tr><td>ApplicationDate</td><td>2025-07-13</td></tr>
+<tr><td>CalendarWeight</td><td>0.7</td></tr>
+</table>
+</div>
+
+<p style="text-align:center;color:#7f8c8d;margin-top:40px;">v10 Definitions | 2026-03-25 19:23</p>
+</body></html>
